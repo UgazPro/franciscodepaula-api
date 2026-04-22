@@ -1,0 +1,422 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//////////////////////////////////////////////////
+// ROLES
+//////////////////////////////////////////////////
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique @db.VarChar(50)
+  description String?
+
+  users       User[]
+}
+
+//////////////////////////////////////////////////
+// USERS
+//////////////////////////////////////////////////
+
+model User {
+  id          Int      @id @default(autoincrement())
+  roleId      Int
+  firstName   String   @db.VarChar(100)
+  lastName    String   @db.VarChar(100)
+  email       String   @unique @db.VarChar(150)
+  password    String   @db.VarChar(255)
+  phone       String?  @db.VarChar(20)
+  status      String   @default("active") @db.VarChar(20)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  role            Role @relation(fields: [roleId], references: [id])
+  representative  Representative?
+  teacher         Teacher?
+  employee        Employee?
+  incidents       Incident[]
+  formats         Format[]
+}
+
+//////////////////////////////////////////////////
+// ACADEMIC PERIODS
+//////////////////////////////////////////////////
+
+model AcademicPeriod {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(50)
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("active") @db.VarChar(20)
+
+  sections     Section[]
+  evaluations  Evaluation[]
+  reportCards  ReportCard[]
+}
+
+//////////////////////////////////////////////////
+// GRADES
+//////////////////////////////////////////////////
+
+model Grade {
+  id     Int    @id @default(autoincrement())
+  name   String @db.VarChar(50)
+  level  String @db.VarChar(50)
+
+  sections Section[]
+}
+
+//////////////////////////////////////////////////
+// SECTIONS
+//////////////////////////////////////////////////
+
+model Section {
+  id               Int @id @default(autoincrement())
+  name             String @db.VarChar(10)
+  gradeId          Int
+  academicPeriodId Int
+
+  grade           Grade           @relation(fields: [gradeId], references: [id])
+  academicPeriod  AcademicPeriod  @relation(fields: [academicPeriodId], references: [id])
+
+  students                Student[]
+  teacherSubjectSections  TeacherSubjectSection[]
+  plannings               Planning[]
+}
+
+//////////////////////////////////////////////////
+// STUDENTS
+//////////////////////////////////////////////////
+
+model Student {
+  id                    Int      @id @default(autoincrement())
+
+
+  firstNames            String   @db.VarChar(150)
+  lastNames             String   @db.VarChar(150)
+
+  identificationNumber  String   @unique @db.VarChar(20)
+  birthDate             DateTime
+  gender                String?  @db.VarChar(10)
+
+
+  profilePhoto          String?  // URL o path del archivo
+  birthCountry          String?  @db.VarChar(100)
+  state                 String?  @db.VarChar(100)
+  parish                String?  @db.VarChar(100)
+  previousSchool        String?  @db.VarChar(150)
+
+
+  address               String?
+  status                String   @default("active") @db.VarChar(20)
+  admissionDate         DateTime?
+  sectionId             Int?
+
+  section           Section? @relation(fields: [sectionId], references: [id])
+
+  representatives   StudentRepresentative[]
+  grades            GradeRecord[]
+  reportCards       ReportCard[]
+  payments          Payment[]
+  attendance        StudentAttendance[]
+  incidents         Incident[]
+}
+
+//////////////////////////////////////////////////
+// REPRESENTATIVES
+//////////////////////////////////////////////////
+
+model Representative {
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique
+  relationship String? @db.VarChar(50)
+  occupation   String? @db.VarChar(100)
+  workPhone    String? @db.VarChar(20)
+
+  user      User @relation(fields: [userId], references: [id])
+  students  StudentRepresentative[]
+}
+
+//////////////////////////////////////////////////
+// PIVOT STUDENT - REPRESENTATIVE
+//////////////////////////////////////////////////
+
+model StudentRepresentative {
+  studentId        Int
+  representativeId Int
+
+  student        Student        @relation(fields: [studentId], references: [id])
+  representative Representative @relation(fields: [representativeId], references: [id])
+
+  @@id([studentId, representativeId])
+}
+
+//////////////////////////////////////////////////
+// TEACHERS
+//////////////////////////////////////////////////
+
+model Teacher {
+  id         Int     @id @default(autoincrement())
+  userId     Int     @unique
+  specialty  String? @db.VarChar(100)
+  hireDate   DateTime?
+  status     String  @default("active") @db.VarChar(20)
+
+  user     User @relation(fields: [userId], references: [id])
+
+  assignments     TeacherSubjectSection[]
+  attendance      TeacherAttendance[]
+  plannings       Planning[]
+  gradeRecords    GradeRecord[]
+}
+
+//////////////////////////////////////////////////
+// EMPLOYEES
+//////////////////////////////////////////////////
+
+model Employee {
+  id        Int     @id @default(autoincrement())
+  userId    Int     @unique
+  position  String? @db.VarChar(100)
+  salary    Decimal? @db.Decimal(10,2)
+  hireDate  DateTime?
+  status    String  @default("active") @db.VarChar(20)
+
+  user     User @relation(fields: [userId], references: [id])
+
+  payrolls PayrollRecord[]
+}
+
+//////////////////////////////////////////////////
+// SUBJECTS
+//////////////////////////////////////////////////
+
+model Subject {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(100)
+  description String?
+
+  assignments   TeacherSubjectSection[]
+  evaluations   Evaluation[]
+  attendance    StudentAttendance[]
+  plannings     Planning[]
+}
+
+//////////////////////////////////////////////////
+// TEACHER - SUBJECT - SECTION
+//////////////////////////////////////////////////
+
+model TeacherSubjectSection {
+  id        Int @id @default(autoincrement())
+  teacherId Int
+  subjectId Int
+  sectionId Int
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
+
+  @@unique([teacherId, subjectId, sectionId])
+}
+
+//////////////////////////////////////////////////
+// EVALUATIONS
+//////////////////////////////////////////////////
+
+model Evaluation {
+  id                Int     @id @default(autoincrement())
+  name              String  @db.VarChar(100)
+  percentage        Decimal @db.Decimal(5,2)
+  subjectId         Int
+  academicPeriodId  Int
+  term              Int
+
+  subject         Subject        @relation(fields: [subjectId], references: [id])
+  academicPeriod  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+
+  grades          GradeRecord[]
+}
+
+//////////////////////////////////////////////////
+// GRADE RECORDS
+//////////////////////////////////////////////////
+
+model GradeRecord {
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  evaluationId Int
+  score        Decimal? @db.Decimal(5,2)
+  observations String?
+  createdBy    Int?
+  createdAt    DateTime @default(now())
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
+  teacher    Teacher?   @relation(fields: [createdBy], references: [id])
+
+  @@unique([studentId, evaluationId])
+}
+
+//////////////////////////////////////////////////
+// REPORT CARDS
+//////////////////////////////////////////////////
+
+model ReportCard {
+  id               Int      @id @default(autoincrement())
+  studentId        Int
+  academicPeriodId Int
+  term             Int
+  average          Decimal? @db.Decimal(5,2)
+  observations     String?
+  generatedAt      DateTime @default(now())
+
+  student         Student        @relation(fields: [studentId], references: [id])
+  academicPeriod  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+
+  @@unique([studentId, academicPeriodId, term])
+}
+
+//////////////////////////////////////////////////
+// PAYMENTS
+//////////////////////////////////////////////////
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  studentId     Int
+  amount        Decimal  @db.Decimal(10,2)
+  paymentDate   DateTime
+  paymentMethod String?  @db.VarChar(50)
+  status        String   @default("completed") @db.VarChar(20)
+  description   String?
+
+  student  Student @relation(fields: [studentId], references: [id])
+  invoice  Invoice?
+}
+
+//////////////////////////////////////////////////
+// INVOICES
+//////////////////////////////////////////////////
+
+model Invoice {
+  id            Int      @id @default(autoincrement())
+  paymentId     Int      @unique
+  invoiceNumber String   @unique @db.VarChar(50)
+  issueDate     DateTime
+  totalAmount   Decimal  @db.Decimal(10,2)
+  status        String   @default("issued") @db.VarChar(20)
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// PAYROLL
+//////////////////////////////////////////////////
+
+model PayrollRecord {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  period      String   @db.VarChar(20)
+  baseSalary  Decimal  @db.Decimal(10,2)
+  deductions  Decimal  @default(0) @db.Decimal(10,2)
+  bonuses     Decimal  @default(0) @db.Decimal(10,2)
+  netSalary   Decimal  @db.Decimal(10,2)
+  paymentDate DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// STUDENT ATTENDANCE
+//////////////////////////////////////////////////
+
+model StudentAttendance {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  date        DateTime
+  attendance  Boolean
+  observations String?
+  subjectId   Int?
+
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject? @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, date])
+}
+
+//////////////////////////////////////////////////
+// TEACHER ATTENDANCE
+//////////////////////////////////////////////////
+
+model TeacherAttendance {
+  id          Int      @id @default(autoincrement())
+  teacherId   Int
+  date        DateTime
+  status      String   @db.VarChar(20)
+  observations String?
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([teacherId, date])
+}
+
+//////////////////////////////////////////////////
+// INCIDENTS
+//////////////////////////////////////////////////
+
+model Incident {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  date        DateTime
+  type        String?  @db.VarChar(100)
+  description String?
+  reportedBy  Int
+
+  student Student @relation(fields: [studentId], references: [id])
+  user    User    @relation(fields: [reportedBy], references: [id])
+}
+
+//////////////////////////////////////////////////
+// PLANNINGS
+//////////////////////////////////////////////////
+
+model Planning {
+  id          Int      @id @default(autoincrement())
+  teacherId   Int
+  subjectId   Int
+  sectionId   Int
+  title       String   @db.VarChar(150)
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// FORMATS
+//////////////////////////////////////////////////
+
+model Format {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(150)
+  description String?
+  fileUrl     String
+  uploadedBy  Int
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [uploadedBy], references: [id])
+}
+
+
+
+
