@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -11,253 +11,235 @@ datasource db {
 //////////////////////////////////////////////////
 // ROLES
 //////////////////////////////////////////////////
-
 model Role {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique @db.VarChar(50)
-  description String?
+  id   Int    @id @default(autoincrement())
+  role String @unique
 
-  users       User[]
+  users User[]
 }
 
 //////////////////////////////////////////////////
-// USERS
+// PEOPLE (BASE ENTITY)
 //////////////////////////////////////////////////
+model Person {
+  id                   Int      @id @default(autoincrement())
+  profilePhoto         String?
+  firstNames           String
+  lastNames            String
+  identificationNumber String   @unique
+  birthDate            DateTime
+  gender               String?
 
+  user    User?
+  student Student?
+}
+
+//////////////////////////////////////////////////
+// USERS (AUTH)
+//////////////////////////////////////////////////
 model User {
-  id          Int      @id @default(autoincrement())
-  roleId      Int
-  firstName   String   @db.VarChar(100)
-  lastName    String   @db.VarChar(100)
-  email       String   @unique @db.VarChar(150)
-  password    String   @db.VarChar(255)
-  phone       String?  @db.VarChar(20)
-  status      String   @default("active") @db.VarChar(20)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       Int @id @default(autoincrement())
+  personId Int @unique
+  roleId   Int
 
-  role            Role @relation(fields: [roleId], references: [id])
-  representative  Representative?
-  teacher         Teacher?
-  employee        Employee?
-  incidents       Incident[]
-  formats         Format[]
-}
+  email     String   @unique
+  password  String
+  phone     String?
+  status    Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//////////////////////////////////////////////////
-// ACADEMIC PERIODS
-//////////////////////////////////////////////////
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id])
 
-model AcademicPeriod {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(50)
-  startDate DateTime
-  endDate   DateTime
-  status    String   @default("active") @db.VarChar(20)
+  representative Representative?
+  employee       Employee?
 
-  sections     Section[]
-  evaluations  Evaluation[]
-  reportCards  ReportCard[]
-}
-
-//////////////////////////////////////////////////
-// GRADES
-//////////////////////////////////////////////////
-
-model Grade {
-  id     Int    @id @default(autoincrement())
-  name   String @db.VarChar(50)
-  level  String @db.VarChar(50)
-
-  sections Section[]
-}
-
-//////////////////////////////////////////////////
-// SECTIONS
-//////////////////////////////////////////////////
-
-model Section {
-  id               Int @id @default(autoincrement())
-  name             String @db.VarChar(10)
-  gradeId          Int
-  academicPeriodId Int
-
-  grade           Grade           @relation(fields: [gradeId], references: [id])
-  academicPeriod  AcademicPeriod  @relation(fields: [academicPeriodId], references: [id])
-
-  students                Student[]
-  teacherSubjectSections  TeacherSubjectSection[]
-  plannings               Planning[]
+  incidentsReported Incident[]
+  formatsUploaded   Format[]
 }
 
 //////////////////////////////////////////////////
 // STUDENTS
 //////////////////////////////////////////////////
-
 model Student {
-  id                    Int      @id @default(autoincrement())
+  id       Int @id @default(autoincrement())
+  personId Int @unique
 
+  birthCountry   String?
+  state          String?
+  parish         String?
+  previousSchool String?
+  address        String?
+  status         String    @default("active")
+  admissionDate  DateTime?
+  sectionId      Int?
 
-  firstNames            String   @db.VarChar(150)
-  lastNames             String   @db.VarChar(150)
+  person  Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  section Section? @relation(fields: [sectionId], references: [id])
 
-  identificationNumber  String   @unique @db.VarChar(20)
-  birthDate             DateTime
-  gender                String?  @db.VarChar(10)
+  representatives StudentRepresentative[]
+  grades          GradeRecord[]
+  reportCards     ReportCard[]
+  payments        Payment[]
+  attendance      StudentAttendance[]
+  incidents       Incident[]
 
-
-  profilePhoto          String?  // URL o path del archivo
-  birthCountry          String?  @db.VarChar(100)
-  state                 String?  @db.VarChar(100)
-  parish                String?  @db.VarChar(100)
-  previousSchool        String?  @db.VarChar(150)
-
-
-  address               String?
-  status                String   @default("active") @db.VarChar(20)
-  admissionDate         DateTime?
-  sectionId             Int?
-
-  section           Section? @relation(fields: [sectionId], references: [id])
-
-  representatives   StudentRepresentative[]
-  grades            GradeRecord[]
-  reportCards       ReportCard[]
-  payments          Payment[]
-  attendance        StudentAttendance[]
-  incidents         Incident[]
+  @@index([sectionId])
 }
 
 //////////////////////////////////////////////////
 // REPRESENTATIVES
 //////////////////////////////////////////////////
-
 model Representative {
-  id           Int     @id @default(autoincrement())
-  userId       Int     @unique
-  relationship String? @db.VarChar(50)
-  occupation   String? @db.VarChar(100)
-  workPhone    String? @db.VarChar(20)
+  id     Int @id @default(autoincrement())
+  userId Int @unique
 
-  user      User @relation(fields: [userId], references: [id])
-  students  StudentRepresentative[]
-}
+  relationship String?
+  occupation   String?
 
-//////////////////////////////////////////////////
-// PIVOT STUDENT - REPRESENTATIVE
-//////////////////////////////////////////////////
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-model StudentRepresentative {
-  studentId        Int
-  representativeId Int
-
-  student        Student        @relation(fields: [studentId], references: [id])
-  representative Representative @relation(fields: [representativeId], references: [id])
-
-  @@id([studentId, representativeId])
-}
-
-//////////////////////////////////////////////////
-// TEACHERS
-//////////////////////////////////////////////////
-
-model Teacher {
-  id         Int     @id @default(autoincrement())
-  userId     Int     @unique
-  specialty  String? @db.VarChar(100)
-  hireDate   DateTime?
-  status     String  @default("active") @db.VarChar(20)
-
-  user     User @relation(fields: [userId], references: [id])
-
-  assignments     TeacherSubjectSection[]
-  attendance      TeacherAttendance[]
-  plannings       Planning[]
-  gradeRecords    GradeRecord[]
+  students StudentRepresentative[]
 }
 
 //////////////////////////////////////////////////
 // EMPLOYEES
 //////////////////////////////////////////////////
-
 model Employee {
-  id        Int     @id @default(autoincrement())
-  userId    Int     @unique
-  position  String? @db.VarChar(100)
-  salary    Decimal? @db.Decimal(10,2)
-  hireDate  DateTime?
-  status    String  @default("active") @db.VarChar(20)
+  id     Int @id @default(autoincrement())
+  userId Int @unique
 
-  user     User @relation(fields: [userId], references: [id])
+  salary   Decimal?
+  hireDate DateTime?
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  teacher  Teacher?
   payrolls PayrollRecord[]
+}
+
+//////////////////////////////////////////////////
+// TEACHERS (SPECIALIZATION OF EMPLOYEE)
+//////////////////////////////////////////////////
+model Teacher {
+  id         Int @id @default(autoincrement())
+  employeeId Int @unique
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  subjects     TeacherSubjectSection[]
+  attendance   TeacherAttendance[]
+  gradeRecords GradeRecord[]
+  plannings    Planning[]
+}
+
+//////////////////////////////////////////////////
+// ACADEMIC STRUCTURE
+//////////////////////////////////////////////////
+model AcademicPeriod {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("active")
+
+  sections    Section[]
+  evaluations Evaluation[]
+  reportCards ReportCard[]
+}
+
+model Grade {
+  id    Int    @id @default(autoincrement())
+  grade String
+
+  sections Section[]
+}
+
+model Section {
+  id               Int    @id @default(autoincrement())
+  section          String
+  gradeId          Int
+  academicPeriodId Int
+
+  grade          Grade          @relation(fields: [gradeId], references: [id])
+  academicPeriod AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+
+  students           Student[]
+  teacherAssignments TeacherSubjectSection[]
+  plannings          Planning[]
+}
+
+//////////////////////////////////////////////////
+// STUDENT - REPRESENTATIVE (M:N)
+//////////////////////////////////////////////////
+model StudentRepresentative {
+  studentId        Int
+  representativeId Int
+
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  representative Representative @relation(fields: [representativeId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, representativeId])
 }
 
 //////////////////////////////////////////////////
 // SUBJECTS
 //////////////////////////////////////////////////
-
 model Subject {
-  id          Int     @id @default(autoincrement())
-  name        String  @db.VarChar(100)
-  description String?
+  id      Int    @id @default(autoincrement())
+  subject String
 
-  assignments   TeacherSubjectSection[]
-  evaluations   Evaluation[]
-  attendance    StudentAttendance[]
-  plannings     Planning[]
+  evaluations Evaluation[]
+  teachers    TeacherSubjectSection[]
+  attendance  StudentAttendance[]
+  plannings   Planning[]
 }
 
 //////////////////////////////////////////////////
 // TEACHER - SUBJECT - SECTION
 //////////////////////////////////////////////////
-
 model TeacherSubjectSection {
   id        Int @id @default(autoincrement())
   teacherId Int
   subjectId Int
   sectionId Int
 
-  teacher Teacher @relation(fields: [teacherId], references: [id])
-  subject Subject @relation(fields: [subjectId], references: [id])
-  section Section @relation(fields: [sectionId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, subjectId, sectionId])
 }
 
 //////////////////////////////////////////////////
-// EVALUATIONS
+// EVALUATIONS & GRADES
 //////////////////////////////////////////////////
-
 model Evaluation {
-  id                Int     @id @default(autoincrement())
-  name              String  @db.VarChar(100)
-  percentage        Decimal @db.Decimal(5,2)
-  subjectId         Int
-  academicPeriodId  Int
-  term              Int
+  id               Int     @id @default(autoincrement())
+  name             String
+  percentage       Decimal
+  subjectId        Int
+  academicPeriodId Int
+  term             Int
 
-  subject         Subject        @relation(fields: [subjectId], references: [id])
-  academicPeriod  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+  subject Subject        @relation(fields: [subjectId], references: [id])
+  period  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
 
-  grades          GradeRecord[]
+  grades GradeRecord[]
 }
-
-//////////////////////////////////////////////////
-// GRADE RECORDS
-//////////////////////////////////////////////////
 
 model GradeRecord {
   id           Int      @id @default(autoincrement())
   studentId    Int
   evaluationId Int
-  score        Decimal? @db.Decimal(5,2)
+  score        Decimal?
   observations String?
   createdBy    Int?
   createdAt    DateTime @default(now())
 
-  student    Student    @relation(fields: [studentId], references: [id])
-  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
   teacher    Teacher?   @relation(fields: [createdBy], references: [id])
 
   @@unique([studentId, evaluationId])
@@ -266,101 +248,89 @@ model GradeRecord {
 //////////////////////////////////////////////////
 // REPORT CARDS
 //////////////////////////////////////////////////
-
 model ReportCard {
   id               Int      @id @default(autoincrement())
   studentId        Int
   academicPeriodId Int
   term             Int
-  average          Decimal? @db.Decimal(5,2)
+  average          Decimal?
   observations     String?
   generatedAt      DateTime @default(now())
 
-  student         Student        @relation(fields: [studentId], references: [id])
-  academicPeriod  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+  student Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  period  AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, academicPeriodId, term])
 }
 
 //////////////////////////////////////////////////
-// PAYMENTS
+// PAYMENTS & INVOICES
 //////////////////////////////////////////////////
-
 model Payment {
   id            Int      @id @default(autoincrement())
   studentId     Int
-  amount        Decimal  @db.Decimal(10,2)
+  amount        Decimal
   paymentDate   DateTime
-  paymentMethod String?  @db.VarChar(50)
-  status        String   @default("completed") @db.VarChar(20)
+  paymentMethod String?
+  status        String   @default("completed")
   description   String?
 
-  student  Student @relation(fields: [studentId], references: [id])
-  invoice  Invoice?
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  invoice Invoice?
 }
-
-//////////////////////////////////////////////////
-// INVOICES
-//////////////////////////////////////////////////
 
 model Invoice {
   id            Int      @id @default(autoincrement())
   paymentId     Int      @unique
-  invoiceNumber String   @unique @db.VarChar(50)
+  invoiceNumber String   @unique
   issueDate     DateTime
-  totalAmount   Decimal  @db.Decimal(10,2)
-  status        String   @default("issued") @db.VarChar(20)
+  totalAmount   Decimal
+  status        String   @default("issued")
 
-  payment Payment @relation(fields: [paymentId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 }
 
 //////////////////////////////////////////////////
 // PAYROLL
 //////////////////////////////////////////////////
-
 model PayrollRecord {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   employeeId  Int
-  period      String   @db.VarChar(20)
-  baseSalary  Decimal  @db.Decimal(10,2)
-  deductions  Decimal  @default(0) @db.Decimal(10,2)
-  bonuses     Decimal  @default(0) @db.Decimal(10,2)
-  netSalary   Decimal  @db.Decimal(10,2)
+  period      String
+  baseSalary  Decimal
+  deductions  Decimal   @default(0)
+  bonuses     Decimal   @default(0)
+  netSalary   Decimal?
   paymentDate DateTime?
 
-  employee Employee @relation(fields: [employeeId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 //////////////////////////////////////////////////
-// STUDENT ATTENDANCE
+// ATTENDANCE
 //////////////////////////////////////////////////
-
 model StudentAttendance {
-  id          Int      @id @default(autoincrement())
-  studentId   Int
-  date        DateTime
-  attendance  Boolean
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  date         DateTime
+  attendance   Boolean
   observations String?
-  subjectId   Int?
+  subjectId    Int?
 
-  student Student @relation(fields: [studentId], references: [id])
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   subject Subject? @relation(fields: [subjectId], references: [id])
 
   @@unique([studentId, date])
 }
 
-//////////////////////////////////////////////////
-// TEACHER ATTENDANCE
-//////////////////////////////////////////////////
-
 model TeacherAttendance {
-  id          Int      @id @default(autoincrement())
-  teacherId   Int
-  date        DateTime
-  status      String   @db.VarChar(20)
+  id           Int      @id @default(autoincrement())
+  teacherId    Int
+  date         DateTime
+  status       String
   observations String?
 
-  teacher Teacher @relation(fields: [teacherId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, date])
 }
@@ -368,55 +338,48 @@ model TeacherAttendance {
 //////////////////////////////////////////////////
 // INCIDENTS
 //////////////////////////////////////////////////
-
 model Incident {
   id          Int      @id @default(autoincrement())
   studentId   Int
   date        DateTime
-  type        String?  @db.VarChar(100)
+  type        String?
   description String?
-  reportedBy  Int
+  reportedBy  Int?
 
-  student Student @relation(fields: [studentId], references: [id])
-  user    User    @relation(fields: [reportedBy], references: [id])
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [reportedBy], references: [id])
 }
 
 //////////////////////////////////////////////////
 // PLANNINGS
 //////////////////////////////////////////////////
-
 model Planning {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   teacherId   Int
   subjectId   Int
   sectionId   Int
-  title       String   @db.VarChar(150)
+  title       String
   description String?
   startDate   DateTime?
   endDate     DateTime?
   fileUrl     String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
-  teacher Teacher @relation(fields: [teacherId], references: [id])
-  subject Subject @relation(fields: [subjectId], references: [id])
-  section Section @relation(fields: [sectionId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 }
 
 //////////////////////////////////////////////////
 // FORMATS
 //////////////////////////////////////////////////
-
 model Format {
   id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(150)
+  title       String
   description String?
   fileUrl     String
-  uploadedBy  Int
+  uploadedBy  Int?
   createdAt   DateTime @default(now())
 
-  user User @relation(fields: [uploadedBy], references: [id])
+  user User? @relation(fields: [uploadedBy], references: [id])
 }
-
-
-
-
