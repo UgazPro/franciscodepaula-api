@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { badResponse, baseResponse } from '../utilities/base.dto';
-import { UserDTO, StudentDTO, EmployeeDTO, TeacherDTO, RepresentativeDTO, UserPassword, } from './users.dto';
+import {
+  UserDTO,
+  StudentDTO,
+  EmployeeDTO,
+  TeacherDTO,
+  RepresentativeDTO,
+  UserPassword,
+} from './users.dto';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -24,6 +31,25 @@ export class UsersService {
       });
 
       return users;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // GET ALL STUDENTS
+  //////////////////////////////////////////////////
+  async getStudents() {
+    try {
+      const students = await this.prisma.student.findMany({
+        include: {
+          person: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      return students;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -100,7 +126,7 @@ export class UsersService {
         return user;
       });
 
-      baseResponse.message = 'User created successfully';
+      baseResponse.message = 'Usuario creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);
@@ -133,7 +159,7 @@ export class UsersService {
             parish: data.parish,
             previousSchool: data.previousSchool,
             address: data.address,
-            status: data.status ?? 'active',
+            status: data.status ?? true,
             admissionDate: data.admissionDate,
             sectionId: data.sectionId,
           },
@@ -142,10 +168,80 @@ export class UsersService {
         return student;
       });
 
-      baseResponse.message = 'Student created successfully';
+      baseResponse.message = 'Estudiante creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async updateStudent(id: number, data: StudentDTO) {
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        //////////////////////////////////////////////////
+        // 1. Buscar student actual
+        //////////////////////////////////////////////////
+        const student = await tx.student.findUnique({
+          where: { id },
+          include: {
+            person: true,
+          },
+        });
+
+        if (!student) {
+          throw new Error('Estudiante no encontrado');
+        }
+
+        //////////////////////////////////////////////////
+        // 2. Actualizar PERSON
+        //////////////////////////////////////////////////
+        await tx.person.update({
+          where: { id: student.personId },
+          data: {
+            profilePhoto: data.profilePhoto,
+            firstNames: data.firstNames,
+            lastNames: data.lastNames,
+            identificationNumber: data.identificationNumber,
+            birthDate: data.birthDate,
+            gender: data.gender,
+          },
+        });
+
+        //////////////////////////////////////////////////
+        // 3. Actualizar STUDENT
+        //////////////////////////////////////////////////
+        await tx.student.update({
+          where: { id },
+          data: {
+            birthCountry: data.birthCountry,
+            state: data.state,
+            parish: data.parish,
+            previousSchool: data.previousSchool,
+            address: data.address,
+            status: data.status,
+            admissionDate: data.admissionDate,
+
+          },
+        });
+
+        //////////////////////////////////////////////////
+        // 4. Retornar actualizado
+        //////////////////////////////////////////////////
+        return tx.student.findUnique({
+          where: { id },
+          include: {
+            person: true,
+          },
+        });
+      });
+
+      baseResponse.data = result;
+      baseResponse.message = 'Estudiante actualizado correctamente';
+      return baseResponse;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
       return badResponse;
     }
   }
@@ -191,7 +287,7 @@ export class UsersService {
         return employee;
       });
 
-      baseResponse.message = 'Employee created successfully';
+      baseResponse.message = 'Empleado creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);
@@ -220,7 +316,7 @@ export class UsersService {
         return teacher;
       });
 
-      baseResponse.message = 'Teacher created successfully';
+      baseResponse.message = 'Profesor creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);
@@ -269,7 +365,7 @@ export class UsersService {
         return representative;
       });
 
-      baseResponse.message = 'Representative created successfully';
+      baseResponse.message = 'Representante creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);
@@ -289,7 +385,7 @@ export class UsersService {
         data: { password: hashed },
       });
 
-      baseResponse.message = 'Password updated successfully';
+      baseResponse.message = 'Contraseña actualizada correctamente';
       return baseResponse;
     } catch (error) {
       badResponse.message = String(error);
@@ -309,10 +405,29 @@ export class UsersService {
         },
       });
 
-      baseResponse.message = 'User disabled successfully';
+      baseResponse.message = 'Usuario eliminado correctamente';
       return baseResponse;
     } catch (error) {
-      badResponse.message = String(error);
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
+      return badResponse;
+    }
+  }
+
+  async deleteStudent(id: number) {
+    try {
+      await this.prisma.student.update({
+        where: { id },
+        data: {
+          status: false,
+        },
+      });
+
+      baseResponse.message = 'Estudiante eliminado correctamente';
+      return baseResponse;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
       return badResponse;
     }
   }

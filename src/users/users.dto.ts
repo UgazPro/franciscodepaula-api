@@ -85,8 +85,8 @@ export class StudentDTO extends PersonDTO {
   address!: string;
 
   @IsOptional()
-  @IsString()
-  status!: string;
+  @IsBoolean()
+  status!: boolean;
 
   @Transform(({ value }) => new Date(value))
   @IsDate()

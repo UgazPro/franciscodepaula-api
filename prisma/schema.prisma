@@ -71,7 +71,7 @@ model Student {
   parish         String?
   previousSchool String?
   address        String?
-  status         String    @default("active")
+  status         Boolean?    
   admissionDate  DateTime?
   sectionId      Int?
 

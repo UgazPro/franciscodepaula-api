@@ -1,10 +1,25 @@
-import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Put, } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  ParseIntPipe,
+  Put,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserDTO, StudentDTO, EmployeeDTO, TeacherDTO, RepresentativeDTO, UserPassword, } from './users.dto';
+import {
+  UserDTO,
+  StudentDTO,
+  EmployeeDTO,
+  TeacherDTO,
+  RepresentativeDTO,
+  UserPassword,
+} from './users.dto';
 
 @Controller('users')
 export class UsersController {
-
   constructor(private usersService: UsersService) {}
 
   //////////////////////////////////////////////////
@@ -14,6 +29,12 @@ export class UsersController {
   @Get()
   async getUsers() {
     return await this.usersService.getUsers();
+  }
+
+  // Get Students
+  @Get('students')
+  async getStudents() {
+    return await this.usersService.getStudents();
   }
 
   @Get(':id')
@@ -49,6 +70,19 @@ export class UsersController {
   @Post('students')
   async createStudent(@Body() data: StudentDTO) {
     return await this.usersService.createStudent(data);
+  }
+
+  @Put('students/:id')
+  updateStudent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() activity: StudentDTO,
+  ) {
+    return this.usersService.updateStudent(id, activity);
+  }
+
+  @Delete('students/:id')
+  async deleteStudent(@Param('id', ParseIntPipe) id: number) {
+    return await this.usersService.deleteStudent(id);
   }
 
   //////////////////////////////////////////////////
