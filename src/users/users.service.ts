@@ -161,7 +161,7 @@ export class UsersService {
             address: data.address,
             status: data.status ?? true,
             admissionDate: data.admissionDate,
-            sectionId: data.sectionId,
+            // sectionId: data.sectionId,
           },
         });
 
@@ -221,7 +221,7 @@ export class UsersService {
             address: data.address,
             status: data.status,
             admissionDate: data.admissionDate,
-
+            // sectionId: data.sectionId,
           },
         });
 
