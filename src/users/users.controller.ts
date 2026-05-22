@@ -13,7 +13,6 @@ import {
   UserDTO,
   StudentDTO,
   EmployeeDTO,
-  TeacherDTO,
   RepresentativeDTO,
   UserPassword,
 } from './users.dto';
@@ -92,15 +91,6 @@ export class UsersController {
   @Post('employees')
   async createEmployee(@Body() data: EmployeeDTO) {
     return await this.usersService.createEmployee(data);
-  }
-
-  //////////////////////////////////////////////////
-  // TEACHERS
-  //////////////////////////////////////////////////
-
-  @Post('teachers')
-  async createTeacher(@Body() data: TeacherDTO) {
-    return await this.usersService.createTeacher(data);
   }
 
   //////////////////////////////////////////////////

@@ -11,22 +11,25 @@ datasource db {
 //////////////////////////////////////////////////
 // ROLES
 //////////////////////////////////////////////////
+
 model Role {
-  id   Int    @id @default(autoincrement())
-  role String @unique
+  id    Int    @id @default(autoincrement())
+  role  String @unique
 
   users User[]
 }
 
 //////////////////////////////////////////////////
-// PEOPLE (BASE ENTITY)
+// PEOPLE
 //////////////////////////////////////////////////
+
 model Person {
-  id                   Int      @id @default(autoincrement())
+  id                   Int @id @default(autoincrement())
+
   profilePhoto         String?
   firstNames           String
   lastNames            String
-  identificationNumber String   @unique
+  identificationNumber String @unique
   birthDate            DateTime
   gender               String?
 
@@ -35,17 +38,21 @@ model Person {
 }
 
 //////////////////////////////////////////////////
-// USERS (AUTH)
+// USERS
 //////////////////////////////////////////////////
+
 model User {
-  id       Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   personId Int @unique
   roleId   Int
 
-  email     String   @unique
-  password  String
-  phone     String?
-  status    Boolean?
+  email    String @unique
+  password String
+  phone    String?
+
+  status Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -53,17 +60,16 @@ model User {
   role   Role   @relation(fields: [roleId], references: [id])
 
   representative Representative?
-  employee       Employee?
-
-  incidentsReported Incident[]
-  formatsUploaded   Format[]
+  employee Employee?
 }
 
 //////////////////////////////////////////////////
 // STUDENTS
 //////////////////////////////////////////////////
+
 model Student {
-  id       Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   personId Int @unique
 
   birthCountry   String?
@@ -71,32 +77,53 @@ model Student {
   parish         String?
   previousSchool String?
   address        String?
-  status         Boolean?    
-  admissionDate  DateTime?
-  sectionId      Int?
 
-  person  Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
-  section Section? @relation(fields: [sectionId], references: [id])
+  status Boolean
+
+  admissionDate DateTime?
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  sections StudentSection[]
+  enrollments StudentEnrollment[]
 
   representatives StudentRepresentative[]
-  grades          GradeRecord[]
-  reportCards     ReportCard[]
-  payments        Payment[]
-  attendance      StudentAttendance[]
-  incidents       Incident[]
 
-  @@index([sectionId])
+  grades GradeRecord[]
+  reportCards ReportCard[]
 }
 
 //////////////////////////////////////////////////
-// REPRESENTATIVES
+// STUDENT SECTION
 //////////////////////////////////////////////////
+
+model StudentSection {
+  id Int @id @default(autoincrement())
+
+  studentId Int
+  sectionId Int
+
+  enrollmentDate DateTime?
+
+  status String @default("active")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, sectionId])
+}
+
+//////////////////////////////////////////////////
+// REPRESENTATIVE
+//////////////////////////////////////////////////
+
 model Representative {
-  id     Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   userId Int @unique
 
   relationship String?
-  occupation   String?
+  occupation String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -104,282 +131,276 @@ model Representative {
 }
 
 //////////////////////////////////////////////////
+// STUDENT REPRESENTATIVE
+//////////////////////////////////////////////////
+
+model StudentRepresentative {
+  id Int @id @default(autoincrement())
+
+  studentId Int
+  representativeId Int
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  representative Representative @relation(fields:[representativeId],references:[id],onDelete:Cascade)
+
+  @@unique([studentId, representativeId])
+}
+
+//////////////////////////////////////////////////
 // EMPLOYEES
 //////////////////////////////////////////////////
+
 model Employee {
-  id     Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   userId Int @unique
 
-  salary   Decimal?
+  salary Decimal? @db.Decimal(10,2)
+
   hireDate DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
 
-  teacher  Teacher?
-  payrolls PayrollRecord[]
+  assignments TeacherSubjectSection[]
+
+  createdGrades GradeRecord[]
 }
 
 //////////////////////////////////////////////////
-// TEACHERS (SPECIALIZATION OF EMPLOYEE)
+// SCHOOL YEAR
 //////////////////////////////////////////////////
-model Teacher {
-  id         Int @id @default(autoincrement())
-  employeeId Int @unique
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+model SchoolYear {
+  id Int @id @default(autoincrement())
 
-  subjects     TeacherSubjectSection[]
-  attendance   TeacherAttendance[]
-  gradeRecords GradeRecord[]
-  plannings    Planning[]
-}
+  name String
 
-//////////////////////////////////////////////////
-// ACADEMIC STRUCTURE
-//////////////////////////////////////////////////
-model AcademicPeriod {
-  id        Int      @id @default(autoincrement())
-  name      String
   startDate DateTime
-  endDate   DateTime
-  status    String   @default("active")
+  endDate DateTime
 
-  sections    Section[]
-  evaluations Evaluation[]
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  periods Period[]
+
+  sections Section[]
+
+  enrollments StudentEnrollment[]
+
   reportCards ReportCard[]
 }
 
-model Grade {
-  id    Int    @id @default(autoincrement())
-  grade String
+//////////////////////////////////////////////////
+// PERIODS
+//////////////////////////////////////////////////
 
-  sections Section[]
+model Period {
+
+  id Int @id @default(autoincrement())
+
+  schoolYearId Int
+
+  period String
+
+  startDate DateTime?
+
+  endDate DateTime?
+
+  schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id],onDelete:Cascade)
+
+  evaluations Evaluation[]
 }
+
+//////////////////////////////////////////////////
+// LEVELS
+//////////////////////////////////////////////////
+
+model HighSchoolLevel {
+
+ id Int @id @default(autoincrement())
+
+ level String
+
+ sections Section[]
+}
+
+//////////////////////////////////////////////////
+// SECTION
+//////////////////////////////////////////////////
 
 model Section {
-  id               Int    @id @default(autoincrement())
-  section          String
-  gradeId          Int
-  academicPeriodId Int
 
-  grade          Grade          @relation(fields: [gradeId], references: [id])
-  academicPeriod AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+ id Int @id @default(autoincrement())
 
-  students           Student[]
-  teacherAssignments TeacherSubjectSection[]
-  plannings          Planning[]
+ schoolYearId Int
+
+ highSchoolLevelId Int
+
+ section String
+
+ schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
+
+ level HighSchoolLevel @relation(fields:[highSchoolLevelId],references:[id])
+
+ students StudentSection[]
+
+ enrollments StudentEnrollment[]
+
+ teacherAssignments TeacherSubjectSection[]
+
+ @@unique([schoolYearId,highSchoolLevelId,section])
 }
 
 //////////////////////////////////////////////////
-// STUDENT - REPRESENTATIVE (M:N)
+// ENROLLMENTS
 //////////////////////////////////////////////////
-model StudentRepresentative {
-  studentId        Int
-  representativeId Int
 
-  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  representative Representative @relation(fields: [representativeId], references: [id], onDelete: Cascade)
+model StudentEnrollment {
 
-  @@id([studentId, representativeId])
+ id Int @id @default(autoincrement())
+
+ studentId Int
+
+ schoolYearId Int
+
+ sectionId Int
+
+ enrollmentDate DateTime?
+
+ status Boolean @default(true)
+
+ student Student @relation(fields:[studentId],references:[id])
+
+ schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
+
+ section Section @relation(fields:[sectionId],references:[id])
 }
 
 //////////////////////////////////////////////////
 // SUBJECTS
 //////////////////////////////////////////////////
+
 model Subject {
-  id      Int    @id @default(autoincrement())
-  subject String
 
-  evaluations Evaluation[]
-  teachers    TeacherSubjectSection[]
-  attendance  StudentAttendance[]
-  plannings   Planning[]
+ id Int @id @default(autoincrement())
+
+ subject String
+
+ code String?
+
+ status Boolean @default(true)
+
+ assignments TeacherSubjectSection[]
 }
 
 //////////////////////////////////////////////////
-// TEACHER - SUBJECT - SECTION
+// TEACHER SUBJECT SECTION
 //////////////////////////////////////////////////
+
 model TeacherSubjectSection {
-  id        Int @id @default(autoincrement())
-  teacherId Int
-  subjectId Int
-  sectionId Int
 
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+ id Int @id @default(autoincrement())
 
-  @@unique([teacherId, subjectId, sectionId])
+ teacherId Int
+
+ subjectId Int
+
+ sectionId Int
+
+ status Boolean @default(true)
+
+ employee Employee @relation(fields:[teacherId],references:[id])
+
+ subject Subject @relation(fields:[subjectId],references:[id])
+
+ section Section @relation(fields:[sectionId],references:[id])
+
+ evaluations Evaluation[]
+
+ @@unique([teacherId,subjectId,sectionId])
 }
 
 //////////////////////////////////////////////////
-// EVALUATIONS & GRADES
+// EVALUATIONS
 //////////////////////////////////////////////////
+
 model Evaluation {
-  id               Int     @id @default(autoincrement())
-  name             String
-  percentage       Decimal
-  subjectId        Int
-  academicPeriodId Int
-  term             Int
 
-  subject Subject        @relation(fields: [subjectId], references: [id])
-  period  AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+ id Int @id @default(autoincrement())
 
-  grades GradeRecord[]
+ teacherSubjectSectionId Int
+
+ periodId Int
+
+ title String
+
+ percentage Decimal @db.Decimal(5,2)
+
+ dueDate DateTime?
+
+ assignment TeacherSubjectSection @relation(fields:[teacherSubjectSectionId],references:[id])
+
+ period Period @relation(fields:[periodId],references:[id])
+
+ grades GradeRecord[]
 }
+
+//////////////////////////////////////////////////
+// GRADE RECORDS
+//////////////////////////////////////////////////
 
 model GradeRecord {
-  id           Int      @id @default(autoincrement())
-  studentId    Int
-  evaluationId Int
-  score        Decimal?
-  observations String?
-  createdBy    Int?
-  createdAt    DateTime @default(now())
 
-  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
-  teacher    Teacher?   @relation(fields: [createdBy], references: [id])
+ id Int @id @default(autoincrement())
 
-  @@unique([studentId, evaluationId])
+ studentId Int
+
+ evaluationId Int
+
+ score Decimal? @db.Decimal(5,2)
+
+ observations String?
+
+ createdBy Int?
+
+ createdAt DateTime @default(now())
+
+ updatedAt DateTime @updatedAt
+
+ student Student @relation(fields:[studentId],references:[id])
+
+ evaluation Evaluation @relation(fields:[evaluationId],references:[id])
+
+ employee Employee? @relation(fields:[createdBy],references:[id])
+
+ @@unique([studentId,evaluationId])
 }
 
 //////////////////////////////////////////////////
 // REPORT CARDS
 //////////////////////////////////////////////////
+
 model ReportCard {
-  id               Int      @id @default(autoincrement())
-  studentId        Int
-  academicPeriodId Int
-  term             Int
-  average          Decimal?
-  observations     String?
-  generatedAt      DateTime @default(now())
 
-  student Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  period  AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+ id Int @id @default(autoincrement())
 
-  @@unique([studentId, academicPeriodId, term])
-}
+ studentId Int
 
-//////////////////////////////////////////////////
-// PAYMENTS & INVOICES
-//////////////////////////////////////////////////
-model Payment {
-  id            Int      @id @default(autoincrement())
-  studentId     Int
-  amount        Decimal
-  paymentDate   DateTime
-  paymentMethod String?
-  status        String   @default("completed")
-  description   String?
+ academicPeriodId Int
 
-  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  invoice Invoice?
-}
+ term Int
 
-model Invoice {
-  id            Int      @id @default(autoincrement())
-  paymentId     Int      @unique
-  invoiceNumber String   @unique
-  issueDate     DateTime
-  totalAmount   Decimal
-  status        String   @default("issued")
+ average Decimal? @db.Decimal(5,2)
 
-  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
+ observations String?
 
-//////////////////////////////////////////////////
-// PAYROLL
-//////////////////////////////////////////////////
-model PayrollRecord {
-  id          Int       @id @default(autoincrement())
-  employeeId  Int
-  period      String
-  baseSalary  Decimal
-  deductions  Decimal   @default(0)
-  bonuses     Decimal   @default(0)
-  netSalary   Decimal?
-  paymentDate DateTime?
+ generatedAt DateTime @default(now())
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-}
+ student Student @relation(fields:[studentId],references:[id])
 
-//////////////////////////////////////////////////
-// ATTENDANCE
-//////////////////////////////////////////////////
-model StudentAttendance {
-  id           Int      @id @default(autoincrement())
-  studentId    Int
-  date         DateTime
-  attendance   Boolean
-  observations String?
-  subjectId    Int?
+ schoolYear SchoolYear @relation(fields:[academicPeriodId],references:[id])
 
-  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  subject Subject? @relation(fields: [subjectId], references: [id])
-
-  @@unique([studentId, date])
-}
-
-model TeacherAttendance {
-  id           Int      @id @default(autoincrement())
-  teacherId    Int
-  date         DateTime
-  status       String
-  observations String?
-
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-
-  @@unique([teacherId, date])
-}
-
-//////////////////////////////////////////////////
-// INCIDENTS
-//////////////////////////////////////////////////
-model Incident {
-  id          Int      @id @default(autoincrement())
-  studentId   Int
-  date        DateTime
-  type        String?
-  description String?
-  reportedBy  Int?
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  user    User?   @relation(fields: [reportedBy], references: [id])
-}
-
-//////////////////////////////////////////////////
-// PLANNINGS
-//////////////////////////////////////////////////
-model Planning {
-  id          Int       @id @default(autoincrement())
-  teacherId   Int
-  subjectId   Int
-  sectionId   Int
-  title       String
-  description String?
-  startDate   DateTime?
-  endDate     DateTime?
-  fileUrl     String?
-  createdAt   DateTime  @default(now())
-
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-}
-
-//////////////////////////////////////////////////
-// FORMATS
-//////////////////////////////////////////////////
-model Format {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  fileUrl     String
-  uploadedBy  Int?
-  createdAt   DateTime @default(now())
-
-  user User? @relation(fields: [uploadedBy], references: [id])
+ @@unique([studentId,academicPeriodId,term])
 }

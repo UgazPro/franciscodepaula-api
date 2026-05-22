@@ -5,7 +5,6 @@ import {
   UserDTO,
   StudentDTO,
   EmployeeDTO,
-  TeacherDTO,
   RepresentativeDTO,
   UserPassword,
 } from './users.dto';
@@ -66,11 +65,7 @@ export class UsersService {
         include: {
           role: true,
           person: true,
-          employee: {
-            include: {
-              teacher: true,
-            },
-          },
+          employee: true,
           representative: true,
         },
       });
@@ -288,35 +283,6 @@ export class UsersService {
       });
 
       baseResponse.message = 'Empleado creado correctamente';
-      return result;
-    } catch (error) {
-      badResponse.message = String(error);
-      return badResponse;
-    }
-  }
-
-  //////////////////////////////////////////////////
-  // CREATE TEACHER
-  //////////////////////////////////////////////////
-  async createTeacher(data: TeacherDTO) {
-    try {
-      const result = await this.prisma.$transaction(async (tx) => {
-        const employee = await this.createEmployee(data);
-
-        if (!employee || (employee as any).message) {
-          throw new Error('Error creating employee');
-        }
-
-        const teacher = await tx.teacher.create({
-          data: {
-            employeeId: (employee as any).id,
-          },
-        });
-
-        return teacher;
-      });
-
-      baseResponse.message = 'Profesor creado correctamente';
       return result;
     } catch (error) {
       badResponse.message = String(error);

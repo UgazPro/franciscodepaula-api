@@ -123,13 +123,6 @@ export class EmployeeDTO extends UserDTO {
   hireDate!: Date;
 }
 
-//////////////////////////////////////////////////
-// TEACHER DTO (extends Employee)
-//////////////////////////////////////////////////
-export class TeacherDTO extends EmployeeDTO {
-  // No extra fields for now, but ready for future
-}
-
 export class UserPassword {
   @IsNumber()
   id!: number;
