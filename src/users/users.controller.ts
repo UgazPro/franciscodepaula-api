@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  ParseIntPipe,
-  Put,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Put, } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
   UserDTO,
@@ -72,11 +63,11 @@ export class UsersController {
   }
 
   @Put('students/:id')
-  updateStudent(
+  async updateStudent(
     @Param('id', ParseIntPipe) id: number,
     @Body() activity: StudentDTO,
   ) {
-    return this.usersService.updateStudent(id, activity);
+    return await this.usersService.updateStudent(id, activity);
   }
 
   @Delete('students/:id')
