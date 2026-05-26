@@ -9,7 +9,21 @@ datasource db {
 }
 
 //////////////////////////////////////////////////
-// ROLES
+// ENUMS
+//////////////////////////////////////////////////
+
+enum Currency {
+  USD
+  VES
+}
+
+enum AdjustmentType {
+  BONUS
+  DEDUCTION
+}
+
+//////////////////////////////////////////////////
+// ROLE
 //////////////////////////////////////////////////
 
 model Role {
@@ -20,201 +34,210 @@ model Role {
 }
 
 //////////////////////////////////////////////////
-// PEOPLE
+// PERSON
 //////////////////////////////////////////////////
 
 model Person {
-  id                   Int @id @default(autoincrement())
+  id                     Int @id @default(autoincrement())
 
-  profilePhoto         String?
-  firstNames           String
-  lastNames            String
-  identificationNumber String @unique
-  birthDate            DateTime
-  gender               String?
+  profilePhoto           String?
+  firstNames             String
+  lastNames              String
+  identificationNumber   String @unique
+  birthDate              DateTime
+  gender                 String?
 
-  user    User?
-  student Student?
+  user                   User?
+  student                Student?
 }
 
 //////////////////////////////////////////////////
-// USERS
+// USER
 //////////////////////////////////////////////////
 
 model User {
+
   id Int @id @default(autoincrement())
 
   personId Int @unique
-  roleId   Int
+  roleId Int
 
-  email    String @unique
+  email String @unique
   password String
-  phone    String?
+  phone String?
 
   status Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-  role   Role   @relation(fields: [roleId], references: [id])
+  person Person @relation(fields:[personId],references:[id])
+  role Role @relation(fields:[roleId],references:[id])
 
   representative Representative?
   employee Employee?
+
+  approvedWorkHours EmployeeWorkHour[]
 }
 
 //////////////////////////////////////////////////
-// STUDENTS
+// STUDENT
 //////////////////////////////////////////////////
 
 model Student {
-  id Int @id @default(autoincrement())
 
-  personId Int @unique
+ id Int @id @default(autoincrement())
 
-  birthCountry   String?
-  state          String?
-  parish         String?
-  previousSchool String?
-  address        String?
+ personId Int @unique
 
-  status Boolean
+ birthCountry String?
+ state String?
+ parish String?
+ previousSchool String?
+ address String?
 
-  admissionDate DateTime?
+ status Boolean
 
-  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+ admissionDate DateTime?
 
-  sections StudentSection[]
-  enrollments StudentEnrollment[]
+ person Person @relation(fields:[personId],references:[id])
 
-  representatives StudentRepresentative[]
+ sections StudentSection[]
+ enrollments StudentEnrollment[]
 
-  grades GradeRecord[]
-  reportCards ReportCard[]
+ representatives StudentRepresentative[]
+
+ grades GradeRecord[]
+ reportCards ReportCard[]
+
+ charges StudentCharge[]
 }
 
-//////////////////////////////////////////////////
-// STUDENT SECTION
 //////////////////////////////////////////////////
 
 model StudentSection {
-  id Int @id @default(autoincrement())
 
-  studentId Int
-  sectionId Int
+ id Int @id @default(autoincrement())
 
-  enrollmentDate DateTime?
+ studentId Int
+ sectionId Int
 
-  status String @default("active")
+ enrollmentDate DateTime?
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+ status Boolean
 
-  @@unique([studentId, sectionId])
+ student Student @relation(fields:[studentId],references:[id])
+
+ section Section @relation(fields:[sectionId],references:[id])
+
+ @@unique([studentId,sectionId])
+
 }
 
-//////////////////////////////////////////////////
-// REPRESENTATIVE
 //////////////////////////////////////////////////
 
 model Representative {
-  id Int @id @default(autoincrement())
 
-  userId Int @unique
+ id Int @id @default(autoincrement())
 
-  relationship String?
-  occupation String?
+ userId Int @unique
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ relationship String?
+ occupation String?
 
-  students StudentRepresentative[]
+ user User @relation(fields:[userId],references:[id])
+
+ students StudentRepresentative[]
+
 }
 
-//////////////////////////////////////////////////
-// STUDENT REPRESENTATIVE
 //////////////////////////////////////////////////
 
 model StudentRepresentative {
-  id Int @id @default(autoincrement())
 
-  studentId Int
-  representativeId Int
+ id Int @id @default(autoincrement())
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+ studentId Int
+ representativeId Int
 
-  representative Representative @relation(fields:[representativeId],references:[id],onDelete:Cascade)
+ student Student @relation(fields:[studentId],references:[id])
 
-  @@unique([studentId, representativeId])
+ representative Representative @relation(fields:[representativeId],references:[id])
+
+ @@unique([studentId,representativeId])
+
 }
 
-//////////////////////////////////////////////////
-// EMPLOYEES
 //////////////////////////////////////////////////
 
 model Employee {
-  id Int @id @default(autoincrement())
 
-  userId Int @unique
+ id Int @id @default(autoincrement())
 
-  salary Decimal? @db.Decimal(10,2)
+ userId Int @unique
 
-  hireDate DateTime?
+ baseHourRate Decimal? @db.Decimal(10,2)
 
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ hireDate DateTime?
 
-  assignments TeacherSubjectSection[]
+ user User @relation(fields:[userId],references:[id])
 
-  createdGrades GradeRecord[]
+ assignments TeacherSubjectSection[]
+
+ createdGrades GradeRecord[]
+
+ workHours EmployeeWorkHour[]
+
+ payrollRecords PayrollRecord[]
+
 }
 
-//////////////////////////////////////////////////
-// SCHOOL YEAR
 //////////////////////////////////////////////////
 
 model SchoolYear {
-  id Int @id @default(autoincrement())
 
-  name String
+ id Int @id @default(autoincrement())
 
-  startDate DateTime
-  endDate DateTime
+ name String
 
-  isActive Boolean @default(true)
+ startDate DateTime
+ endDate DateTime
 
-  createdAt DateTime @default(now())
+ isActive Boolean?
 
-  periods Period[]
+ createdAt DateTime @default(now())
 
-  sections Section[]
+ periods Period[]
 
-  enrollments StudentEnrollment[]
+ sections Section[]
 
-  reportCards ReportCard[]
+ enrollments StudentEnrollment[]
+
+ reportCards ReportCard[]
+
+ charges StudentCharge[]
+
 }
 
-//////////////////////////////////////////////////
-// PERIODS
 //////////////////////////////////////////////////
 
 model Period {
 
-  id Int @id @default(autoincrement())
+ id Int @id @default(autoincrement())
 
-  schoolYearId Int
+ schoolYearId Int
 
-  period String
+ period String
 
-  startDate DateTime?
+ startDate DateTime?
+ endDate DateTime?
 
-  endDate DateTime?
+ schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
 
-  schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id],onDelete:Cascade)
+ evaluations Evaluation[]
 
-  evaluations Evaluation[]
 }
 
-//////////////////////////////////////////////////
-// LEVELS
 //////////////////////////////////////////////////
 
 model HighSchoolLevel {
@@ -224,10 +247,9 @@ model HighSchoolLevel {
  level String
 
  sections Section[]
+
 }
 
-//////////////////////////////////////////////////
-// SECTION
 //////////////////////////////////////////////////
 
 model Section {
@@ -248,13 +270,12 @@ model Section {
 
  enrollments StudentEnrollment[]
 
- teacherAssignments TeacherSubjectSection[]
+ assignments TeacherSubjectSection[]
 
  @@unique([schoolYearId,highSchoolLevelId,section])
+
 }
 
-//////////////////////////////////////////////////
-// ENROLLMENTS
 //////////////////////////////////////////////////
 
 model StudentEnrollment {
@@ -269,17 +290,16 @@ model StudentEnrollment {
 
  enrollmentDate DateTime?
 
- status Boolean @default(true)
+ status Boolean?
 
  student Student @relation(fields:[studentId],references:[id])
 
  schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
 
  section Section @relation(fields:[sectionId],references:[id])
+
 }
 
-//////////////////////////////////////////////////
-// SUBJECTS
 //////////////////////////////////////////////////
 
 model Subject {
@@ -290,13 +310,12 @@ model Subject {
 
  code String?
 
- status Boolean @default(true)
+ status Boolean?
 
  assignments TeacherSubjectSection[]
+
 }
 
-//////////////////////////////////////////////////
-// TEACHER SUBJECT SECTION
 //////////////////////////////////////////////////
 
 model TeacherSubjectSection {
@@ -309,7 +328,7 @@ model TeacherSubjectSection {
 
  sectionId Int
 
- status Boolean @default(true)
+ status Boolean?
 
  employee Employee @relation(fields:[teacherId],references:[id])
 
@@ -319,11 +338,8 @@ model TeacherSubjectSection {
 
  evaluations Evaluation[]
 
- @@unique([teacherId,subjectId,sectionId])
 }
 
-//////////////////////////////////////////////////
-// EVALUATIONS
 //////////////////////////////////////////////////
 
 model Evaluation {
@@ -345,10 +361,9 @@ model Evaluation {
  period Period @relation(fields:[periodId],references:[id])
 
  grades GradeRecord[]
+
 }
 
-//////////////////////////////////////////////////
-// GRADE RECORDS
 //////////////////////////////////////////////////
 
 model GradeRecord {
@@ -359,11 +374,11 @@ model GradeRecord {
 
  evaluationId Int
 
+ createdBy Int?
+
  score Decimal? @db.Decimal(5,2)
 
  observations String?
-
- createdBy Int?
 
  createdAt DateTime @default(now())
 
@@ -375,11 +390,8 @@ model GradeRecord {
 
  employee Employee? @relation(fields:[createdBy],references:[id])
 
- @@unique([studentId,evaluationId])
 }
 
-//////////////////////////////////////////////////
-// REPORT CARDS
 //////////////////////////////////////////////////
 
 model ReportCard {
@@ -402,5 +414,219 @@ model ReportCard {
 
  schoolYear SchoolYear @relation(fields:[academicPeriodId],references:[id])
 
- @@unique([studentId,academicPeriodId,term])
+}
+
+//////////////////////////////////////////////////
+// FINANZAS
+//////////////////////////////////////////////////
+
+model ChargeType {
+
+ id Int @id @default(autoincrement())
+
+ name String @unique
+
+ description String?
+
+ charges StudentCharge[]
+
+}
+
+model StudentCharge {
+
+ id Int @id @default(autoincrement())
+
+ studentId Int
+
+ paymentId Int?
+
+ chargeTypeId Int
+
+ schoolYearId Int?
+
+ description String?
+
+ createdAt DateTime @default(now())
+
+ student Student @relation(fields:[studentId],references:[id])
+
+ chargeType ChargeType @relation(fields:[chargeTypeId],references:[id])
+
+ schoolYear SchoolYear? @relation(fields:[schoolYearId],references:[id])
+
+ payment Payment? @relation(fields:[paymentId],references:[id])
+
+}
+
+model PaymentMethod {
+
+ id Int @id @default(autoincrement())
+
+ type String
+
+ bank String?
+ accountNumber String?
+
+ identification String?
+
+ email String?
+
+ phone String?
+
+ owner String?
+
+ active Boolean @default(true)
+
+ payments Payment[]
+
+}
+
+model Exchange {
+
+ id Int @id @default(autoincrement())
+
+ rate Decimal @db.Decimal(10,2)
+
+ date DateTime
+
+ payments Payment[]
+
+}
+
+model Payment {
+
+ id Int @id @default(autoincrement())
+
+ paymentMethodId Int
+
+ exchangeId Int?
+
+ totalAmount Decimal @db.Decimal(12,2)
+
+ currency Currency
+
+ paymentDate DateTime @default(now())
+
+ reference String?
+
+ payerName String?
+
+ payerIdentification String?
+
+ payerPhone String?
+
+ status Boolean
+
+ paymentMethod PaymentMethod @relation(fields:[paymentMethodId],references:[id])
+
+ exchange Exchange? @relation(fields:[exchangeId],references:[id])
+
+ charges StudentCharge[]
+
+}
+
+//////////////////////////////////////////////////
+// NOMINA
+//////////////////////////////////////////////////
+
+model PayrollPeriod {
+
+ id Int @id @default(autoincrement())
+
+ month Int
+
+ year Int
+
+ startDate DateTime?
+
+ endDate DateTime?
+
+ status Boolean
+
+ workHours EmployeeWorkHour[]
+
+ payrolls PayrollRecord[]
+
+ @@unique([month,year])
+
+}
+
+model EmployeeWorkHour {
+
+ id Int @id @default(autoincrement())
+
+ employeeId Int
+
+ payrollPeriodId Int
+
+ approvedBy Int?
+
+ assignedHours Decimal @db.Decimal(8,2)
+
+ observations String?
+
+ createdAt DateTime @default(now())
+
+ employee Employee @relation(fields:[employeeId],references:[id])
+
+ approver User? @relation(fields:[approvedBy],references:[id])
+
+ payrollPeriod PayrollPeriod @relation(fields:[payrollPeriodId],references:[id])
+
+ @@unique([employeeId,payrollPeriodId])
+
+}
+
+model PayrollRecord {
+
+ id Int @id @default(autoincrement())
+
+ employeeId Int
+
+ payrollPeriodId Int
+
+ hourlyRate Decimal? @db.Decimal(10,2)
+
+ workedHours Decimal? @db.Decimal(8,2)
+
+ grossSalary Decimal? @db.Decimal(12,2)
+
+ deductions Decimal @default(0) @db.Decimal(12,2)
+
+ bonuses Decimal @default(0) @db.Decimal(12,2)
+
+ netSalary Decimal? @db.Decimal(12,2)
+
+ currency Currency
+
+ paymentStatus Boolean
+
+ paymentDate DateTime?
+
+ generatedAt DateTime @default(now())
+
+ employee Employee @relation(fields:[employeeId],references:[id])
+
+ payrollPeriod PayrollPeriod @relation(fields:[payrollPeriodId],references:[id])
+
+ adjustments PayrollAdjustment[]
+
+ @@unique([employeeId,payrollPeriodId])
+
+}
+
+model PayrollAdjustment {
+
+ id Int @id @default(autoincrement())
+
+ payrollRecordId Int
+
+ type AdjustmentType
+
+ concept String
+
+ amount Decimal @db.Decimal(10,2)
+
+ payroll PayrollRecord @relation(fields:[payrollRecordId],references:[id])
+
 }

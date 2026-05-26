@@ -274,7 +274,7 @@ export class UsersService {
         const employee = await tx.employee.create({
           data: {
             userId: user.id,
-            salary: data.salary,
+            baseHourRate: data.baseHourRate,
             hireDate: data.hireDate,
           },
         });

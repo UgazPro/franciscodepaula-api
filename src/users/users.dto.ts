@@ -116,7 +116,7 @@ export class RepresentativeDTO extends UserDTO {
 export class EmployeeDTO extends UserDTO {
   @IsOptional()
   @IsNumber()
-  salary?: number;
+  baseHourRate?: number;
 
   @Transform(({ value }) => new Date(value))
   @IsDate()
