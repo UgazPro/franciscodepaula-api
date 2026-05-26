@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SchoolYearModule } from './school-year/school-year.module';
+import { MainLoadModule } from './main-load/main-load.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SchoolYearModule } from './school-year/school-year.module';
     PaymentsModule,
     EnrollmentModule,
     SchoolYearModule,
+    MainLoadModule,
   ],
   controllers: [AppController],
   providers: [
