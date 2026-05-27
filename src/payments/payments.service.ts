@@ -13,7 +13,16 @@ export class PaymentsService {
         include: {
           paymentMethod: true,
           exchange: true,
-          charges: true,
+          charges: {
+            include: {
+              student: {
+                include: {
+                  person: true,
+                },
+              },
+              chargeType: true,
+            },
+          },
         },
       });
 
