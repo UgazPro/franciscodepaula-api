@@ -90,9 +90,6 @@ export class UsersService {
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
       const result = await this.prismaService.$transaction(async (tx) => {
-        //////////////////////////////////////////////////
-        // 1. CREATE PERSON
-        //////////////////////////////////////////////////
         const person = await tx.person.create({
           data: {
             profilePhoto: data.profilePhoto,
@@ -104,9 +101,6 @@ export class UsersService {
           },
         });
 
-        //////////////////////////////////////////////////
-        // 2. CREATE USER
-        //////////////////////////////////////////////////
         const user = await tx.user.create({
           data: {
             personId: person.id,
@@ -151,12 +145,13 @@ export class UsersService {
             personId: person.id,
             birthCountry: data.birthCountry,
             state: data.state,
+            municipality: data.municipality,
             parish: data.parish,
+            currentParish: data.currentParish,
             previousSchool: data.previousSchool,
             address: data.address,
             status: data.status ?? true,
             admissionDate: data.admissionDate,
-            // sectionId: data.sectionId,
           },
         });
 
@@ -174,9 +169,6 @@ export class UsersService {
   async updateStudent(id: number, data: StudentDTO) {
     try {
       const result = await this.prismaService.$transaction(async (tx) => {
-        //////////////////////////////////////////////////
-        // 1. Buscar student actual
-        //////////////////////////////////////////////////
         const student = await tx.student.findUnique({
           where: { id },
           include: {
@@ -188,9 +180,6 @@ export class UsersService {
           throw new Error('Estudiante no encontrado');
         }
 
-        //////////////////////////////////////////////////
-        // 2. Actualizar PERSON
-        //////////////////////////////////////////////////
         await tx.person.update({
           where: { id: student.personId },
           data: {
@@ -203,26 +192,21 @@ export class UsersService {
           },
         });
 
-        //////////////////////////////////////////////////
-        // 3. Actualizar STUDENT
-        //////////////////////////////////////////////////
         await tx.student.update({
           where: { id },
           data: {
             birthCountry: data.birthCountry,
             state: data.state,
+            municipality: data.municipality,
             parish: data.parish,
+            currentParish: data.currentParish,
             previousSchool: data.previousSchool,
             address: data.address,
             status: data.status,
             admissionDate: data.admissionDate,
-            // sectionId: data.sectionId,
           },
         });
 
-        //////////////////////////////////////////////////
-        // 4. Retornar actualizado
-        //////////////////////////////////////////////////
         return tx.student.findUnique({
           where: { id },
           include: {
@@ -295,9 +279,20 @@ export class UsersService {
   //////////////////////////////////////////////////
   async createRepresentative(data: RepresentativeDTO) {
     try {
-      const hashedPassword = await bcrypt.hash(data.password, 10);
+      const passwordSource =
+        data.studentIdentification || data.identificationNumber;
+      const hashedPassword = await bcrypt.hash(passwordSource, 10);
 
       const result = await this.prismaService.$transaction(async (tx) => {
+        const role = await tx.role.findUnique({
+          where: { role: 'Representante' },
+        });
+
+        if (!role) {
+          badResponse.message = 'Rol de representante no encontrado';
+          return badResponse;
+        }
+
         const person = await tx.person.create({
           data: {
             profilePhoto: data.profilePhoto,
@@ -312,11 +307,11 @@ export class UsersService {
         const user = await tx.user.create({
           data: {
             personId: person.id,
-            roleId: data.roleId,
+            roleId: role.id,
             email: data.email,
             password: hashedPassword,
             phone: data.phone,
-            status: data.status ?? true,
+            status: true,
           },
         });
 
@@ -334,7 +329,8 @@ export class UsersService {
       baseResponse.message = 'Representante creado correctamente';
       return result;
     } catch (error) {
-      badResponse.message = String(error);
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
       return badResponse;
     }
   }

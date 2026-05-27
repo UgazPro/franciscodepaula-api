@@ -92,7 +92,9 @@ model Student {
 
  birthCountry String?
  state String?
- parish String?
+  municipality String?
+  parish String?
+  currentParish String?
  previousSchool String?
  address String?
 

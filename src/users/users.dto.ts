@@ -13,9 +13,6 @@ import { Transform } from 'class-transformer';
 // PERSON DTO (MAIN DTO)
 //////////////////////////////////////////////////
 export class PersonDTO {
-  //////////////////////////////////////////////////
-  // PERSON DATA (REQUIRED)
-  //////////////////////////////////////////////////
   @IsOptional()
   @IsString()
   profilePhoto!: string;
@@ -74,7 +71,15 @@ export class StudentDTO extends PersonDTO {
 
   @IsOptional()
   @IsString()
+  municipality!: string;
+
+  @IsOptional()
+  @IsString()
   parish!: string;
+
+  @IsOptional()
+  @IsString()
+  currentParish!: string;
 
   @IsOptional()
   @IsString()
@@ -100,7 +105,14 @@ export class StudentDTO extends PersonDTO {
 //////////////////////////////////////////////////
 // REPRESENTATIVE DTO
 //////////////////////////////////////////////////
-export class RepresentativeDTO extends UserDTO {
+export class RepresentativeDTO extends PersonDTO {
+  @IsEmail()
+  email!: string;
+
+  @IsOptional()
+  @IsString()
+  phone!: string;
+
   @IsOptional()
   @IsString()
   relationship!: string;
@@ -108,6 +120,10 @@ export class RepresentativeDTO extends UserDTO {
   @IsOptional()
   @IsString()
   occupation!: string;
+
+  @IsOptional()
+  @IsString()
+  studentIdentification?: string;
 }
 
 //////////////////////////////////////////////////
