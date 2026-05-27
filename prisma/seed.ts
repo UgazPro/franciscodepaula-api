@@ -441,12 +441,8 @@ async function main() {
 
   // ── 14. CHARGE TYPES ──
   const chargeTypesData = [
-    { id: 1, name: 'Matrícula', description: 'Pago de matrícula anual' },
+    { id: 1, name: 'Inscripción', description: 'Pago de inscripción por año escolar' },
     { id: 2, name: 'Mensualidad', description: 'Pago de mensualidad escolar' },
-    { id: 3, name: 'Inscripción', description: 'Pago de inscripción por año escolar' },
-    { id: 4, name: 'Material Educativo', description: 'Pago de material educativo y textos' },
-    { id: 5, name: 'Uniforme', description: 'Pago de uniforme escolar' },
-    { id: 6, name: 'Actividad Extraescolar', description: 'Pago de actividades culturales y deportivas' },
   ];
   await prisma.chargeType.createMany({ data: chargeTypesData });
   console.log('Tipos de cargo creados.');
@@ -609,15 +605,13 @@ async function main() {
   // ── 18. STUDENT CHARGES ──
   const chargesData = [
     // Carmen Jiménez — hijos: Luis Miguel (1) y Valentina (2)
-    // Matrícula + mensualidad sept + uniforme para ambos
-    { studentId: 1, paymentId: 1, chargeTypeId: 5, schoolYearId: 1, description: 'Uniforme escolar - Luis Miguel' },
-    { studentId: 2, paymentId: 2, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Valentina' },
+    { studentId: 1, paymentId: 1, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Luis Miguel' },
+    { studentId: 2, paymentId: 2, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Valentina' },
     { studentId: 2, paymentId: 2, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad septiembre - Valentina' },
     { studentId: 1, paymentId: 2, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad septiembre - Luis Miguel' },
 
     // José Torrealba — hijos: Samuel (3) e Isabella (4)
-    // Matrícula + mensualidad feb para Samuel; mensualidad feb para Isabella
-    { studentId: 3, paymentId: 3, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Samuel' },
+    { studentId: 3, paymentId: 3, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Samuel' },
     { studentId: 3, paymentId: 4, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad febrero - Samuel' },
     { studentId: 4, paymentId: 4, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad febrero - Isabella' },
 
@@ -625,35 +619,34 @@ async function main() {
     { studentId: 5, paymentId: 5, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad abril - Diego (pendiente)' },
     { studentId: 6, paymentId: 5, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad abril - Camila (pendiente)' },
 
-    // Pago con Zelle - Material educativo para Samuel
-    { studentId: 3, paymentId: 6, chargeTypeId: 4, schoolYearId: 1, description: 'Material educativo 2024-2025 - Samuel' },
-    { studentId: 4, paymentId: 6, chargeTypeId: 4, schoolYearId: 1, description: 'Material educativo 2024-2025 - Isabella' },
+    // Mensualidades para material educativo
+    { studentId: 3, paymentId: 6, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad - Material educativo 2024-2025 - Samuel' },
+    { studentId: 4, paymentId: 6, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad - Material educativo 2024-2025 - Isabella' },
 
     // Cargos sin pago asociado (deudas pendientes)
-    { studentId: 5, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Diego (adeudado)' },
-    { studentId: 6, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Camila (adeudado)' },
-    // ——— CARGOS NUEVOS ESTUDIANTES ———
-    // Patricia Hernández — hijo: Mateo (7)
-    { studentId: 7, paymentId: 7, chargeTypeId: 5, schoolYearId: 2, description: 'Uniforme escolar - Mateo' },
-    { studentId: 7, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Mateo' },
-    { studentId: 7, paymentId: 8, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Mateo' },
-    // Ricardo Pérez — hijos: Gabriela (8) y Santiago (9)
-    { studentId: 8, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Gabriela' },
-    { studentId: 8, paymentId: 8, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Gabriela' },
-    { studentId: 9, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Santiago' },
-    // Elena Medina — hijos: Sofía (10) y Andrés (11)
-    { studentId: 10, paymentId: 9, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Sofía' },
-    { studentId: 10, paymentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Sofía' },
-    { studentId: 11, paymentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Andrés' },
-    // Fernando Contreras — hija: Laura (12)
-    { studentId: 12, paymentId: 10, chargeTypeId: 4, schoolYearId: 2, description: 'Material educativo 2025-2026 - Laura' },
-    // Cargos sin pago (deudas)
-    { studentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad octubre - Santiago (adeudado)' },
-    { studentId: 11, chargeTypeId: 5, schoolYearId: 2, description: 'Uniforme escolar - Andrés (adeudado)' },
-    { studentId: 12, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Laura (adeudado)' },
+    { studentId: 5, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Diego (adeudado)' },
+    { studentId: 6, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Camila (adeudado)' },
   ];
   await prisma.studentCharge.createMany({ data: chargesData });
   console.log('Cargos de estudiantes creados.');
+
+  // ── Sincronizar secuencias auto-increment ──
+  const sequences = [
+    'Role_id_seq', 'Person_id_seq', 'User_id_seq',
+    'Student_id_seq', 'Representative_id_seq', 'Employee_id_seq',
+    'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
+    'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
+    'StudentSection_id_seq', 'StudentEnrollment_id_seq',
+    'ChargeType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'Payment_id_seq', 'StudentCharge_id_seq',
+  ];
+  for (const seq of sequences) {
+    const table = seq.replace('_id_seq', '');
+    await prisma.$executeRawUnsafe(
+      `SELECT setval('"${seq}"', COALESCE((SELECT MAX(id) FROM "${table}"), 1))`
+    );
+  }
+  console.log('Secuencias sincronizadas.');
 
   console.log('✅ Seed completado exitosamente.');
 }

@@ -51,29 +51,40 @@ export class PaymentsService {
 
   async createPayment(data: PaymentDTO) {
     try {
-      const payment = await this.prismaService.payment.create({
-        data: {
-          paymentMethodId: data.paymentMethodId,
-
-          exchangeId: data.exchangeId,
-
-          currency: data.currency,
-
-          totalAmount: data.totalAmount,
-
-          reference: data.reference,
-
-          payerName: data.payerName,
-
-          payerIdentification: data.payerIdentification,
-
-          payerPhone: data.payerPhone,
-
-          status: data.status,
-        },
+      const activeSchoolYear = await this.prismaService.schoolYear.findFirst({
+        where: { isActive: true },
       });
 
-      return payment;
+      const result = await this.prismaService.$transaction(async (tx) => {
+        const payment = await tx.payment.create({
+          data: {
+            paymentMethodId: data.paymentMethodId,
+            exchangeId: data.exchangeId,
+            currency: data.currency,
+            totalAmount: data.totalAmount,
+            reference: data.reference,
+            payerName: data.payerName,
+            payerIdentification: data.payerIdentification,
+            payerPhone: data.payerPhone,
+            status: data.status,
+            paymentDate: data.paymentDate,
+          },
+        });
+
+        await tx.studentCharge.create({
+          data: {
+            studentId: data.studentId,
+            chargeTypeId: data.chargeTypeId,
+            schoolYearId: activeSchoolYear?.id,
+            description: data.description,
+            paymentId: payment.id,
+          },
+        });
+
+        return payment;
+      });
+
+      return result;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

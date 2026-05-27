@@ -24,6 +24,11 @@ export class EnrollmentController {
     return this.service.createEnrollment(dto);
   }
 
+  @Get('/pending')
+  getPendingEnrollments() {
+    return this.service.getPendingEnrollments();
+  }
+
   @Get()
   getEnrollments(
     @Query('schoolYearId') schoolYearId?: string,

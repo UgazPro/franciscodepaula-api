@@ -119,4 +119,13 @@ export class PaymentDTO {
   @IsDate()
   paymentDate!: Date;
 
+  // ——— CAMPOS PARA CREACIÓN AUTOMÁTICA DE STUDENT CHARGE ———
+  @IsNumber()
+  studentId!: number;
+
+  @IsNumber()
+  chargeTypeId!: number;
+
+  @IsString()
+  description!: string;
 }

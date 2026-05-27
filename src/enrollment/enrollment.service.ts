@@ -309,6 +309,37 @@ export class EnrollmentService {
   // STUDENT REPRESENTATIVES
   /////////////////////////////////////////////////
 
+  async getPendingEnrollments() {
+    try {
+      const students = await this.prismaService.student.findMany({
+        where: {
+          charges: {
+            some: {
+              chargeTypeId: 1,
+              paymentId: { not: null },
+            },
+          },
+          enrollments: {
+            none: {},
+          },
+        },
+        include: {
+          person: true,
+        },
+        orderBy: {
+          person: {
+            firstNames: 'asc',
+          },
+        },
+      });
+
+      return students;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
   async createStudentRepresentative(data: StudentRepresentativeDTO) {
     try {
       const student = await this.prismaService.student.findUnique({
