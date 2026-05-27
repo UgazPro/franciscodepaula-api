@@ -176,6 +176,88 @@ async function main() {
       birthDate: new Date('2013-05-28'),
       gender: 'Femenino',
     },
+    // ——— NUEVOS ESTUDIANTES ———
+    {
+      id: 16,
+      firstNames: 'Mateo',
+      lastNames: 'Hernández Rivas',
+      identificationNumber: 'V-30102030',
+      birthDate: new Date('2013-02-14'),
+      gender: 'Masculino',
+    },
+    {
+      id: 17,
+      firstNames: 'Gabriela',
+      lastNames: 'Pérez Castillo',
+      identificationNumber: 'V-31213141',
+      birthDate: new Date('2014-06-20'),
+      gender: 'Femenino',
+    },
+    {
+      id: 18,
+      firstNames: 'Santiago',
+      lastNames: 'Castillo López',
+      identificationNumber: 'V-32223242',
+      birthDate: new Date('2012-10-05'),
+      gender: 'Masculino',
+    },
+    {
+      id: 19,
+      firstNames: 'Sofía',
+      lastNames: 'Medina Torres',
+      identificationNumber: 'V-33233343',
+      birthDate: new Date('2013-12-18'),
+      gender: 'Femenino',
+    },
+    {
+      id: 20,
+      firstNames: 'Andrés',
+      lastNames: 'Rivas Pérez',
+      identificationNumber: 'V-34243444',
+      birthDate: new Date('2014-04-25'),
+      gender: 'Masculino',
+    },
+    {
+      id: 21,
+      firstNames: 'Laura',
+      lastNames: 'Contreras Silva',
+      identificationNumber: 'V-35253545',
+      birthDate: new Date('2012-08-30'),
+      gender: 'Femenino',
+    },
+    // ——— NUEVOS REPRESENTANTES ———
+    {
+      id: 22,
+      firstNames: 'Patricia',
+      lastNames: 'Hernández de Rivas',
+      identificationNumber: 'V-19283746',
+      birthDate: new Date('1981-03-12'),
+      gender: 'Femenino',
+    },
+    {
+      id: 23,
+      firstNames: 'Ricardo',
+      lastNames: 'Pérez Castillo',
+      identificationNumber: 'V-28374651',
+      birthDate: new Date('1979-11-08'),
+      gender: 'Masculino',
+    },
+    {
+      id: 24,
+      firstNames: 'Elena',
+      lastNames: 'Medina de Torres',
+      identificationNumber: 'V-37482910',
+      birthDate: new Date('1983-07-25'),
+      gender: 'Femenino',
+    },
+    {
+      id: 25,
+      firstNames: 'Fernando',
+      lastNames: 'Contreras Silva',
+      identificationNumber: 'V-46573829',
+      birthDate: new Date('1980-05-16'),
+      gender: 'Masculino',
+    },
   ];
   await prisma.person.createMany({ data: personsData });
   console.log('Personas creadas.');
@@ -191,6 +273,10 @@ async function main() {
     { id: 7, personId: 7, roleId: 6, email: 'pedro.martinez@colegio.com', password, phone: '0412-7777777' },
     { id: 8, personId: 8, roleId: 7, email: 'carmen.jimenez@correo.com', password, phone: '0412-8888888' },
     { id: 9, personId: 9, roleId: 7, email: 'jose.torrealba@correo.com', password, phone: '0412-9999999' },
+    { id: 10, personId: 22, roleId: 7, email: 'patricia.hernandez@correo.com', password, phone: '0412-1010101' },
+    { id: 11, personId: 23, roleId: 7, email: 'ricardo.perez@correo.com', password, phone: '0412-1111112' },
+    { id: 12, personId: 24, roleId: 7, email: 'elena.medina@correo.com', password, phone: '0412-1212123' },
+    { id: 13, personId: 25, roleId: 7, email: 'fernando.contreras@correo.com', password, phone: '0412-1313134' },
   ];
   await prisma.user.createMany({ data: usersData });
   console.log('Usuarios creados.');
@@ -203,6 +289,12 @@ async function main() {
     { personId: 13, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
     { personId: 14, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
     { personId: 15, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 16, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Petare', previousSchool: 'U.E. José María Vargas', address: 'Calle 3, Petare, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 17, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Pedro', previousSchool: 'U.E. Santo Domingo', address: 'Av. Los Ilustres, Res. Luz, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 18, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Chacao', parish: 'Chacao', previousSchool: 'U.E. Santo Domingo', address: 'Av. Principal, Edif. Chacao, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 19, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'El Cafetal', previousSchool: 'U.E. Los Pinos', address: 'Calle 8, El Cafetal, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 20, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Agustín', previousSchool: 'U.E. Los Pinos', address: 'Av. San Martín, Qta. Elena, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 21, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Los Dos Caminos', previousSchool: 'U.E. San Francisco', address: 'Calle 9, Los Dos Caminos, Caracas', status: true, admissionDate: new Date('2025-09-01') },
   ];
   await prisma.student.createMany({ data: studentsData });
   console.log('Estudiantes creados.');
@@ -211,6 +303,10 @@ async function main() {
   const representativesData = [
     { userId: 8, relationship: 'Madre', occupation: 'Abogada' },
     { userId: 9, relationship: 'Padre', occupation: 'Ingeniero' },
+    { userId: 10, relationship: 'Madre', occupation: 'Docente' },
+    { userId: 11, relationship: 'Padre', occupation: 'Médico' },
+    { userId: 12, relationship: 'Madre', occupation: 'Contadora Pública' },
+    { userId: 13, relationship: 'Padre', occupation: 'Arquitecto' },
   ];
   await prisma.representative.createMany({ data: representativesData });
   console.log('Representantes creados.');
@@ -236,6 +332,13 @@ async function main() {
     { studentId: 5, representativeId: 2 },
     { studentId: 6, representativeId: 1 },
     { studentId: 6, representativeId: 2 },
+    // Nuevos: representantes 3-6, estudiantes 7-12
+    { studentId: 7, representativeId: 3 },
+    { studentId: 8, representativeId: 4 },
+    { studentId: 9, representativeId: 4 },
+    { studentId: 10, representativeId: 5 },
+    { studentId: 11, representativeId: 5 },
+    { studentId: 12, representativeId: 6 },
   ];
   await prisma.studentRepresentative.createMany({ data: studentRepsData });
   console.log('Relaciones estudiante-representante creadas.');
@@ -308,6 +411,12 @@ async function main() {
     { studentId: 4, sectionId: 6, enrollmentDate: new Date('2024-09-15'), status: true },
     { studentId: 5, sectionId: 7, enrollmentDate: new Date('2024-09-15'), status: true },
     { studentId: 6, sectionId: 9, enrollmentDate: new Date('2024-09-15'), status: true },
+    { studentId: 7, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 8, sectionId: 12, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 9, sectionId: 13, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 10, sectionId: 14, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 11, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 12, sectionId: 16, enrollmentDate: new Date('2025-09-15'), status: true },
   ];
   await prisma.studentSection.createMany({ data: studentSectionsData });
   console.log('Inscripciones en secciones creadas.');
@@ -320,6 +429,12 @@ async function main() {
     { studentId: 4, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2024-09-15'), status: true },
     { studentId: 5, schoolYearId: 1, sectionId: 7, enrollmentDate: new Date('2024-09-15'), status: true },
     { studentId: 6, schoolYearId: 1, sectionId: 9, enrollmentDate: new Date('2024-09-15'), status: true },
+    { studentId: 7, schoolYearId: 2, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 8, schoolYearId: 2, sectionId: 12, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 9, schoolYearId: 2, sectionId: 13, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 10, schoolYearId: 2, sectionId: 14, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 11, schoolYearId: 2, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 12, schoolYearId: 2, sectionId: 16, enrollmentDate: new Date('2025-09-15'), status: true },
   ];
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
@@ -435,6 +550,58 @@ async function main() {
       payerPhone: '0412-9999999',
       status: true,
     },
+    // ——— PAGOS NUEVOS ESTUDIANTES ———
+    {
+      id: 7,
+      paymentMethodId: 1,
+      exchangeId: 3,
+      totalAmount: 45.0,
+      currency: $Enums.Currency.VES,
+      paymentDate: new Date('2025-10-01'),
+      reference: 'REC-003',
+      payerName: 'Patricia Hernández de Rivas',
+      payerIdentification: 'V-19283746',
+      payerPhone: '0412-1010101',
+      status: true,
+    },
+    {
+      id: 8,
+      paymentMethodId: 4,
+      exchangeId: 3,
+      totalAmount: 3312.0,
+      currency: $Enums.Currency.VES,
+      paymentDate: new Date('2025-10-01'),
+      reference: 'PM-002',
+      payerName: 'Ricardo Pérez Castillo',
+      payerIdentification: 'V-28374651',
+      payerPhone: '0412-1111112',
+      status: true,
+    },
+    {
+      id: 9,
+      paymentMethodId: 3,
+      exchangeId: 3,
+      totalAmount: 2208.0,
+      currency: $Enums.Currency.VES,
+      paymentDate: new Date('2025-10-05'),
+      reference: 'TRF-002',
+      payerName: 'Elena Medina de Torres',
+      payerIdentification: 'V-37482910',
+      payerPhone: '0412-1212123',
+      status: true,
+    },
+    {
+      id: 10,
+      paymentMethodId: 6,
+      totalAmount: 100.0,
+      currency: $Enums.Currency.USD,
+      paymentDate: new Date('2025-10-10'),
+      reference: 'ZLL-002',
+      payerName: 'Fernando Contreras Silva',
+      payerIdentification: 'V-46573829',
+      payerPhone: '0412-1313134',
+      status: true,
+    },
   ];
   await prisma.payment.createMany({ data: paymentsData });
   console.log('Pagos creados.');
@@ -465,6 +632,25 @@ async function main() {
     // Cargos sin pago asociado (deudas pendientes)
     { studentId: 5, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Diego (adeudado)' },
     { studentId: 6, chargeTypeId: 1, schoolYearId: 1, description: 'Matrícula 2024-2025 - Camila (adeudado)' },
+    // ——— CARGOS NUEVOS ESTUDIANTES ———
+    // Patricia Hernández — hijo: Mateo (7)
+    { studentId: 7, paymentId: 7, chargeTypeId: 5, schoolYearId: 2, description: 'Uniforme escolar - Mateo' },
+    { studentId: 7, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Mateo' },
+    { studentId: 7, paymentId: 8, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Mateo' },
+    // Ricardo Pérez — hijos: Gabriela (8) y Santiago (9)
+    { studentId: 8, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Gabriela' },
+    { studentId: 8, paymentId: 8, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Gabriela' },
+    { studentId: 9, paymentId: 8, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Santiago' },
+    // Elena Medina — hijos: Sofía (10) y Andrés (11)
+    { studentId: 10, paymentId: 9, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Sofía' },
+    { studentId: 10, paymentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Sofía' },
+    { studentId: 11, paymentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad septiembre - Andrés' },
+    // Fernando Contreras — hija: Laura (12)
+    { studentId: 12, paymentId: 10, chargeTypeId: 4, schoolYearId: 2, description: 'Material educativo 2025-2026 - Laura' },
+    // Cargos sin pago (deudas)
+    { studentId: 9, chargeTypeId: 2, schoolYearId: 2, description: 'Mensualidad octubre - Santiago (adeudado)' },
+    { studentId: 11, chargeTypeId: 5, schoolYearId: 2, description: 'Uniforme escolar - Andrés (adeudado)' },
+    { studentId: 12, chargeTypeId: 1, schoolYearId: 2, description: 'Matrícula 2025-2026 - Laura (adeudado)' },
   ];
   await prisma.studentCharge.createMany({ data: chargesData });
   console.log('Cargos de estudiantes creados.');
