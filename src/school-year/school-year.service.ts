@@ -1,83 +1,199 @@
 import { Injectable } from '@nestjs/common';
-import { SchoolYearDTO } from './school-year.dto';
+import { SchoolYearDTO, SectionDTO } from './school-year.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
 
 @Injectable()
 export class SchoolYearService {
+  constructor(private prismaService: PrismaService) {}
 
-    constructor(private prisma:PrismaService){}
+  async getSchoolYears() {
+    try {
+      const schoolYears = await this.prismaService.schoolYear.findMany();
 
-    async getSchoolYears() {
+      return schoolYears;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 
-        try {
-            const schoolYears = await this.prisma.schoolYear.findMany();
+  async createSchoolYear(data: SchoolYearDTO) {
+    try {
+      const schoolYear = await this.prismaService.schoolYear.create({
+        data: {
+          name: data.name,
+          startDate: data.startDate,
+          endDate: data.endDate,
+        },
+      });
 
-            return schoolYears;
-        } catch (error) {
-            badResponse.message = String(error);
-            return badResponse;
-        }
+      return schoolYear;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 
+  async getSchoolYearById(id: number) {
+    try {
+      const year = await this.prismaService.schoolYear.findUnique({
+        where: { id },
+        include: {
+          periods: true,
+          sections: {
+            include: {
+              level: true,
+            },
+          },
+        },
+      });
+
+      return year;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  // Periods
+  async getPeriods() {
+    try {
+      const periods = await this.prismaService.period.findMany();
+
+      return periods;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  // High School Levels
+  async getHighSchoolLevels() {
+    try {
+      const highSchoolLevels = await this.prismaService.highSchoolLevel.findMany();
+
+      return highSchoolLevels;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  // Sections
+  async getSections() {
+    try {
+      const sections = await this.prismaService.section.findMany({
+        include: {
+          level: true,
+          schoolYear: true,
+        },
+
+        orderBy: [
+          {
+            highSchoolLevelId: 'asc',
+          },
+          {
+            section: 'asc',
+          },
+        ],
+      });
+      return sections;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async getSectionById(id: number) {
+    try {
+      const section = await this.prismaService.section.findUnique({
+        where: { id },
+
+        include: {
+          level: true,
+          schoolYear: true,
+        },
+      });
+      return section;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async createSection(data: SectionDTO) {
+    const schoolYear = await this.prismaService.schoolYear.findUnique({
+      where: {
+        id: data.schoolYearId,
+      },
+    });
+
+    if (!schoolYear) {
+      badResponse.message = 'Año no encontrado.';
+      return badResponse;
     }
 
-    async createSchoolYear(data: SchoolYearDTO) {
+    const level = await this.prismaService.highSchoolLevel.findUnique({
+      where: {
+        id: data.highSchoolLevelId,
+      },
+    });
 
-        try {
-            const schoolYear = await this.prisma.schoolYear.create({
-                data: {
-                    name: data.name,
-                    startDate: data.startDate,
-                    endDate: data.endDate
-                }
-            });
-
-            return schoolYear;
-
-        } catch (error) {
-            badResponse.message = String(error);
-            return badResponse;
-        }
+    if (!level) {
+      badResponse.message = 'Nivel no encontrado.';
+      return badResponse;
     }
 
-    // Periods
-    async getPeriods() {
+    const exists = await this.prismaService.section.findFirst({
+      where: {
+        schoolYearId: data.schoolYearId,
 
-        try {
-            const periods = await this.prisma.period.findMany();
+        highSchoolLevelId: data.highSchoolLevelId,
 
-            return periods;
-        } catch (error) {
-            badResponse.message = String(error);
-            return badResponse;
-        }
+        section: data.section,
+      },
+    });
+
+    if (exists) {
+      badResponse.message = 'La sección ya existe.';
+      return badResponse;
     }
 
-    // High School Levels
-    async getHighSchoolLevels() {
+    return this.prismaService.section.create({
+      data: {
+        schoolYearId: data.schoolYearId,
 
-        try {
-            const highSchoolLevels = await this.prisma.highSchoolLevel.findMany();
+        highSchoolLevelId: data.highSchoolLevelId,
 
-            return highSchoolLevels;
-        } catch (error) {
-            badResponse.message = String(error);
-            return badResponse;
-        }
+        section: data.section,
+      },
+
+      include: {
+        level: true,
+        schoolYear: true,
+      },
+    });
+  }
+
+  async updateSection(id: number, section: SectionDTO) {
+    try {
+      const updatedSection = await this.prismaService.section.update({
+        where: { id },
+        data: {
+          schoolYearId: section.schoolYearId,
+          highSchoolLevelId: section.highSchoolLevelId,
+          section: section.section,
+        },
+        include: {
+          level: true,
+          schoolYear: true,
+        },
+      });
+      return updatedSection;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
     }
-
-    // Sections
-    async getSections() {
-
-        try {
-            const sections = await this.prisma.section.findMany();
-
-            return sections;
-        } catch (error) {
-            badResponse.message = String(error);
-            return badResponse;
-        }
-
-    }
-
+  }
 }

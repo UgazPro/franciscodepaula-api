@@ -7,9 +7,6 @@ export class MainLoadController {
 
     constructor(private readonly mainLoadService: MainLoadService) {}
 
-    @Get()
-    async loadInitialData(): Promise<DtoBaseResponse> {
-        return this.mainLoadService.loadInitialData();
-    }
+
     
 }

@@ -12,14 +12,14 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prismaService: PrismaService) {}
 
   //////////////////////////////////////////////////
   // GET ALL USERS
   //////////////////////////////////////////////////
   async getUsers() {
     try {
-      const users = await this.prisma.user.findMany({
+      const users = await this.prismaService.user.findMany({
         include: {
           role: true,
           person: true,
@@ -41,7 +41,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async getStudents() {
     try {
-      const students = await this.prisma.student.findMany({
+      const students = await this.prismaService.student.findMany({
         include: {
           person: true,
         },
@@ -60,7 +60,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async getUserById(id: number) {
     try {
-      const user = await this.prisma.user.findUnique({
+      const user = await this.prismaService.user.findUnique({
         where: { id },
         include: {
           role: true,
@@ -89,7 +89,7 @@ export class UsersService {
     try {
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prismaService.$transaction(async (tx) => {
         //////////////////////////////////////////////////
         // 1. CREATE PERSON
         //////////////////////////////////////////////////
@@ -134,7 +134,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async createStudent(data: StudentDTO) {
     try {
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prismaService.$transaction(async (tx) => {
         const person = await tx.person.create({
           data: {
             profilePhoto: data.profilePhoto,
@@ -173,7 +173,7 @@ export class UsersService {
 
   async updateStudent(id: number, data: StudentDTO) {
     try {
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prismaService.$transaction(async (tx) => {
         //////////////////////////////////////////////////
         // 1. Buscar student actual
         //////////////////////////////////////////////////
@@ -248,7 +248,7 @@ export class UsersService {
     try {
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prismaService.$transaction(async (tx) => {
         const person = await tx.person.create({
           data: {
             profilePhoto: data.profilePhoto,
@@ -297,7 +297,7 @@ export class UsersService {
     try {
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      const result = await this.prisma.$transaction(async (tx) => {
+      const result = await this.prismaService.$transaction(async (tx) => {
         const person = await tx.person.create({
           data: {
             profilePhoto: data.profilePhoto,
@@ -346,7 +346,7 @@ export class UsersService {
     try {
       const hashed = await bcrypt.hash(data.password, 10);
 
-      await this.prisma.user.update({
+      await this.prismaService.user.update({
         where: { id: data.id },
         data: { password: hashed },
       });
@@ -364,7 +364,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async deleteUser(id: number) {
     try {
-      await this.prisma.user.update({
+      await this.prismaService.user.update({
         where: { id },
         data: {
           status: false,
@@ -382,7 +382,7 @@ export class UsersService {
 
   async deleteStudent(id: number) {
     try {
-      await this.prisma.student.update({
+      await this.prismaService.student.update({
         where: { id },
         data: {
           status: false,

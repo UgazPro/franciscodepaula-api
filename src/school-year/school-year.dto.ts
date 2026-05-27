@@ -1,57 +1,59 @@
-import { ArrayMinSize, IsArray, IsDateString, IsInt, IsString, ValidateNested } from "class-validator"
+import {
+  ArrayMinSize,
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
-import { Type } from "class-transformer"
+import { Type } from 'class-transformer';
 
 export class PeriodDTO {
+  @IsString()
+  period!: string;
 
-    @IsString()
-    period!: string
+  @IsDateString()
+  startDate!: Date;
 
-    @IsDateString()
-    startDate!: Date
-
-    @IsDateString()
-    endDate!: Date
-
+  @IsDateString()
+  endDate!: Date;
 }
 
 export class SectionDTO {
+  @IsInt()
+  schoolYearId!: number;
 
-    @IsInt()
-    highSchoolLevelId!: number
+  @IsInt()
+  highSchoolLevelId!: number;
 
-    @IsString()
-    section!: string
-
+  @IsString()
+  section!: string;
 }
 
 export class SchoolYearDTO {
+  @IsString()
+  name!: string;
 
-    @IsString()
-    name!: string
+  @IsDateString()
+  startDate!: Date;
 
-    @IsDateString()
-    startDate!: Date
+  @IsDateString()
+  endDate!: Date;
 
-    @IsDateString()
-    endDate!: Date
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SchoolYearDTO)
+  periods!: SchoolYearDTO[];
 
-    @IsArray()
-    @ValidateNested({ each:true })
-    @Type(()=>SchoolYearDTO)
-    periods!: SchoolYearDTO[]
-
-    @IsArray()
-    @ArrayMinSize(1)
-    @ValidateNested({ each:true })
-    @Type(()=>SectionDTO)
-    sections!: SectionDTO[]
-
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => SectionDTO)
+  sections!: SectionDTO[];
 }
 
 export class HighSchoolLevelDTO {
-
-    @IsString()
-    level!: string
-
+  @IsString()
+  level!: string;
 }
