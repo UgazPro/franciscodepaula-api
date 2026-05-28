@@ -44,6 +44,28 @@ export class UsersService {
       const students = await this.prismaService.student.findMany({
         include: {
           person: true,
+          enrollments: {
+            include: {
+              section: {
+                include: {
+                  level: true,
+                },
+              },
+            },
+          },
+          representatives: {
+            include: {
+              representative: {
+                include: {
+                  user: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         orderBy: { id: 'asc' },
       });

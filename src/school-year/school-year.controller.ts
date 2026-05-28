@@ -20,16 +20,6 @@ export class SchoolYearController {
     return await this.schoolYearService.getSchoolYears();
   }
 
-  @Get(':id')
-  async getSchoolYearById(@Param('id', ParseIntPipe) id: number) {
-    return await this.schoolYearService.getSchoolYearById(id);
-  }
-
-  @Post()
-  async createSchoolYear(@Body() data: SchoolYearDTO) {
-    return await this.schoolYearService.createSchoolYear(data);
-  }
-
   @Get('/periods')
   async getPeriods() {
     return await this.schoolYearService.getPeriods();
@@ -48,6 +38,16 @@ export class SchoolYearController {
   @Get('/sections/:id')
   async getSection(@Param('id', ParseIntPipe) id: number) {
     return await this.schoolYearService.getSectionById(id);
+  }
+
+  @Get(':id')
+  async getSchoolYearById(@Param('id', ParseIntPipe) id: number) {
+    return await this.schoolYearService.getSchoolYearById(id);
+  }
+
+  @Post()
+  async createSchoolYear(@Body() data: SchoolYearDTO) {
+    return await this.schoolYearService.createSchoolYear(data);
   }
 
   @Post('/sections')
