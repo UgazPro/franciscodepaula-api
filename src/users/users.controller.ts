@@ -27,6 +27,12 @@ export class UsersController {
     return await this.usersService.getStudents();
   }
 
+  // Get Staff (employees with person & role)
+  @Get('staff')
+  async getStaff() {
+    return await this.usersService.getStaff();
+  }
+
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return await this.usersService.getUserById(id);

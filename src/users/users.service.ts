@@ -78,6 +78,30 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
+  // GET STAFF (employees with person & role)
+  //////////////////////////////////////////////////
+  async getStaff() {
+    try {
+      const staff = await this.prismaService.user.findMany({
+        where: {
+          employee: { isNot: null },
+        },
+        include: {
+          person: true,
+          role: true,
+          employee: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      return staff;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
   // GET USER BY ID
   //////////////////////////////////////////////////
   async getUserById(id: number) {

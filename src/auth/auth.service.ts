@@ -11,7 +11,7 @@ export class AuthService {
   private secretKey: string;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
   ) {
     this.secretKey = this.configService.get<string>('JWT_SECRET_KEY') as string;
@@ -19,7 +19,7 @@ export class AuthService {
 
   async login(credentials: LoginDto) {
     try {
-      const findUser = await this.prisma.user.findUnique({
+      const findUser = await this.prismaService.user.findUnique({
         where: { email: credentials.email },
         include: {
           role: true,
