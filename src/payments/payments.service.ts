@@ -1,7 +1,7 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
 import { Injectable } from '@nestjs/common';
-import { PaymentDTO, PaymentMethodDTO, ExchangeDTO, ChargeTypeDTO, StudentChargeDTO } from './payments.dto';
+import { PaymentDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO } from './payments.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -13,14 +13,9 @@ export class PaymentsService {
         include: {
           paymentMethod: true,
           exchange: true,
-          charges: {
+          paymentReferences: {
             include: {
-              student: {
-                include: {
-                  person: true,
-                },
-              },
-              chargeType: true,
+              fee: true,
             },
           },
         },
@@ -38,7 +33,11 @@ export class PaymentsService {
       const payment = await this.prismaService.payment.findUnique({
         where: { id },
         include: {
-          charges: true,
+          paymentReferences: {
+            include: {
+              fee: true,
+            },
+          },
         },
       });
 
@@ -51,10 +50,6 @@ export class PaymentsService {
 
   async createPayment(data: PaymentDTO) {
     try {
-      const activeSchoolYear = await this.prismaService.schoolYear.findFirst({
-        where: { isActive: true },
-      });
-
       const result = await this.prismaService.$transaction(async (tx) => {
         const payment = await tx.payment.create({
           data: {
@@ -71,12 +66,9 @@ export class PaymentsService {
           },
         });
 
-        await tx.studentCharge.create({
+        await tx.paymentReference.create({
           data: {
-            studentId: data.studentId,
-            chargeTypeId: data.chargeTypeId,
-            schoolYearId: activeSchoolYear?.id,
-            description: data.description,
+            feeId: data.feeId,
             paymentId: payment.id,
           },
         });
@@ -192,68 +184,34 @@ export class PaymentsService {
   }
 
   /////////////////////////////////////////////////
-  // CHARGE TYPES
+  // FEES
   /////////////////////////////////////////////////
 
-  async getChargeTypes() {
+  async getFees() {
     try {
-      const types = await this.prismaService.chargeType.findMany();
-      return types;
+      const fees = await this.prismaService.fee.findMany({
+        include: {
+          schoolYear: true,
+        },
+      });
+      return fees;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
     }
   }
 
-  async createChargeType(data: ChargeTypeDTO) {
+  async createFee(data: FeeDTO) {
     try {
-      const type = await this.prismaService.chargeType.create({
+      const fee = await this.prismaService.fee.create({
         data: {
           name: data.name,
-          description: data.description,
-        },
-      });
-      return type;
-    } catch (error) {
-      badResponse.message = String(error);
-      return badResponse;
-    }
-  }
-
-  /////////////////////////////////////////////////
-  // STUDENT CHARGES
-  /////////////////////////////////////////////////
-
-  async getStudentCharges() {
-    try {
-      const charges = await this.prismaService.studentCharge.findMany({
-        include: {
-          student: {
-            include: {
-              person: true,
-            },
-          },
-          chargeType: true,
-        },
-      });
-      return charges;
-    } catch (error) {
-      badResponse.message = String(error);
-      return badResponse;
-    }
-  }
-
-  async createStudentCharge(data: StudentChargeDTO) {
-    try {
-      const charge = await this.prismaService.studentCharge.create({
-        data: {
-          studentId: data.studentId,
-          chargeTypeId: data.chargeTypeId,
           schoolYearId: data.schoolYearId,
-          description: data.description,
+          value: data.value,
+          createdAt: data.createdAt,
         },
       });
-      return charge;
+      return fee;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -282,7 +240,11 @@ export class PaymentsService {
         include: {
           paymentMethod: true,
           exchange: true,
-          charges: true,
+          paymentReferences: {
+            include: {
+              fee: true,
+            },
+          },
         },
       });
       return payment;

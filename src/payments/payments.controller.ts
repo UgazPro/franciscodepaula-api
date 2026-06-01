@@ -8,7 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { PaymentDTO } from './payments.dto';
+import { PaymentDTO, FeeDTO } from './payments.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -53,31 +53,17 @@ export class PaymentsController {
   }
 
   /////////////////////////////////////////////////
-  // CHARGE TYPES
+  // FEES
   /////////////////////////////////////////////////
 
-  @Get('/charge-types')
-  getChargeTypes() {
-    return this.service.getChargeTypes();
+  @Get('/fees')
+  getFees() {
+    return this.service.getFees();
   }
 
-  @Post('/charge-types')
-  createChargeType(@Body() dto: any) {
-    return this.service.createChargeType(dto);
-  }
-
-  /////////////////////////////////////////////////
-  // STUDENT CHARGES
-  /////////////////////////////////////////////////
-
-  @Get('/student-charges')
-  getCharges() {
-    return this.service.getStudentCharges();
-  }
-
-  @Post('/student-charges')
-  createCharge(@Body() dto: any) {
-    return this.service.createStudentCharge(dto);
+  @Post('/fees')
+  createFee(@Body() dto: FeeDTO) {
+    return this.service.createFee(dto);
   }
 
   /////////////////////////////////////////////////

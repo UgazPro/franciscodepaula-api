@@ -30,7 +30,7 @@ export class EnrollmentService {
           schoolYear: true,
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
             },
           },
         },
@@ -57,7 +57,7 @@ export class EnrollmentService {
           schoolYear: true,
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
             },
           },
         },
@@ -121,7 +121,7 @@ export class EnrollmentService {
           schoolYear: true,
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
             },
           },
         },
@@ -161,7 +161,7 @@ export class EnrollmentService {
           schoolYear: true,
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
             },
           },
         },
@@ -189,7 +189,7 @@ export class EnrollmentService {
           },
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
               schoolYear: true,
             },
           },
@@ -251,7 +251,7 @@ export class EnrollmentService {
           },
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
               schoolYear: true,
             },
           },
@@ -291,7 +291,7 @@ export class EnrollmentService {
           },
           section: {
             include: {
-              level: true,
+              highSchoolLevel: true,
               schoolYear: true,
             },
           },
@@ -313,12 +313,6 @@ export class EnrollmentService {
     try {
       const students = await this.prismaService.student.findMany({
         where: {
-          charges: {
-            some: {
-              chargeTypeId: 1,
-              paymentId: { not: null },
-            },
-          },
           enrollments: {
             none: {},
           },

@@ -22,7 +22,7 @@ async function main() {
   console.log('Limpiando datos existentes...');
   const tables = [
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
-    'StudentCharge', 'Payment', 'Exchange', 'PaymentMethod', 'ChargeType',
+    'PaymentReference', 'Payment', 'Exchange', 'PaymentMethod', 'Fee',
     'ReportCard', 'GradeRecord', 'Evaluation', 'TeacherSubjectSection', 'Subject',
     'StudentEnrollment', 'StudentSection', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
@@ -283,18 +283,18 @@ async function main() {
 
   // ── 4. ESTUDIANTES ──
   const studentsData = [
-    { personId: 10, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 11, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 12, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 13, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 14, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 15, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 16, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Petare', previousSchool: 'U.E. José María Vargas', address: 'Calle 3, Petare, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 17, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Pedro', previousSchool: 'U.E. Santo Domingo', address: 'Av. Los Ilustres, Res. Luz, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 18, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Chacao', parish: 'Chacao', previousSchool: 'U.E. Santo Domingo', address: 'Av. Principal, Edif. Chacao, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 19, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'El Cafetal', previousSchool: 'U.E. Los Pinos', address: 'Calle 8, El Cafetal, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 20, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Agustín', previousSchool: 'U.E. Los Pinos', address: 'Av. San Martín, Qta. Elena, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 21, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Los Dos Caminos', previousSchool: 'U.E. San Francisco', address: 'Calle 9, Los Dos Caminos, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 10, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', currentParish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
+    { personId: 11, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', currentParish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
+    { personId: 12, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', currentParish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
+    { personId: 13, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', currentParish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
+    { personId: 14, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', currentParish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 15, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', currentParish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 16, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Petare', currentParish: 'Petare', previousSchool: 'U.E. José María Vargas', address: 'Calle 3, Petare, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 17, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Pedro', currentParish: 'San Pedro', previousSchool: 'U.E. Santo Domingo', address: 'Av. Los Ilustres, Res. Luz, Caracas', status: true, admissionDate: new Date('2024-09-01') },
+    { personId: 18, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Chacao', parish: 'Chacao', currentParish: 'Chacao', previousSchool: 'U.E. Santo Domingo', address: 'Av. Principal, Edif. Chacao, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 19, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'El Cafetal', currentParish: 'El Cafetal', previousSchool: 'U.E. Los Pinos', address: 'Calle 8, El Cafetal, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 20, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Agustín', currentParish: 'San Agustín', previousSchool: 'U.E. Los Pinos', address: 'Av. San Martín, Qta. Elena, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    { personId: 21, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Los Dos Caminos', currentParish: 'Los Dos Caminos', previousSchool: 'U.E. San Francisco', address: 'Calle 9, Los Dos Caminos, Caracas', status: true, admissionDate: new Date('2025-09-01') },
   ];
   await prisma.student.createMany({ data: studentsData });
   console.log('Estudiantes creados.');
@@ -443,13 +443,15 @@ async function main() {
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
 
-  // ── 14. CHARGE TYPES ──
-  const chargeTypesData = [
-    { id: 1, name: 'Inscripción', description: 'Pago de inscripción por año escolar' },
-    { id: 2, name: 'Mensualidad', description: 'Pago de mensualidad escolar' },
+  // ── 14. FEES ──
+  const feesData = [
+    { id: 1, name: 'Inscripción', schoolYearId: 1, value: 50, createdAt: new Date('2024-09-01') },
+    { id: 2, name: 'Mensualidad', schoolYearId: 1, value: 350, createdAt: new Date('2024-09-01') },
+    { id: 3, name: 'Inscripción', schoolYearId: 2, value: 55, createdAt: new Date('2025-09-01') },
+    { id: 4, name: 'Mensualidad', schoolYearId: 2, value: 380, createdAt: new Date('2025-09-01') },
   ];
-  await prisma.chargeType.createMany({ data: chargeTypesData });
-  console.log('Tipos de cargo creados.');
+  await prisma.fee.createMany({ data: feesData });
+  console.log('Aranceles creados.');
 
   // ── 15. PAYMENT METHODS ──
   const paymentMethodsData = [
@@ -606,33 +608,29 @@ async function main() {
   await prisma.payment.createMany({ data: paymentsData });
   console.log('Pagos creados.');
 
-  // ── 18. STUDENT CHARGES ──
-  const chargesData = [
-    // Carmen Jiménez — hijos: Luis Miguel (1) y Valentina (2)
-    { studentId: 1, paymentId: 1, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Luis Miguel' },
-    { studentId: 2, paymentId: 2, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Valentina' },
-    { studentId: 2, paymentId: 2, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad septiembre - Valentina' },
-    { studentId: 1, paymentId: 2, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad septiembre - Luis Miguel' },
-
-    // José Torrealba — hijos: Samuel (3) e Isabella (4)
-    { studentId: 3, paymentId: 3, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Samuel' },
-    { studentId: 3, paymentId: 4, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad febrero - Samuel' },
-    { studentId: 4, paymentId: 4, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad febrero - Isabella' },
-
-    // Pagos pendientes (payment.status = false)
-    { studentId: 5, paymentId: 5, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad abril - Diego (pendiente)' },
-    { studentId: 6, paymentId: 5, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad abril - Camila (pendiente)' },
-
-    // Mensualidades para material educativo
-    { studentId: 3, paymentId: 6, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad - Material educativo 2024-2025 - Samuel' },
-    { studentId: 4, paymentId: 6, chargeTypeId: 2, schoolYearId: 1, description: 'Mensualidad - Material educativo 2024-2025 - Isabella' },
-
-    // Cargos sin pago asociado (deudas pendientes)
-    { studentId: 5, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Diego (adeudado)' },
-    { studentId: 6, chargeTypeId: 1, schoolYearId: 1, description: 'Inscripción 2024-2025 - Camila (adeudado)' },
+  // ── 18. PAYMENT REFERENCES ──
+  const paymentReferencesData = [
+    { id: 1, feeId: 1, paymentId: 1 },
+    { id: 2, feeId: 1, paymentId: 2 },
+    { id: 3, feeId: 2, paymentId: 2 },
+    { id: 4, feeId: 2, paymentId: 2 },
+    { id: 5, feeId: 1, paymentId: 3 },
+    { id: 6, feeId: 2, paymentId: 4 },
+    { id: 7, feeId: 2, paymentId: 4 },
+    { id: 8, feeId: 2, paymentId: 5 },
+    { id: 9, feeId: 2, paymentId: 5 },
+    { id: 10, feeId: 2, paymentId: 6 },
+    { id: 11, feeId: 2, paymentId: 6 },
+    { id: 12, feeId: 1, paymentId: 7 },
+    { id: 13, feeId: 1, paymentId: 8 },
+    { id: 14, feeId: 2, paymentId: 8 },
+    { id: 15, feeId: 1, paymentId: 9 },
+    { id: 16, feeId: 2, paymentId: 9 },
+    { id: 17, feeId: 2, paymentId: 10 },
+    { id: 18, feeId: 1, paymentId: 10 },
   ];
-  await prisma.studentCharge.createMany({ data: chargesData });
-  console.log('Cargos de estudiantes creados.');
+  await prisma.paymentReference.createMany({ data: paymentReferencesData });
+  console.log('Referencias de pago creadas.');
 
   // ── Sincronizar secuencias auto-increment ──
   const sequences = [
@@ -641,8 +639,8 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentSection_id_seq', 'StudentEnrollment_id_seq',
-    'ChargeType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
-    'Payment_id_seq', 'StudentCharge_id_seq',
+    'Fee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'Payment_id_seq', 'PaymentReference_id_seq',
   ];
   for (const seq of sequences) {
     const table = seq.replace('_id_seq', '');

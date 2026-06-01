@@ -27,8 +27,8 @@ enum AdjustmentType {
 //////////////////////////////////////////////////
 
 model Role {
-  id    Int    @id @default(autoincrement())
-  role  String @unique
+  id   Int    @id @default(autoincrement())
+  role String @unique
 
   users User[]
 }
@@ -38,12 +38,12 @@ model Role {
 //////////////////////////////////////////////////
 
 model Person {
-  id                     Int @id @default(autoincrement())
+  id                     Int      @id @default(autoincrement())
 
   profilePhoto           String?
   firstNames             String
   lastNames              String
-  identificationNumber   String @unique
+  identificationNumber   String   @unique
   birthDate              DateTime
   gender                 String?
 
@@ -56,26 +56,25 @@ model Person {
 //////////////////////////////////////////////////
 
 model User {
-
   id Int @id @default(autoincrement())
 
   personId Int @unique
-  roleId Int
+  roleId   Int
 
-  email String @unique
+  email    String @unique
   password String
-  phone String?
+  phone    String?
 
-  status Boolean @default(true)
+  status Boolean?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  person Person @relation(fields:[personId],references:[id])
-  role Role @relation(fields:[roleId],references:[id])
+  person Person @relation(fields: [personId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
 
   representative Representative?
-  employee Employee?
+  employee       Employee?
 
   approvedWorkHours EmployeeWorkHour[]
 }
@@ -85,550 +84,550 @@ model User {
 //////////////////////////////////////////////////
 
 model Student {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  personId Int @unique
 
- personId Int @unique
-
- birthCountry String?
- state String?
-  municipality String?
-  parish String?
+  birthCountry  String?
+  state         String?
+  municipality  String?
+  parish        String?
   currentParish String?
- previousSchool String?
- address String?
+  previousSchool String?
+  address        String?
 
- status Boolean
+  status Boolean?
 
- admissionDate DateTime?
+  admissionDate DateTime?
 
- person Person @relation(fields:[personId],references:[id])
+  person Person @relation(fields: [personId], references: [id])
 
- sections StudentSection[]
- enrollments StudentEnrollment[]
+  studentSections StudentSection[]
+  enrollments     StudentEnrollment[]
 
- representatives StudentRepresentative[]
+  representatives StudentRepresentative[]
 
- grades GradeRecord[]
- reportCards ReportCard[]
-
- charges StudentCharge[]
+  gradeRecords GradeRecord[]
+  reportCards ReportCard[]
 }
 
+//////////////////////////////////////////////////
+// STUDENT SECTION
 //////////////////////////////////////////////////
 
 model StudentSection {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  studentId Int
+  sectionId Int
 
- studentId Int
- sectionId Int
+  enrollmentDate DateTime?
 
- enrollmentDate DateTime?
+  status Boolean?
 
- status Boolean
+  student Student @relation(fields: [studentId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
 
- student Student @relation(fields:[studentId],references:[id])
-
- section Section @relation(fields:[sectionId],references:[id])
-
- @@unique([studentId,sectionId])
-
+  @@unique([studentId, sectionId])
 }
 
+//////////////////////////////////////////////////
+// REPRESENTATIVE
 //////////////////////////////////////////////////
 
 model Representative {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  userId Int @unique
 
- userId Int @unique
+  relationship String?
+  occupation   String?
 
- relationship String?
- occupation String?
+  user User @relation(fields: [userId], references: [id])
 
- user User @relation(fields:[userId],references:[id])
-
- students StudentRepresentative[]
-
+  students StudentRepresentative[]
 }
 
+//////////////////////////////////////////////////
+// STUDENT REPRESENTATIVE
 //////////////////////////////////////////////////
 
 model StudentRepresentative {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  studentId        Int
+  representativeId Int
 
- studentId Int
- representativeId Int
+  student Student @relation(fields: [studentId], references: [id])
 
- student Student @relation(fields:[studentId],references:[id])
+  representative Representative @relation(fields: [representativeId], references: [id])
 
- representative Representative @relation(fields:[representativeId],references:[id])
-
- @@unique([studentId,representativeId])
-
+  @@unique([studentId, representativeId])
 }
 
+//////////////////////////////////////////////////
+// EMPLOYEE
 //////////////////////////////////////////////////
 
 model Employee {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  userId Int @unique
 
- userId Int @unique
+  baseHourRate Decimal? @db.Decimal(10,2)
 
- baseHourRate Decimal? @db.Decimal(10,2)
+  hireDate DateTime?
 
- hireDate DateTime?
+  user User @relation(fields: [userId], references: [id])
 
- user User @relation(fields:[userId],references:[id])
+  assignments TeacherSubjectSection[]
 
- assignments TeacherSubjectSection[]
+  createdGrades GradeRecord[]
 
- createdGrades GradeRecord[]
+  workHours EmployeeWorkHour[]
 
- workHours EmployeeWorkHour[]
-
- payrollRecords PayrollRecord[]
-
+  payrollRecords PayrollRecord[]
 }
 
+//////////////////////////////////////////////////
+// SCHOOL YEAR
 //////////////////////////////////////////////////
 
 model SchoolYear {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  name String
 
- name String
+  startDate DateTime
+  endDate   DateTime
 
- startDate DateTime
- endDate DateTime
+  isActive Boolean?
 
- isActive Boolean?
+  createdAt DateTime @default(now())
 
- createdAt DateTime @default(now())
+  periods     Period[]
+  sections    Section[]
+  enrollments StudentEnrollment[]
 
- periods Period[]
+  reportCards ReportCard[]
 
- sections Section[]
-
- enrollments StudentEnrollment[]
-
- reportCards ReportCard[]
-
- charges StudentCharge[]
-
+  fees Fee[]
 }
 
+//////////////////////////////////////////////////
+// PERIOD
 //////////////////////////////////////////////////
 
 model Period {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  schoolYearId Int
 
- schoolYearId Int
+  period String
 
- period String
+  startDate DateTime?
+  endDate   DateTime?
 
- startDate DateTime?
- endDate DateTime?
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
- schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
-
- evaluations Evaluation[]
-
+  evaluations Evaluation[]
 }
 
+//////////////////////////////////////////////////
+// HIGH SCHOOL LEVEL
 //////////////////////////////////////////////////
 
 model HighSchoolLevel {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  level String
 
- level String
-
- sections Section[]
-
+  sections Section[]
 }
 
+//////////////////////////////////////////////////
+// SECTION
 //////////////////////////////////////////////////
 
 model Section {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  schoolYearId      Int
+  highSchoolLevelId Int
 
- schoolYearId Int
+  section String
 
- highSchoolLevelId Int
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
- section String
+  highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
 
- schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
+  students    StudentSection[]
+  enrollments StudentEnrollment[]
 
- level HighSchoolLevel @relation(fields:[highSchoolLevelId],references:[id])
-
- students StudentSection[]
-
- enrollments StudentEnrollment[]
-
- assignments TeacherSubjectSection[]
-
- @@unique([schoolYearId,highSchoolLevelId,section])
-
+  assignments TeacherSubjectSection[]
 }
 
+//////////////////////////////////////////////////
+// STUDENT ENROLLMENT
 //////////////////////////////////////////////////
 
 model StudentEnrollment {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  studentId    Int
+  schoolYearId Int
+  sectionId    Int
 
- studentId Int
+  referenceId Int?
 
- schoolYearId Int
+  enrollmentDate DateTime?
 
- sectionId Int
+  status Boolean?
 
- enrollmentDate DateTime?
+  student Student @relation(fields: [studentId], references: [id])
 
- status Boolean?
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
- student Student @relation(fields:[studentId],references:[id])
+  section Section @relation(fields: [sectionId], references: [id])
 
- schoolYear SchoolYear @relation(fields:[schoolYearId],references:[id])
-
- section Section @relation(fields:[sectionId],references:[id])
-
+  paymentReference PaymentReference? @relation(fields: [referenceId], references: [id])
 }
 
+//////////////////////////////////////////////////
+// SUBJECT
 //////////////////////////////////////////////////
 
 model Subject {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  subject String
 
- subject String
+  code String?
 
- code String?
+  status Boolean?
 
- status Boolean?
-
- assignments TeacherSubjectSection[]
-
+  assignments TeacherSubjectSection[]
 }
 
+//////////////////////////////////////////////////
+// TEACHER SUBJECT SECTION
 //////////////////////////////////////////////////
 
 model TeacherSubjectSection {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  teacherId Int
+  subjectId Int
+  sectionId Int
 
- teacherId Int
+  status Boolean?
 
- subjectId Int
+  employee Employee @relation(fields: [teacherId], references: [id])
 
- sectionId Int
+  subject Subject @relation(fields: [subjectId], references: [id])
 
- status Boolean?
+  section Section @relation(fields: [sectionId], references: [id])
 
- employee Employee @relation(fields:[teacherId],references:[id])
+  evaluations Evaluation[]
 
- subject Subject @relation(fields:[subjectId],references:[id])
-
- section Section @relation(fields:[sectionId],references:[id])
-
- evaluations Evaluation[]
-
+  @@unique([teacherId, subjectId, sectionId])
 }
 
+//////////////////////////////////////////////////
+// EVALUATION
 //////////////////////////////////////////////////
 
 model Evaluation {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  teacherSubjectSectionId Int
+  periodId                Int
 
- teacherSubjectSectionId Int
+  title String
 
- periodId Int
+  percentage Decimal @db.Decimal(5,2)
 
- title String
+  dueDate DateTime?
 
- percentage Decimal @db.Decimal(5,2)
+  teacherSubjectSection TeacherSubjectSection @relation(fields: [teacherSubjectSectionId], references: [id])
 
- dueDate DateTime?
+  period Period @relation(fields: [periodId], references: [id])
 
- assignment TeacherSubjectSection @relation(fields:[teacherSubjectSectionId],references:[id])
-
- period Period @relation(fields:[periodId],references:[id])
-
- grades GradeRecord[]
-
+  grades GradeRecord[]
 }
 
+//////////////////////////////////////////////////
+// GRADE RECORD
 //////////////////////////////////////////////////
 
 model GradeRecord {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  studentId    Int
+  evaluationId Int
 
- studentId Int
+  score Decimal? @db.Decimal(5,2)
 
- evaluationId Int
+  observations String?
 
- createdBy Int?
+  createdBy Int?
 
- score Decimal? @db.Decimal(5,2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
- observations String?
+  student Student @relation(fields: [studentId], references: [id])
 
- createdAt DateTime @default(now())
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
 
- updatedAt DateTime @updatedAt
+  employee Employee? @relation(fields: [createdBy], references: [id])
 
- student Student @relation(fields:[studentId],references:[id])
-
- evaluation Evaluation @relation(fields:[evaluationId],references:[id])
-
- employee Employee? @relation(fields:[createdBy],references:[id])
-
+  @@unique([studentId, evaluationId])
 }
 
+//////////////////////////////////////////////////
+// REPORT CARD
 //////////////////////////////////////////////////
 
 model ReportCard {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  studentId Int
 
- studentId Int
+  academicPeriodId Int
 
- academicPeriodId Int
+  term Int
 
- term Int
+  average Decimal? @db.Decimal(5,2)
 
- average Decimal? @db.Decimal(5,2)
+  observations String?
 
- observations String?
+  generatedAt DateTime @default(now())
 
- generatedAt DateTime @default(now())
+  student Student @relation(fields: [studentId], references: [id])
 
- student Student @relation(fields:[studentId],references:[id])
+  schoolYear SchoolYear @relation(fields: [academicPeriodId], references: [id])
 
- schoolYear SchoolYear @relation(fields:[academicPeriodId],references:[id])
-
+  @@unique([studentId, academicPeriodId, term])
 }
 
 //////////////////////////////////////////////////
-// FINANZAS
+// PAYMENT METHODS
 //////////////////////////////////////////////////
-
-model ChargeType {
-
- id Int @id @default(autoincrement())
-
- name String @unique
-
- description String?
-
- charges StudentCharge[]
-
-}
-
-model StudentCharge {
-
- id Int @id @default(autoincrement())
-
- studentId Int
-
- paymentId Int?
-
- chargeTypeId Int
-
- schoolYearId Int?
-
- description String?
-
- createdAt DateTime @default(now())
-
- student Student @relation(fields:[studentId],references:[id])
-
- chargeType ChargeType @relation(fields:[chargeTypeId],references:[id])
-
- schoolYear SchoolYear? @relation(fields:[schoolYearId],references:[id])
-
- payment Payment? @relation(fields:[paymentId],references:[id])
-
-}
 
 model PaymentMethod {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  type String
 
- type String
+  bank String?
 
- bank String?
- accountNumber String?
+  accountNumber String?
 
- identification String?
+  identification String?
 
- email String?
+  email String?
 
- phone String?
+  phone String?
 
- owner String?
+  owner String?
 
- active Boolean @default(true)
+  active Boolean @default(true)
 
- payments Payment[]
-
-}
-
-model Exchange {
-
- id Int @id @default(autoincrement())
-
- rate Decimal @db.Decimal(10,2)
-
- date DateTime
-
- payments Payment[]
-
-}
-
-model Payment {
-
- id Int @id @default(autoincrement())
-
- paymentMethodId Int
-
- exchangeId Int?
-
- totalAmount Decimal @db.Decimal(12,2)
-
- currency Currency
-
- paymentDate DateTime @default(now())
-
- reference String?
-
- payerName String?
-
- payerIdentification String?
-
- payerPhone String?
-
- status Boolean
-
- paymentMethod PaymentMethod @relation(fields:[paymentMethodId],references:[id])
-
- exchange Exchange? @relation(fields:[exchangeId],references:[id])
-
- charges StudentCharge[]
-
+  payments Payment[]
 }
 
 //////////////////////////////////////////////////
-// NOMINA
+// FEE
+//////////////////////////////////////////////////
+
+model Fee {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  schoolYearId Int
+
+  value Int
+
+  createdAt DateTime
+
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  paymentReferences PaymentReference[]
+}
+
+//////////////////////////////////////////////////
+// PAYMENT REFERENCE
+//////////////////////////////////////////////////
+
+model PaymentReference {
+  id Int @id @default(autoincrement())
+
+  feeId Int
+
+  paymentId Int
+
+  fee Fee @relation(fields: [feeId], references: [id])
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  enrollments StudentEnrollment[]
+}
+
+//////////////////////////////////////////////////
+// EXCHANGE
+//////////////////////////////////////////////////
+
+model Exchange {
+  id Int @id @default(autoincrement())
+
+  rate Decimal @db.Decimal(10,2)
+
+  date DateTime
+
+  payments Payment[]
+}
+
+//////////////////////////////////////////////////
+// PAYMENTS
+//////////////////////////////////////////////////
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  paymentMethodId Int
+
+  totalAmount Decimal @db.Decimal(12,2)
+
+  currency Currency
+
+  paymentDate DateTime @default(now())
+
+  reference String?
+
+  payerName String?
+
+  payerIdentification String?
+
+  payerPhone String?
+
+  exchangeId Int?
+
+  status Boolean?
+
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  exchange Exchange? @relation(fields: [exchangeId], references: [id])
+
+  paymentReferences PaymentReference[]
+}
+
+//////////////////////////////////////////////////
+// PAYROLL PERIODS
 //////////////////////////////////////////////////
 
 model PayrollPeriod {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  month Int
 
- month Int
+  year Int
 
- year Int
+  startDate DateTime?
 
- startDate DateTime?
+  endDate DateTime?
 
- endDate DateTime?
+  status Boolean?
 
- status Boolean
+  workHours EmployeeWorkHour[]
 
- workHours EmployeeWorkHour[]
+  payrollRecords PayrollRecord[]
 
- payrolls PayrollRecord[]
-
- @@unique([month,year])
-
+  @@unique([month, year])
 }
+
+//////////////////////////////////////////////////
+// EMPLOYEE WORK HOURS
+//////////////////////////////////////////////////
 
 model EmployeeWorkHour {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  employeeId Int
 
- employeeId Int
+  payrollPeriodId Int
 
- payrollPeriodId Int
+  assignedHours Decimal @db.Decimal(8,2)
 
- approvedBy Int?
+  approvedBy Int?
 
- assignedHours Decimal @db.Decimal(8,2)
+  observations String?
 
- observations String?
+  createdAt DateTime @default(now())
 
- createdAt DateTime @default(now())
+  employee Employee @relation(fields: [employeeId], references: [id])
 
- employee Employee @relation(fields:[employeeId],references:[id])
+  approver User? @relation(fields: [approvedBy], references: [id])
 
- approver User? @relation(fields:[approvedBy],references:[id])
+  payrollPeriod PayrollPeriod @relation(fields: [payrollPeriodId], references: [id])
 
- payrollPeriod PayrollPeriod @relation(fields:[payrollPeriodId],references:[id])
-
- @@unique([employeeId,payrollPeriodId])
-
+  @@unique([employeeId, payrollPeriodId])
 }
+
+//////////////////////////////////////////////////
+// PAYROLL RECORDS
+//////////////////////////////////////////////////
 
 model PayrollRecord {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  employeeId Int
 
- employeeId Int
+  payrollPeriodId Int
 
- payrollPeriodId Int
+  hourlyRate Decimal? @db.Decimal(10,2)
 
- hourlyRate Decimal? @db.Decimal(10,2)
+  workedHours Decimal? @db.Decimal(8,2)
 
- workedHours Decimal? @db.Decimal(8,2)
+  grossSalary Decimal? @db.Decimal(12,2)
 
- grossSalary Decimal? @db.Decimal(12,2)
+  deductions Decimal? @default(0) @db.Decimal(12,2)
 
- deductions Decimal @default(0) @db.Decimal(12,2)
+  bonuses Decimal? @default(0) @db.Decimal(12,2)
 
- bonuses Decimal @default(0) @db.Decimal(12,2)
+  netSalary Decimal? @db.Decimal(12,2)
 
- netSalary Decimal? @db.Decimal(12,2)
+  currency String? @default("USD")
 
- currency Currency
+  paymentStatus String? @default("pending")
 
- paymentStatus Boolean
+  paymentDate DateTime?
 
- paymentDate DateTime?
+  generatedAt DateTime @default(now())
 
- generatedAt DateTime @default(now())
+  employee Employee @relation(fields: [employeeId], references: [id])
 
- employee Employee @relation(fields:[employeeId],references:[id])
+  payrollPeriod PayrollPeriod @relation(fields: [payrollPeriodId], references: [id])
 
- payrollPeriod PayrollPeriod @relation(fields:[payrollPeriodId],references:[id])
+  adjustments PayrollAdjustment[]
 
- adjustments PayrollAdjustment[]
-
- @@unique([employeeId,payrollPeriodId])
-
+  @@unique([employeeId, payrollPeriodId])
 }
 
+//////////////////////////////////////////////////
+// PAYROLL ADJUSTMENTS
+//////////////////////////////////////////////////
+
 model PayrollAdjustment {
+  id Int @id @default(autoincrement())
 
- id Int @id @default(autoincrement())
+  payrollRecordId Int
 
- payrollRecordId Int
+  type AdjustmentType
 
- type AdjustmentType
+  concept String
 
- concept String
+  amount Decimal @db.Decimal(10,2)
 
- amount Decimal @db.Decimal(10,2)
-
- payroll PayrollRecord @relation(fields:[payrollRecordId],references:[id])
-
+  payrollRecord PayrollRecord @relation(fields: [payrollRecordId], references: [id])
 }

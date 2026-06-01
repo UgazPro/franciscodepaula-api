@@ -1,6 +1,5 @@
 import { Transform } from 'class-transformer';
 import {
-  IsArray,
   IsBoolean,
   IsDate,
   IsEnum,
@@ -54,31 +53,20 @@ export class ExchangeDTO {
   date!: Date;
 }
 
-// CHARGE TYPE
-export class ChargeTypeDTO {
+// FEE
+export class FeeDTO {
   @IsString()
   name!: string;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-}
-
-// STUDENT CHARGE
-export class StudentChargeDTO {
   @IsNumber()
-  studentId!: number;
+  schoolYearId!: number;
 
   @IsNumber()
-  chargeTypeId!: number;
+  value!: number;
 
-  @IsOptional()
-  @IsNumber()
-  schoolYearId?: number;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  createdAt!: Date;
 }
 
 // PAYMENT
@@ -119,13 +107,6 @@ export class PaymentDTO {
   @IsDate()
   paymentDate!: Date;
 
-  // ——— CAMPOS PARA CREACIÓN AUTOMÁTICA DE STUDENT CHARGE ———
   @IsNumber()
-  studentId!: number;
-
-  @IsNumber()
-  chargeTypeId!: number;
-
-  @IsString()
-  description!: string;
+  feeId!: number;
 }

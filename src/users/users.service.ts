@@ -48,7 +48,7 @@ export class UsersService {
             include: {
               section: {
                 include: {
-                  level: true,
+                  highSchoolLevel: true,
                 },
               },
             },

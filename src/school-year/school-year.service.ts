@@ -43,7 +43,7 @@ export class SchoolYearService {
           periods: true,
           sections: {
             include: {
-              level: true,
+              highSchoolLevel: true,
             },
           },
         },
@@ -85,7 +85,7 @@ export class SchoolYearService {
     try {
       const sections = await this.prismaService.section.findMany({
         include: {
-          level: true,
+          highSchoolLevel: true,
           schoolYear: true,
         },
 
@@ -111,7 +111,7 @@ export class SchoolYearService {
         where: { id },
 
         include: {
-          level: true,
+          highSchoolLevel: true,
           schoolYear: true,
         },
       });
@@ -170,7 +170,7 @@ export class SchoolYearService {
       },
 
       include: {
-        level: true,
+        highSchoolLevel: true,
         schoolYear: true,
       },
     });
@@ -186,7 +186,7 @@ export class SchoolYearService {
           section: section.section,
         },
         include: {
-          level: true,
+          highSchoolLevel: true,
           schoolYear: true,
         },
       });
