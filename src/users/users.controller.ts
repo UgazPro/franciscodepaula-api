@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Put, } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, ParseIntPipe, Put, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
   UserDTO,
@@ -23,8 +23,24 @@ export class UsersController {
 
   // Get Students
   @Get('students')
-  async getStudents() {
-    return await this.usersService.getStudents();
+  async getStudents(
+    @Query('view') view?: string,
+    @Query('levelId') levelId?: string,
+    @Query('section') section?: string,
+    @Query('gender') gender?: string,
+    @Query('ageMin') ageMin?: string,
+    @Query('ageMax') ageMax?: string,
+    @Query('ageExact') ageExact?: string,
+  ) {
+    return await this.usersService.getStudents(
+      view,
+      levelId ? +levelId : undefined,
+      section,
+      gender,
+      ageMin ? +ageMin : undefined,
+      ageMax ? +ageMax : undefined,
+      ageExact ? +ageExact : undefined,
+    );
   }
 
   // Get Staff (employees with person & role)

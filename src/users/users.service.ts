@@ -39,9 +39,105 @@ export class UsersService {
   //////////////////////////////////////////////////
   // GET ALL STUDENTS
   //////////////////////////////////////////////////
-  async getStudents() {
+  async getStudents(
+    view?: string,
+    levelId?: number,
+    section?: string,
+    gender?: string,
+    ageMin?: number,
+    ageMax?: number,
+    ageExact?: number,
+  ) {
     try {
+      let where: any = {};
+
+      switch (view) {
+        case 'all':
+          where = {};
+          break;
+        case 'pending':
+          where = {
+            status: true,
+            enrollments: { none: { status: true } },
+          };
+          break;
+        case 'inactive':
+          where = { status: false };
+          break;
+        case 'active':
+        default:
+          where = {
+            status: true,
+            enrollments: {
+              some: { status: true, schoolYear: { isActive: true } },
+            },
+          };
+          break;
+      }
+
+      // Gender filter
+      if (gender) {
+        if (!where.person) where.person = {};
+        where.person.gender = gender;
+      }
+
+      // Age filter → birthDate range
+      const today = new Date();
+      const birthFilter: any = {};
+      if (ageExact !== undefined) {
+        const start = new Date(
+          today.getFullYear() - ageExact - 1,
+          today.getMonth(),
+          today.getDate() + 1,
+        );
+        const end = new Date(
+          today.getFullYear() - ageExact,
+          today.getMonth(),
+          today.getDate(),
+        );
+        birthFilter.gt = start;
+        birthFilter.lte = end;
+      } else {
+        if (ageMax !== undefined) {
+          birthFilter.gt = new Date(
+            today.getFullYear() - ageMax - 1,
+            today.getMonth(),
+            today.getDate(),
+          );
+        }
+        if (ageMin !== undefined) {
+          birthFilter.lte = new Date(
+            today.getFullYear() - ageMin,
+            today.getMonth(),
+            today.getDate(),
+          );
+        }
+      }
+      if (Object.keys(birthFilter).length) {
+        if (!where.person) where.person = {};
+        where.person.birthDate = birthFilter;
+      }
+
+      // Level / Section filters
+      const enrollmentFilters: any = {};
+      if (levelId !== undefined) {
+        enrollmentFilters.section = { highSchoolLevelId: levelId };
+      }
+      if (section !== undefined) {
+        enrollmentFilters.section = { ...enrollmentFilters.section, section };
+      }
+      if (Object.keys(enrollmentFilters).length) {
+        if (!where.enrollments) {
+          where.enrollments = { some: enrollmentFilters };
+        } else if (where.enrollments.some) {
+          Object.assign(where.enrollments.some, enrollmentFilters);
+        } else {
+          where.enrollments.some = enrollmentFilters;
+        }
+      }
+
       const students = await this.prismaService.student.findMany({
+        where,
         include: {
           person: true,
           enrollments: {
