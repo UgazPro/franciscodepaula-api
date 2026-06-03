@@ -360,8 +360,8 @@ async function main() {
 
   // ── 9. SCHOOL YEARS ──
   const schoolYearsData = [
-    { id: 1, name: '2024-2025', startDate: new Date('2024-09-15'), endDate: new Date('2025-07-15'), isActive: true },
-    { id: 2, name: '2025-2026', startDate: new Date('2025-09-15'), endDate: new Date('2026-07-15'), isActive: false },
+    { id: 1, name: '2024-2025', startDate: new Date('2024-09-15'), endDate: new Date('2025-07-15'), isActive: false },
+    { id: 2, name: '2025-2026', startDate: new Date('2025-09-15'), endDate: new Date('2026-07-15'), isActive: true },
   ];
   await prisma.schoolYear.createMany({ data: schoolYearsData });
   console.log('Años escolares creados.');
@@ -452,6 +452,26 @@ async function main() {
   ];
   await prisma.fee.createMany({ data: feesData });
   console.log('Aranceles creados.');
+
+  // ── 14b. STUDENT FEES ──
+  const studentFeesData = [
+    // School year 2024-2025 students (1-6)
+    { id: 1, studentId: 1, feeId: 1, status: true },
+    { id: 2, studentId: 1, feeId: 2, status: true },
+    { id: 3, studentId: 3, feeId: 1, status: true },
+    { id: 4, studentId: 3, feeId: 2, status: true },
+    { id: 5, studentId: 5, feeId: 2, status: false },
+    { id: 6, studentId: 4, feeId: 2, status: true },
+    // School year 2025-2026 students (7-12)
+    { id: 7, studentId: 7, feeId: 3, status: true },
+    { id: 8, studentId: 8, feeId: 3, status: true },
+    { id: 9, studentId: 8, feeId: 4, status: true },
+    { id: 10, studentId: 10, feeId: 3, status: true },
+    { id: 11, studentId: 10, feeId: 4, status: true },
+    { id: 12, studentId: 12, feeId: 4, status: true },
+  ];
+  await prisma.studentFee.createMany({ data: studentFeesData });
+  console.log('Aranceles por estudiante creados.');
 
   // ── 15. PAYMENT METHODS ──
   const paymentMethodsData = [
@@ -610,24 +630,24 @@ async function main() {
 
   // ── 18. PAYMENT REFERENCES ──
   const paymentReferencesData = [
-    { id: 1, feeId: 1, paymentId: 1 },
-    { id: 2, feeId: 1, paymentId: 2 },
-    { id: 3, feeId: 2, paymentId: 2 },
-    { id: 4, feeId: 2, paymentId: 2 },
-    { id: 5, feeId: 1, paymentId: 3 },
-    { id: 6, feeId: 2, paymentId: 4 },
-    { id: 7, feeId: 2, paymentId: 4 },
-    { id: 8, feeId: 2, paymentId: 5 },
-    { id: 9, feeId: 2, paymentId: 5 },
-    { id: 10, feeId: 2, paymentId: 6 },
-    { id: 11, feeId: 2, paymentId: 6 },
-    { id: 12, feeId: 1, paymentId: 7 },
-    { id: 13, feeId: 1, paymentId: 8 },
-    { id: 14, feeId: 2, paymentId: 8 },
-    { id: 15, feeId: 1, paymentId: 9 },
-    { id: 16, feeId: 2, paymentId: 9 },
-    { id: 17, feeId: 2, paymentId: 10 },
-    { id: 18, feeId: 1, paymentId: 10 },
+    { id: 1, studentFeeId: 1, paymentId: 1 },
+    { id: 2, studentFeeId: 1, paymentId: 2 },
+    { id: 3, studentFeeId: 2, paymentId: 2 },
+    { id: 4, studentFeeId: 2, paymentId: 2 },
+    { id: 5, studentFeeId: 3, paymentId: 3 },
+    { id: 6, studentFeeId: 4, paymentId: 4 },
+    { id: 7, studentFeeId: 4, paymentId: 4 },
+    { id: 8, studentFeeId: 5, paymentId: 5 },
+    { id: 9, studentFeeId: 5, paymentId: 5 },
+    { id: 10, studentFeeId: 6, paymentId: 6 },
+    { id: 11, studentFeeId: 6, paymentId: 6 },
+    { id: 12, studentFeeId: 7, paymentId: 7 },
+    { id: 13, studentFeeId: 8, paymentId: 8 },
+    { id: 14, studentFeeId: 9, paymentId: 8 },
+    { id: 15, studentFeeId: 10, paymentId: 9 },
+    { id: 16, studentFeeId: 11, paymentId: 9 },
+    { id: 17, studentFeeId: 12, paymentId: 10 },
+    { id: 18, studentFeeId: 12, paymentId: 10 },
   ];
   await prisma.paymentReference.createMany({ data: paymentReferencesData });
   console.log('Referencias de pago creadas.');
@@ -639,7 +659,7 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentSection_id_seq', 'StudentEnrollment_id_seq',
-    'Fee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq', 'PaymentReference_id_seq',
   ];
   for (const seq of sequences) {

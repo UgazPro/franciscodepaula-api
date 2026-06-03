@@ -104,6 +104,7 @@ model Student {
 
   studentSections StudentSection[]
   enrollments     StudentEnrollment[]
+  studentFees     StudentFee[]
 
   representatives StudentRepresentative[]
 
@@ -453,7 +454,29 @@ model Fee {
 
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
+  studentFees StudentFee[]
+}
+
+//////////////////////////////////////////////////
+// STUDENT FEE
+//////////////////////////////////////////////////
+
+model StudentFee {
+  id Int @id @default(autoincrement())
+
+  studentId Int
+
+  feeId Int
+
+  status Boolean?
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  fee Fee @relation(fields: [feeId], references: [id])
+
   paymentReferences PaymentReference[]
+
+  @@unique([studentId, feeId])
 }
 
 //////////////////////////////////////////////////
@@ -463,11 +486,11 @@ model Fee {
 model PaymentReference {
   id Int @id @default(autoincrement())
 
-  feeId Int
+  studentFeeId Int
 
   paymentId Int
 
-  fee Fee @relation(fields: [feeId], references: [id])
+  studentFee StudentFee @relation(fields: [studentFeeId], references: [id])
 
   payment Payment @relation(fields: [paymentId], references: [id])
 
@@ -512,6 +535,8 @@ model Payment {
   payerPhone String?
 
   exchangeId Int?
+
+  description String?
 
   status Boolean?
 

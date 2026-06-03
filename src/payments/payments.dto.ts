@@ -109,4 +109,12 @@ export class PaymentDTO {
 
   @IsNumber()
   feeId!: number;
+
+  @IsOptional()
+  @IsNumber()
+  studentId?: number;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

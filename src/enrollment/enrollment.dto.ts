@@ -7,6 +7,7 @@ import {
 } from 'class-validator';
 
 export class EnrollmentDTO {
+  @IsOptional()
   @IsNumber()
   studentId!: number;
 

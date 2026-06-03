@@ -110,7 +110,7 @@ export class EnrollmentService {
           schoolYearId: data.schoolYearId,
           sectionId: data.sectionId,
           enrollmentDate: data.enrollmentDate,
-          status: data.status ?? true,
+          status: false,
         },
         include: {
           student: {
@@ -148,6 +148,7 @@ export class EnrollmentService {
       const enrollment = await this.prismaService.studentEnrollment.update({
         where: { id },
         data: {
+          schoolYearId: data.schoolYearId,
           sectionId: data.sectionId,
           enrollmentDate: data.enrollmentDate,
           status: data.status,

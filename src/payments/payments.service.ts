@@ -15,10 +15,21 @@ export class PaymentsService {
           exchange: true,
           paymentReferences: {
             include: {
-              fee: true,
+              studentFee: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                  fee: true,
+                },
+              },
+              enrollments: true,
             },
           },
         },
+        orderBy: { id: 'desc' },
       });
 
       return payments;
@@ -35,7 +46,16 @@ export class PaymentsService {
         include: {
           paymentReferences: {
             include: {
-              fee: true,
+              studentFee: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                  fee: true,
+                },
+              },
             },
           },
         },
@@ -61,17 +81,69 @@ export class PaymentsService {
             payerName: data.payerName,
             payerIdentification: data.payerIdentification,
             payerPhone: data.payerPhone,
+            description: data.description,
             status: data.status,
             paymentDate: data.paymentDate,
           },
         });
 
-        await tx.paymentReference.create({
+        // Find or create StudentFee
+        let studentFee;
+        if (data.studentId && data.feeId) {
+          studentFee = await tx.studentFee.findUnique({
+            where: {
+              studentId_feeId: { studentId: data.studentId, feeId: data.feeId },
+            },
+          });
+
+          if (!studentFee) {
+            studentFee = await tx.studentFee.create({
+              data: {
+                studentId: data.studentId,
+                feeId: data.feeId,
+                status: false,
+              },
+            });
+          }
+        }
+
+        const paymentReference = await tx.paymentReference.create({
           data: {
-            feeId: data.feeId,
+            studentFeeId: studentFee.id,
             paymentId: payment.id,
           },
         });
+
+        // Mark StudentFee as paid
+        if (studentFee) {
+          await tx.studentFee.update({
+            where: { id: studentFee.id },
+            data: { status: true },
+          });
+        }
+
+        // Solo enlazar al enrollment si el fee es "Inscripción"
+        if (data.studentId && studentFee) {
+          const feeInfo = await tx.fee.findUnique({
+            where: { id: studentFee.feeId },
+          });
+
+          if (feeInfo?.name === "Inscripción") {
+            const enrollment = await tx.studentEnrollment.findFirst({
+              where: {
+                studentId: data.studentId,
+                schoolYearId: feeInfo.schoolYearId,
+              },
+            });
+
+            if (enrollment) {
+              await tx.studentEnrollment.update({
+                where: { id: enrollment.id },
+                data: { referenceId: paymentReference.id, status: true },
+              });
+            }
+          }
+        }
 
         return payment;
       });
@@ -235,6 +307,7 @@ export class PaymentsService {
           payerName: data.payerName,
           payerIdentification: data.payerIdentification,
           payerPhone: data.payerPhone,
+          description: data.description,
           status: data.status,
         },
         include: {
@@ -242,7 +315,17 @@ export class PaymentsService {
           exchange: true,
           paymentReferences: {
             include: {
-              fee: true,
+              studentFee: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                  fee: true,
+                },
+              },
+              enrollments: true,
             },
           },
         },

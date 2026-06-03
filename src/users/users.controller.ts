@@ -98,4 +98,12 @@ export class UsersController {
   async createRepresentative(@Body() data: RepresentativeDTO) {
     return await this.usersService.createRepresentative(data);
   }
+
+  @Put('representatives/:id')
+  async updateRepresentative(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: RepresentativeDTO,
+  ) {
+    return await this.usersService.updateRepresentative(id, data);
+  }
 }

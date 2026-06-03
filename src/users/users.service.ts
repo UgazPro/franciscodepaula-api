@@ -325,8 +325,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async createRepresentative(data: RepresentativeDTO) {
     try {
-      const passwordSource =
-        data.studentIdentification || data.identificationNumber;
+      const passwordSource = data.studentIdentification || data.identificationNumber;
       const hashedPassword = await bcrypt.hash(passwordSource, 10);
 
       const result = await this.prismaService.$transaction(async (tx) => {
@@ -374,6 +373,55 @@ export class UsersService {
 
       baseResponse.message = 'Representante creado correctamente';
       return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
+      return badResponse;
+    }
+  }
+
+  async updateRepresentative(id: number, data: RepresentativeDTO) {
+    try {
+      const rep = await this.prismaService.representative.findUnique({
+        where: { id },
+        include: { user: { include: { person: true } } },
+      });
+
+      if (!rep) {
+        badResponse.message = 'Representante no encontrado';
+        return badResponse;
+      }
+
+      await this.prismaService.person.update({
+        where: { id: rep.user.personId },
+        data: {
+          profilePhoto: data.profilePhoto,
+          firstNames: data.firstNames,
+          lastNames: data.lastNames,
+          identificationNumber: data.identificationNumber,
+          birthDate: data.birthDate,
+          gender: data.gender,
+        },
+      });
+
+      await this.prismaService.user.update({
+        where: { id: rep.userId },
+        data: {
+          email: data.email,
+          phone: data.phone,
+        },
+      });
+
+      const updated = await this.prismaService.representative.update({
+        where: { id },
+        data: {
+          relationship: data.relationship,
+          occupation: data.occupation,
+        },
+      });
+
+      baseResponse.message = 'Representante actualizado correctamente';
+      return updated;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
