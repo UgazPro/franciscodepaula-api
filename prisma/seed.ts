@@ -27,6 +27,7 @@ async function main() {
     'StudentEnrollment', 'StudentSection', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
     'Student', 'User', 'Person', 'Role',
+    'Parish', 'Municipality', 'State', 'Country',
   ];
   for (const table of tables) {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
@@ -50,6 +51,267 @@ async function main() {
   ];
   await prisma.role.createMany({ data: rolesData });
   console.log('Roles creados.');
+
+  // ── LOCATION: COUNTRIES ──
+  const countriesData = [
+    { name: 'Afganistán' }, { name: 'Albania' }, { name: 'Alemania' },
+    { name: 'Andorra' }, { name: 'Angola' }, { name: 'Antigua y Barbuda' },
+    { name: 'Arabia Saudita' }, { name: 'Argelia' }, { name: 'Argentina' },
+    { name: 'Armenia' }, { name: 'Australia' }, { name: 'Austria' },
+    { name: 'Azerbaiyán' }, { name: 'Bahamas' }, { name: 'Bangladés' },
+    { name: 'Barbados' }, { name: 'Baréin' }, { name: 'Bélgica' },
+    { name: 'Belice' }, { name: 'Benín' }, { name: 'Bielorrusia' },
+    { name: 'Birmania' }, { name: 'Bolivia' }, { name: 'Bosnia y Herzegovina' },
+    { name: 'Botsuana' }, { name: 'Brasil' }, { name: 'Brunéi' },
+    { name: 'Bulgaria' }, { name: 'Burkina Faso' }, { name: 'Burundi' },
+    { name: 'Bután' }, { name: 'Cabo Verde' }, { name: 'Camboya' },
+    { name: 'Camerún' }, { name: 'Canadá' }, { name: 'Catar' },
+    { name: 'Chad' }, { name: 'Chile' }, { name: 'China' },
+    { name: 'Chipre' }, { name: 'Colombia' }, { name: 'Comoras' },
+    { name: 'Corea del Norte' }, { name: 'Corea del Sur' }, { name: 'Costa de Marfil' },
+    { name: 'Costa Rica' }, { name: 'Croacia' }, { name: 'Cuba' },
+    { name: 'Dinamarca' }, { name: 'Dominica' }, { name: 'Ecuador' },
+    { name: 'Egipto' }, { name: 'El Salvador' }, { name: 'Emiratos Árabes Unidos' },
+    { name: 'Eritrea' }, { name: 'Eslovaquia' }, { name: 'Eslovenia' },
+    { name: 'España' }, { name: 'Estados Unidos' }, { name: 'Estonia' },
+    { name: 'Esuatini' }, { name: 'Etiopía' }, { name: 'Filipinas' },
+    { name: 'Finlandia' }, { name: 'Fiyi' }, { name: 'Francia' },
+    { name: 'Gabón' }, { name: 'Gambia' }, { name: 'Georgia' },
+    { name: 'Ghana' }, { name: 'Granada' }, { name: 'Grecia' },
+    { name: 'Guatemala' }, { name: 'Guinea' }, { name: 'Guinea-Bisáu' },
+    { name: 'Guinea Ecuatorial' }, { name: 'Guyana' }, { name: 'Haití' },
+    { name: 'Honduras' }, { name: 'Hungría' }, { name: 'India' },
+    { name: 'Indonesia' }, { name: 'Irak' }, { name: 'Irán' },
+    { name: 'Irlanda' }, { name: 'Islandia' }, { name: 'Islas Marshall' },
+    { name: 'Islas Salomón' }, { name: 'Israel' }, { name: 'Italia' },
+    { name: 'Jamaica' }, { name: 'Japón' }, { name: 'Jordania' },
+    { name: 'Kazajistán' }, { name: 'Kenia' }, { name: 'Kirguistán' },
+    { name: 'Kiribati' }, { name: 'Kuwait' }, { name: 'Laos' },
+    { name: 'Lesoto' }, { name: 'Letonia' }, { name: 'Líbano' },
+    { name: 'Liberia' }, { name: 'Libia' }, { name: 'Liechtenstein' },
+    { name: 'Lituania' }, { name: 'Luxemburgo' }, { name: 'Madagascar' },
+    { name: 'Malasia' }, { name: 'Malaui' }, { name: 'Maldivas' },
+    { name: 'Mali' }, { name: 'Malta' }, { name: 'Marruecos' },
+    { name: 'Mauricio' }, { name: 'Mauritania' }, { name: 'México' },
+    { name: 'Micronesia' }, { name: 'Moldavia' }, { name: 'Mónaco' },
+    { name: 'Mongolia' }, { name: 'Montenegro' }, { name: 'Mozambique' },
+    { name: 'Namibia' }, { name: 'Nauru' }, { name: 'Nepal' },
+    { name: 'Nicaragua' }, { name: 'Níger' }, { name: 'Nigeria' },
+    { name: 'Noruega' }, { name: 'Nueva Zelanda' }, { name: 'Omán' },
+    { name: 'Países Bajos' }, { name: 'Pakistán' }, { name: 'Palaos' },
+    { name: 'Palestina' }, { name: 'Panamá' }, { name: 'Papúa Nueva Guinea' },
+    { name: 'Paraguay' }, { name: 'Perú' }, { name: 'Polonia' },
+    { name: 'Portugal' }, { name: 'Reino Unido' }, { name: 'República Centroafricana' },
+    { name: 'República Checa' }, { name: 'República del Congo' },
+    { name: 'República Democrática del Congo' }, { name: 'República Dominicana' },
+    { name: 'Ruanda' }, { name: 'Rumania' }, { name: 'Rusia' },
+    { name: 'Samoa' }, { name: 'San Cristóbal y Nieves' }, { name: 'San Marino' },
+    { name: 'San Vicente y las Granadinas' }, { name: 'Santa Lucía' },
+    { name: 'Santo Tomé y Príncipe' }, { name: 'Senegal' }, { name: 'Serbia' },
+    { name: 'Seychelles' }, { name: 'Sierra Leona' }, { name: 'Singapur' },
+    { name: 'Siria' }, { name: 'Somalia' }, { name: 'Sri Lanka' },
+    { name: 'Sudáfrica' }, { name: 'Sudán' }, { name: 'Sudán del Sur' },
+    { name: 'Suecia' }, { name: 'Suiza' }, { name: 'Surinam' },
+    { name: 'Tailandia' }, { name: 'Tanzania' }, { name: 'Tayikistán' },
+    { name: 'Timor Oriental' }, { name: 'Togo' }, { name: 'Tonga' },
+    { name: 'Trinidad y Tobago' }, { name: 'Túnez' }, { name: 'Turkmenistán' },
+    { name: 'Turquía' }, { name: 'Tuvalu' }, { name: 'Ucrania' },
+    { name: 'Uganda' }, { name: 'Uruguay' }, { name: 'Uzbekistán' },
+    { name: 'Vanuatu' }, { name: 'Vaticano' }, { name: 'Venezuela' },
+    { name: 'Vietnam' }, { name: 'Yemen' }, { name: 'Yibuti' },
+    { name: 'Zambia' }, { name: 'Zimbabue' },
+  ];
+  await prisma.country.createMany({ data: countriesData });
+  const venezuela = await prisma.country.findUnique({ where: { name: 'Venezuela' } });
+  console.log('Países creados.');
+
+  // ── LOCATION: VENEZUELAN STATES ──
+  const statesData = [
+    { countryId: venezuela!.id, name: 'Amazonas' },
+    { countryId: venezuela!.id, name: 'Anzoátegui' },
+    { countryId: venezuela!.id, name: 'Apure' },
+    { countryId: venezuela!.id, name: 'Aragua' },
+    { countryId: venezuela!.id, name: 'Barinas' },
+    { countryId: venezuela!.id, name: 'Bolívar' },
+    { countryId: venezuela!.id, name: 'Carabobo' },
+    { countryId: venezuela!.id, name: 'Cojedes' },
+    { countryId: venezuela!.id, name: 'Delta Amacuro' },
+    { countryId: venezuela!.id, name: 'Distrito Capital' },
+    { countryId: venezuela!.id, name: 'Falcón' },
+    { countryId: venezuela!.id, name: 'Guárico' },
+    { countryId: venezuela!.id, name: 'La Guaira' },
+    { countryId: venezuela!.id, name: 'Lara' },
+    { countryId: venezuela!.id, name: 'Mérida' },
+    { countryId: venezuela!.id, name: 'Miranda' },
+    { countryId: venezuela!.id, name: 'Monagas' },
+    { countryId: venezuela!.id, name: 'Nueva Esparta' },
+    { countryId: venezuela!.id, name: 'Portuguesa' },
+    { countryId: venezuela!.id, name: 'Sucre' },
+    { countryId: venezuela!.id, name: 'Táchira' },
+    { countryId: venezuela!.id, name: 'Trujillo' },
+    { countryId: venezuela!.id, name: 'Yaracuy' },
+    { countryId: venezuela!.id, name: 'Zulia' },
+  ];
+  await prisma.state.createMany({ data: statesData });
+  const zulia = await prisma.state.findFirst({ where: { name: 'Zulia', countryId: venezuela!.id } });
+  console.log('Estados creados.');
+
+  // ── LOCATION: ZULIA MUNICIPALITIES ──
+  const municipalitiesData = [
+    { stateId: zulia!.id, name: 'Almirante Padilla' },
+    { stateId: zulia!.id, name: 'Baralt' },
+    { stateId: zulia!.id, name: 'Cabimas' },
+    { stateId: zulia!.id, name: 'Catatumbo' },
+    { stateId: zulia!.id, name: 'Colón' },
+    { stateId: zulia!.id, name: 'Francisco Javier Pulgar' },
+    { stateId: zulia!.id, name: 'Jesús Enrique Lossada' },
+    { stateId: zulia!.id, name: 'Jesús María Semprún' },
+    { stateId: zulia!.id, name: 'La Cañada de Urdaneta' },
+    { stateId: zulia!.id, name: 'Lagunillas' },
+    { stateId: zulia!.id, name: 'Machiques de Perijá' },
+    { stateId: zulia!.id, name: 'Mara' },
+    { stateId: zulia!.id, name: 'Maracaibo' },
+    { stateId: zulia!.id, name: 'Miranda' },
+    { stateId: zulia!.id, name: 'Rosario de Perijá' },
+    { stateId: zulia!.id, name: 'San Francisco' },
+    { stateId: zulia!.id, name: 'Santa Rita' },
+    { stateId: zulia!.id, name: 'Simón Bolívar' },
+    { stateId: zulia!.id, name: 'Sucre' },
+    { stateId: zulia!.id, name: 'Valmore Rodríguez' },
+  ];
+  await prisma.municipality.createMany({ data: municipalitiesData });
+  console.log('Municipios creados.');
+
+  // ── LOCATION: ZULIA PARISHES ──
+  const allMunicipalities = await prisma.municipality.findMany({
+    where: { stateId: zulia!.id },
+  });
+  const muniMap = Object.fromEntries(
+    allMunicipalities.map((m) => [m.name, m.id]),
+  );
+
+  const parishesData = [
+    // Almirante Padilla
+    { municipalityId: muniMap['Almirante Padilla'], name: 'Isla de Toas' },
+    { municipalityId: muniMap['Almirante Padilla'], name: 'Monagas' },
+    // Baralt
+    { municipalityId: muniMap['Baralt'], name: 'General Urdaneta' },
+    { municipalityId: muniMap['Baralt'], name: 'Libertador' },
+    { municipalityId: muniMap['Baralt'], name: 'Marcelino Briceño' },
+    { municipalityId: muniMap['Baralt'], name: 'Pueblo Nuevo' },
+    { municipalityId: muniMap['Baralt'], name: 'Manuel Guanipa Matos' },
+    // Cabimas
+    { municipalityId: muniMap['Cabimas'], name: 'Ambrosio' },
+    { municipalityId: muniMap['Cabimas'], name: 'Carmen Herrera' },
+    { municipalityId: muniMap['Cabimas'], name: 'Germán Ríos Linares' },
+    { municipalityId: muniMap['Cabimas'], name: 'Jorge Hernández' },
+    { municipalityId: muniMap['Cabimas'], name: 'La Rosa' },
+    { municipalityId: muniMap['Cabimas'], name: 'Punta Gorda' },
+    { municipalityId: muniMap['Cabimas'], name: 'San Benito' },
+    { municipalityId: muniMap['Cabimas'], name: 'San Juan' },
+    { municipalityId: muniMap['Cabimas'], name: 'Arístides Calvani' },
+    { municipalityId: muniMap['Cabimas'], name: 'Nueva Cabimas' },
+    // Catatumbo
+    { municipalityId: muniMap['Catatumbo'], name: 'Encontrados' },
+    { municipalityId: muniMap['Catatumbo'], name: 'Udón Pérez' },
+    // Colón
+    { municipalityId: muniMap['Colón'], name: 'San Carlos del Zulia' },
+    { municipalityId: muniMap['Colón'], name: 'Moralito' },
+    { municipalityId: muniMap['Colón'], name: 'Santa Bárbara' },
+    { municipalityId: muniMap['Colón'], name: 'Urribarrí' },
+    // Francisco Javier Pulgar
+    { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Carlos Quevedo' },
+    { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Francisco Javier Pulgar' },
+    { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Simón Rodríguez' },
+    // Jesús Enrique Lossada
+    { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'José Ramón Yépez' },
+    { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'María de los Ángeles' },
+    { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'La Concepción' },
+    { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'San José' },
+    // Jesús María Semprún
+    { municipalityId: muniMap['Jesús María Semprún'], name: 'Jesús María Semprún' },
+    { municipalityId: muniMap['Jesús María Semprún'], name: 'Barí' },
+    // La Cañada de Urdaneta
+    { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Concepción' },
+    { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Andrés Bello' },
+    { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Chiquinquirá' },
+    { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'El Carmelo' },
+    { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Potreritos' },
+    // Lagunillas
+    { municipalityId: muniMap['Lagunillas'], name: 'Alonso de Ojeda' },
+    { municipalityId: muniMap['Lagunillas'], name: 'Campo Lara' },
+    { municipalityId: muniMap['Lagunillas'], name: 'Eleazar López Contreras' },
+    { municipalityId: muniMap['Lagunillas'], name: 'Francisco Javier Pulgar' },
+    { municipalityId: muniMap['Lagunillas'], name: 'Libertad' },
+    { municipalityId: muniMap['Lagunillas'], name: 'Venezuela' },
+    // Machiques de Perijá
+    { municipalityId: muniMap['Machiques de Perijá'], name: 'Machiques' },
+    { municipalityId: muniMap['Machiques de Perijá'], name: 'Bartolomé de las Casas' },
+    { municipalityId: muniMap['Machiques de Perijá'], name: 'Libertad' },
+    { municipalityId: muniMap['Machiques de Perijá'], name: 'Río Negro' },
+    { municipalityId: muniMap['Machiques de Perijá'], name: 'San José de Perijá' },
+    // Mara
+    { municipalityId: muniMap['Mara'], name: 'Bolívar' },
+    { municipalityId: muniMap['Mara'], name: 'Guadalupe' },
+    { municipalityId: muniMap['Mara'], name: 'La Sierrita' },
+    { municipalityId: muniMap['Mara'], name: 'San Rafael' },
+    { municipalityId: muniMap['Mara'], name: 'Ricaurte' },
+    // Maracaibo
+    { municipalityId: muniMap['Maracaibo'], name: 'Antonio Borjas Romero' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Bolívar' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Cacique Mara' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Carracciolo Parra Pérez' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Cecilio Acosta' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Cristo de Aranza' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Coquivacoa' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Chiquinquirá' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Francisco Eugenio Bustamante' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Idelfonso Vásquez' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Juana de Ávila' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Luis Hurtado Higuera' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Manuel Dagnino' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Olegario Villalobos' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Raúl Leoni' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Santa Lucía' },
+    { municipalityId: muniMap['Maracaibo'], name: 'San Isidro' },
+    { municipalityId: muniMap['Maracaibo'], name: 'Venancio Pulgar' },
+    // Miranda
+    { municipalityId: muniMap['Miranda'], name: 'Alta Guajira' },
+    { municipalityId: muniMap['Miranda'], name: 'San José' },
+    { municipalityId: muniMap['Miranda'], name: 'Ana María Campos' },
+    { municipalityId: muniMap['Miranda'], name: 'Faría' },
+    { municipalityId: muniMap['Miranda'], name: 'Monagas' },
+    // Rosario de Perijá
+    { municipalityId: muniMap['Rosario de Perijá'], name: 'El Rosario' },
+    { municipalityId: muniMap['Rosario de Perijá'], name: 'Sixto Zambrano' },
+    { municipalityId: muniMap['Rosario de Perijá'], name: 'Nueva Estación' },
+    // San Francisco
+    { municipalityId: muniMap['San Francisco'], name: 'San Francisco' },
+    { municipalityId: muniMap['San Francisco'], name: 'El Bajo' },
+    { municipalityId: muniMap['San Francisco'], name: 'Domitila Flores' },
+    { municipalityId: muniMap['San Francisco'], name: 'Francisco Ochoa' },
+    { municipalityId: muniMap['San Francisco'], name: 'Los Cortijos' },
+    { municipalityId: muniMap['San Francisco'], name: 'Marcial Hernández' },
+    { municipalityId: muniMap['San Francisco'], name: 'José Domingo Rus' },
+    // Santa Rita
+    { municipalityId: muniMap['Santa Rita'], name: 'Santa Rita' },
+    { municipalityId: muniMap['Santa Rita'], name: 'El Menito' },
+    { municipalityId: muniMap['Santa Rita'], name: 'José Cenobio Urribarrí' },
+    // Simón Bolívar
+    { municipalityId: muniMap['Simón Bolívar'], name: 'Manuel Manrique' },
+    { municipalityId: muniMap['Simón Bolívar'], name: 'Rafael María Baralt' },
+    { municipalityId: muniMap['Simón Bolívar'], name: 'Miguel Isidro Niñez' },
+    // Sucre
+    { municipalityId: muniMap['Sucre'], name: 'Sucre' },
+    { municipalityId: muniMap['Sucre'], name: 'Rómulo Gallegos' },
+    { municipalityId: muniMap['Sucre'], name: 'San José' },
+    // Valmore Rodríguez
+    { municipalityId: muniMap['Valmore Rodríguez'], name: 'Rafael Urdaneta' },
+    { municipalityId: muniMap['Valmore Rodríguez'], name: 'La Victoria' },
+    { municipalityId: muniMap['Valmore Rodríguez'], name: 'Raúl Cuenca' },
+  ];
+  await prisma.parish.createMany({ data: parishesData });
+  console.log('Parroquias creadas.');
 
   // ── 2. PERSONAS ──
   const password = await bcrypt.hash('123456', 10);

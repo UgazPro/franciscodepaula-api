@@ -412,6 +412,43 @@ model ReportCard {
 }
 
 //////////////////////////////////////////////////
+// LOCATION
+//////////////////////////////////////////////////
+
+model Country {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+
+  states State[]
+}
+
+model State {
+  id        Int    @id @default(autoincrement())
+  countryId Int
+  name      String
+
+  country       Country        @relation(fields: [countryId], references: [id])
+  municipalities Municipality[]
+}
+
+model Municipality {
+  id      Int    @id @default(autoincrement())
+  stateId Int
+  name    String
+
+  state   State   @relation(fields: [stateId], references: [id])
+  parishes Parish[]
+}
+
+model Parish {
+  id             Int    @id @default(autoincrement())
+  municipalityId Int
+  name           String
+
+  municipality Municipality @relation(fields: [municipalityId], references: [id])
+}
+
+//////////////////////////////////////////////////
 // PAYMENT METHODS
 //////////////////////////////////////////////////
 

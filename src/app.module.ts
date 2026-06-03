@@ -10,6 +10,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SchoolYearModule } from './school-year/school-year.module';
 import { MainLoadModule } from './main-load/main-load.module';
+import { LocationModule } from './location/location.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MainLoadModule } from './main-load/main-load.module';
     EnrollmentModule,
     SchoolYearModule,
     MainLoadModule,
+    LocationModule,
   ],
   controllers: [AppController],
   providers: [
