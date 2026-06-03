@@ -174,6 +174,24 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
+  // CHECK IDENTIFICATION NUMBER UNIQUENESS
+  //////////////////////////////////////////////////
+  async checkIdentification(value: string, excludePersonId?: number) {
+    try {
+      const where: any = { identificationNumber: value };
+      if (excludePersonId !== undefined) {
+        where.id = { not: excludePersonId };
+      }
+      const existing = await this.prismaService.person.findFirst({ where });
+      return { exists: !!existing };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
   // GET STAFF (employees with person & role)
   //////////////////////////////////////////////////
   async getStaff() {
@@ -320,6 +338,19 @@ export class UsersService {
 
         if (!student) {
           throw new Error('Estudiante no encontrado');
+        }
+
+        // Check identification number uniqueness (exclude current person)
+        const duplicate = await this.prismaService.person.findFirst({
+          where: {
+            identificationNumber: data.identificationNumber,
+            id: { not: student.personId },
+          },
+        });
+        if (duplicate) {
+          throw new Error(
+            `La cédula "${data.identificationNumber}" ya está registrada por otro estudiante o usuario`,
+          );
         }
 
         await tx.person.update({
@@ -485,6 +516,19 @@ export class UsersService {
 
       if (!rep) {
         badResponse.message = 'Representante no encontrado';
+        return badResponse;
+      }
+
+      // Check identification number uniqueness (exclude current person)
+      const duplicate = await this.prismaService.person.findFirst({
+        where: {
+          identificationNumber: data.identificationNumber,
+          id: { not: rep.user.personId },
+        },
+      });
+      if (duplicate) {
+        badResponse.message =
+          `La cédula "${data.identificationNumber}" ya está registrada por otro estudiante o usuario`;
         return badResponse;
       }
 

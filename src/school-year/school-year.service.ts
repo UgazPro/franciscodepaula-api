@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SchoolYearDTO, SectionDTO } from './school-year.dto';
+import { CreateSchoolYearDTO, UpdateSchoolYearDTO, SectionDTO, HighSchoolLevelDTO } from './school-year.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
 
@@ -9,7 +9,18 @@ export class SchoolYearService {
 
   async getSchoolYears() {
     try {
-      const schoolYears = await this.prismaService.schoolYear.findMany();
+      const schoolYears = await this.prismaService.schoolYear.findMany({
+        include: {
+          _count: {
+            select: {
+              sections: true,
+              enrollments: true,
+              periods: true,
+            },
+          },
+        },
+        orderBy: { startDate: 'desc' },
+      });
 
       return schoolYears;
     } catch (error) {
@@ -18,17 +29,85 @@ export class SchoolYearService {
     }
   }
 
-  async createSchoolYear(data: SchoolYearDTO) {
+  async createSchoolYear(data: CreateSchoolYearDTO) {
     try {
       const schoolYear = await this.prismaService.schoolYear.create({
         data: {
           name: data.name,
           startDate: data.startDate,
           endDate: data.endDate,
+          isActive: false,
         },
       });
 
       return schoolYear;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async updateSchoolYear(id: number, data: UpdateSchoolYearDTO) {
+    try {
+      const existing = await this.prismaService.schoolYear.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Año escolar no encontrado.';
+        return badResponse;
+      }
+
+      if (data.isActive === true) {
+        await this.prismaService.schoolYear.updateMany({
+          where: { isActive: true },
+          data: { isActive: false },
+        });
+      }
+
+      const updated = await this.prismaService.schoolYear.update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.startDate !== undefined && { startDate: data.startDate }),
+          ...(data.endDate !== undefined && { endDate: data.endDate }),
+          ...(data.isActive !== undefined && { isActive: data.isActive }),
+        },
+      });
+
+      return updated;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async toggleSchoolYearActive(id: number) {
+    try {
+      const existing = await this.prismaService.schoolYear.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Año escolar no encontrado.';
+        return badResponse;
+      }
+
+      const newActive = !existing.isActive;
+
+      if (newActive) {
+        await this.prismaService.schoolYear.updateMany({
+          where: { isActive: true },
+          data: { isActive: false },
+        });
+      }
+
+      const updated = await this.prismaService.schoolYear.update({
+        where: { id },
+        data: { isActive: newActive },
+      });
+
+      return updated;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -191,6 +270,101 @@ export class SchoolYearService {
         },
       });
       return updatedSection;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async deleteSection(id: number) {
+    try {
+      const existing = await this.prismaService.section.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Sección no encontrada.';
+        return badResponse;
+      }
+
+      await this.prismaService.section.delete({
+        where: { id },
+      });
+
+      return { message: 'Sección eliminada correctamente.' };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  // High School Levels CRUD
+  async createLevel(data: HighSchoolLevelDTO) {
+    try {
+      const level = await this.prismaService.highSchoolLevel.create({
+        data: {
+          level: data.level,
+        },
+      });
+
+      return level;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async updateLevel(id: number, data: HighSchoolLevelDTO) {
+    try {
+      const existing = await this.prismaService.highSchoolLevel.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Nivel no encontrado.';
+        return badResponse;
+      }
+
+      const updated = await this.prismaService.highSchoolLevel.update({
+        where: { id },
+        data: {
+          level: data.level,
+        },
+      });
+
+      return updated;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async deleteLevel(id: number) {
+    try {
+      const existing = await this.prismaService.highSchoolLevel.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: { sections: true },
+          },
+        },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Nivel no encontrado.';
+        return badResponse;
+      }
+
+      if (existing._count.sections > 0) {
+        badResponse.message = `No se puede eliminar el nivel porque tiene ${existing._count.sections} sección(es) asociada(s). Elimínalas primero.`;
+        return badResponse;
+      }
+
+      await this.prismaService.highSchoolLevel.delete({
+        where: { id },
+      });
+
+      return { message: 'Nivel eliminado correctamente.' };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

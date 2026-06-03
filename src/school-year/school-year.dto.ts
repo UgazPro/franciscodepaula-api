@@ -1,8 +1,9 @@
 import {
-  ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsInt,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -31,7 +32,7 @@ export class SectionDTO {
   section!: string;
 }
 
-export class SchoolYearDTO {
+export class CreateSchoolYearDTO {
   @IsString()
   name!: string;
 
@@ -41,16 +42,35 @@ export class SchoolYearDTO {
   @IsDateString()
   endDate!: Date;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SchoolYearDTO)
-  periods!: SchoolYearDTO[];
+  @Type(() => PeriodDTO)
+  periods?: PeriodDTO[];
 
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => SectionDTO)
-  sections!: SectionDTO[];
+  sections?: SectionDTO[];
+}
+
+export class UpdateSchoolYearDTO {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class HighSchoolLevelDTO {

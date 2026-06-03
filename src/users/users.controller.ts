@@ -49,6 +49,18 @@ export class UsersController {
     return await this.usersService.getStaff();
   }
 
+  // Check identification number uniqueness
+  @Get('check-identification')
+  async checkIdentification(
+    @Query('value') value: string,
+    @Query('excludePersonId') excludePersonId?: string,
+  ) {
+    return await this.usersService.checkIdentification(
+      value,
+      excludePersonId ? +excludePersonId : undefined,
+    );
+  }
+
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return await this.usersService.getUserById(id);
