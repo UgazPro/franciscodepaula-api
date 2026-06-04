@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
-import { EnrollmentDTO, StudentSectionDTO, StudentRepresentativeDTO } from './enrollment.dto';
+import { EnrollmentDTO, StudentSectionDTO, StudentRepresentativeDTO, FullEnrollmentDTO } from './enrollment.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class EnrollmentService {
@@ -420,5 +421,148 @@ export class EnrollmentService {
       badResponse.message = String(error);
       return badResponse;
     }
+  }
+
+  /////////////////////////////////////////////////
+  // FULL ENROLLMENT (atomic creation)
+  /////////////////////////////////////////////////
+
+  async createFullEnrollment(data: FullEnrollmentDTO) {
+    const hashedPassword = await bcrypt.hash(data.identificationNumber, 10);
+
+    const result = await this.prismaService.$transaction(async (tx) => {
+      // 1. Validate student CI uniqueness
+      const existingStudentPerson = await tx.person.findUnique({
+        where: { identificationNumber: data.identificationNumber },
+      });
+      if (existingStudentPerson) {
+        throw new ConflictException('Ya existe una persona con esa cédula de identidad');
+      }
+
+      // 2. Create student person
+      const studentPerson = await tx.person.create({
+        data: {
+          profilePhoto: data.profilePhoto,
+          firstNames: data.firstNames,
+          lastNames: data.lastNames,
+          identificationNumber: data.identificationNumber,
+          birthDate: data.birthDate,
+          gender: data.gender,
+        },
+      });
+
+      // 3. Create student record
+      const student = await tx.student.create({
+        data: {
+          personId: studentPerson.id,
+          birthCountry: data.birthCountry,
+          state: data.state,
+          municipality: data.municipality,
+          parish: data.parish,
+          currentParish: data.currentParish,
+          previousSchool: data.previousSchool,
+          address: data.address,
+          status: true,
+          admissionDate: data.admissionDate,
+        },
+      });
+
+      // 4. Resolve representative
+      let representativeId: number;
+
+      if (data.representativeMode === 'existing') {
+        if (!data.existingRepresentativeId) {
+          throw new BadRequestException('Debe seleccionar un representante existente');
+        }
+        const rep = await tx.representative.findUnique({
+          where: { id: data.existingRepresentativeId },
+        });
+        if (!rep) {
+          throw new NotFoundException('Representante no encontrado');
+        }
+        representativeId = rep.id;
+      } else {
+        // Validate rep CI uniqueness
+        const existingRepPerson = await tx.person.findUnique({
+          where: { identificationNumber: data.representativeIdentification },
+        });
+        if (existingRepPerson) {
+          throw new ConflictException('Ya existe una persona con esa cédula de identidad para el representante');
+        }
+
+        // Create representative person
+        const repPerson = await tx.person.create({
+          data: {
+            firstNames: data.representativeFirstNames!,
+            lastNames: data.representativeLastNames!,
+            identificationNumber: data.representativeIdentification!,
+            birthDate: data.representativeBirthDate!,
+            gender: data.representativeGender,
+          },
+        });
+
+        // Find role
+        const role = await tx.role.findUnique({ where: { role: 'Representante' } });
+        if (!role) {
+          throw new BadRequestException('Rol de representante no encontrado');
+        }
+
+        // Create user
+        const repUser = await tx.user.create({
+          data: {
+            personId: repPerson.id,
+            roleId: role.id,
+            email: data.representativeEmail!,
+            password: hashedPassword,
+            phone: data.representativePhone,
+            status: true,
+          },
+        });
+
+        // Create representative
+        const representative = await tx.representative.create({
+          data: {
+            userId: repUser.id,
+            relationship: data.representativeRelation,
+            occupation: data.representativeProfession,
+          },
+        });
+
+        representativeId = representative.id;
+      }
+
+      // 5. Link student to representative
+      await tx.studentRepresentative.create({
+        data: {
+          studentId: student.id,
+          representativeId,
+        },
+      });
+
+      // 6. Create student section
+      await tx.studentSection.create({
+        data: {
+          studentId: student.id,
+          sectionId: data.sectionId,
+          enrollmentDate: data.enrollmentDate,
+          status: true,
+        },
+      });
+
+      // 7. Create enrollment
+      const enrollment = await tx.studentEnrollment.create({
+        data: {
+          studentId: student.id,
+          schoolYearId: data.schoolYearId,
+          sectionId: data.sectionId,
+          enrollmentDate: data.enrollmentDate,
+          status: false,
+        },
+      });
+
+      return { student, enrollment };
+    });
+
+    return result;
   }
 }

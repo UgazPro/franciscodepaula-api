@@ -122,6 +122,11 @@ export class UsersController {
   // REPRESENTATIVES
   //////////////////////////////////////////////////
 
+  @Get('representatives')
+  async getRepresentatives(@Query('search') search?: string) {
+    return await this.usersService.searchRepresentatives(search);
+  }
+
   @Post('representatives')
   async createRepresentative(@Body() data: RepresentativeDTO) {
     return await this.usersService.createRepresentative(data);

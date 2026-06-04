@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
-import { EnrollmentDTO, StudentSectionDTO, StudentRepresentativeDTO } from './enrollment.dto';
+import { EnrollmentDTO, StudentSectionDTO, StudentRepresentativeDTO, FullEnrollmentDTO } from './enrollment.dto';
 
 @Controller('enrollment')
 export class EnrollmentController {
@@ -18,6 +18,11 @@ export class EnrollmentController {
   /////////////////////////////////////////////////
   // ENROLLMENTS
   /////////////////////////////////////////////////
+
+  @Post('/full')
+  createFullEnrollment(@Body() dto: FullEnrollmentDTO) {
+    return this.service.createFullEnrollment(dto);
+  }
 
   @Post()
   createEnrollment(@Body() dto: EnrollmentDTO) {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSchoolYearDTO, UpdateSchoolYearDTO, SectionDTO, HighSchoolLevelDTO } from './school-year.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
@@ -133,6 +133,16 @@ export class SchoolYearService {
       badResponse.message = String(error);
       return badResponse;
     }
+  }
+
+  async getActiveSchoolYear() {
+    const sy = await this.prismaService.schoolYear.findFirst({
+      where: { isActive: true },
+    });
+    if (!sy) {
+      throw new NotFoundException('No hay un año escolar activo');
+    }
+    return sy;
   }
 
   // Periods

@@ -622,27 +622,23 @@ async function main() {
 
   // ── 9. SCHOOL YEARS ──
   const schoolYearsData = [
-    { id: 1, name: '2024-2025', startDate: new Date('2024-09-15'), endDate: new Date('2025-07-15'), isActive: false },
-    { id: 2, name: '2025-2026', startDate: new Date('2025-09-15'), endDate: new Date('2026-07-15'), isActive: true },
+    { id: 1, name: '2025-2026', startDate: new Date('2025-09-15'), endDate: new Date('2026-07-15'), isActive: true },
   ];
   await prisma.schoolYear.createMany({ data: schoolYearsData });
   console.log('Años escolares creados.');
 
   // ── 10. PERIODS ──
   const periodsData = [
-    { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2024-09-15'), endDate: new Date('2024-12-20') },
-    { id: 2, schoolYearId: 1, period: '2do Lapso', startDate: new Date('2025-01-13'), endDate: new Date('2025-04-11') },
-    { id: 3, schoolYearId: 1, period: '3er Lapso', startDate: new Date('2025-04-14'), endDate: new Date('2025-07-15') },
-    { id: 4, schoolYearId: 2, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
-    { id: 5, schoolYearId: 2, period: '2do Lapso', startDate: new Date('2026-01-12'), endDate: new Date('2026-04-10') },
-    { id: 6, schoolYearId: 2, period: '3er Lapso', startDate: new Date('2026-04-13'), endDate: new Date('2026-07-15') },
+    { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
+    { id: 2, schoolYearId: 1, period: '2do Lapso', startDate: new Date('2026-01-12'), endDate: new Date('2026-04-10') },
+    { id: 3, schoolYearId: 1, period: '3er Lapso', startDate: new Date('2026-04-13'), endDate: new Date('2026-07-15') },
   ];
   await prisma.period.createMany({ data: periodsData });
   console.log('Períodos creados.');
 
   // ── 11. SECTIONS ──
+  // Todos los niveles tienen secciones A y B
   const sectionsData = [
-    // Año escolar 2024-2025
     { id: 1, schoolYearId: 1, highSchoolLevelId: 1, section: 'A' },
     { id: 2, schoolYearId: 1, highSchoolLevelId: 1, section: 'B' },
     { id: 3, schoolYearId: 1, highSchoolLevelId: 2, section: 'A' },
@@ -653,105 +649,81 @@ async function main() {
     { id: 8, schoolYearId: 1, highSchoolLevelId: 4, section: 'B' },
     { id: 9, schoolYearId: 1, highSchoolLevelId: 5, section: 'A' },
     { id: 10, schoolYearId: 1, highSchoolLevelId: 5, section: 'B' },
-    // Año escolar 2025-2026
-    { id: 11, schoolYearId: 2, highSchoolLevelId: 1, section: 'A' },
-    { id: 12, schoolYearId: 2, highSchoolLevelId: 1, section: 'B' },
-    { id: 13, schoolYearId: 2, highSchoolLevelId: 2, section: 'A' },
-    { id: 14, schoolYearId: 2, highSchoolLevelId: 2, section: 'B' },
-    { id: 15, schoolYearId: 2, highSchoolLevelId: 3, section: 'A' },
-    { id: 16, schoolYearId: 2, highSchoolLevelId: 3, section: 'B' },
-    { id: 17, schoolYearId: 2, highSchoolLevelId: 4, section: 'A' },
-    { id: 18, schoolYearId: 2, highSchoolLevelId: 4, section: 'B' },
-    { id: 19, schoolYearId: 2, highSchoolLevelId: 5, section: 'A' },
-    { id: 20, schoolYearId: 2, highSchoolLevelId: 5, section: 'B' },
   ];
   await prisma.section.createMany({ data: sectionsData });
   console.log('Secciones creadas.');
 
   // ── 12. STUDENT SECTIONS ──
-  // Se asigna cada estudiante a una sección en el año 2024-2025
+  // Los estudiantes 1-6 (viejos) se distribuyen en 3er-5to año, los 7-12 (nuevos) en 1er-2do año
   const studentSectionsData = [
-    { studentId: 1, sectionId: 1, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 2, sectionId: 2, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 3, sectionId: 5, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 4, sectionId: 6, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 5, sectionId: 7, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 6, sectionId: 9, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 7, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 8, sectionId: 12, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 9, sectionId: 13, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 10, sectionId: 14, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 11, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 12, sectionId: 16, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 1, sectionId: 5, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 2, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 3, sectionId: 9, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 4, sectionId: 10, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 5, sectionId: 7, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 6, sectionId: 8, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 7, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 8, sectionId: 2, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 9, sectionId: 3, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 10, sectionId: 4, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 11, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 12, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
   ];
   await prisma.studentSection.createMany({ data: studentSectionsData });
   console.log('Inscripciones en secciones creadas.');
 
   // ── 13. STUDENT ENROLLMENTS ──
   const enrollmentsData = [
-    { studentId: 1, schoolYearId: 1, sectionId: 1, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 2, schoolYearId: 1, sectionId: 2, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 3, schoolYearId: 1, sectionId: 5, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 4, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 5, schoolYearId: 1, sectionId: 7, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 6, schoolYearId: 1, sectionId: 9, enrollmentDate: new Date('2024-09-15'), status: true },
-    { studentId: 7, schoolYearId: 2, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 8, schoolYearId: 2, sectionId: 12, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 9, schoolYearId: 2, sectionId: 13, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 10, schoolYearId: 2, sectionId: 14, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 11, schoolYearId: 2, sectionId: 11, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 12, schoolYearId: 2, sectionId: 16, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 1, schoolYearId: 1, sectionId: 5, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 2, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 3, schoolYearId: 1, sectionId: 9, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 4, schoolYearId: 1, sectionId: 10, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 5, schoolYearId: 1, sectionId: 7, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 6, schoolYearId: 1, sectionId: 8, enrollmentDate: new Date('2025-09-15'), status: false },
+    { studentId: 7, schoolYearId: 1, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 8, schoolYearId: 1, sectionId: 2, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 9, schoolYearId: 1, sectionId: 3, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 10, schoolYearId: 1, sectionId: 4, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 11, schoolYearId: 1, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
+    { studentId: 12, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
   ];
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
 
   // ── 14. FEES ──
   const feesData = [
-    { id: 1, name: 'Inscripción', schoolYearId: 1, value: 50, createdAt: new Date('2024-09-01') },
-    { id: 2, name: 'Mensualidad', schoolYearId: 1, value: 350, createdAt: new Date('2024-09-01') },
-    { id: 3, name: 'Inscripción', schoolYearId: 2, value: 55, createdAt: new Date('2025-09-01') },
-    { id: 4, name: 'Mensualidad', schoolYearId: 2, value: 380, createdAt: new Date('2025-09-01') },
+    { id: 1, name: 'Inscripción', schoolYearId: 1, value: 55, createdAt: new Date('2025-09-01') },
+    { id: 2, name: 'Mensualidad', schoolYearId: 1, value: 380, createdAt: new Date('2025-09-01') },
   ];
   await prisma.fee.createMany({ data: feesData });
   console.log('Aranceles creados.');
 
   // ── 14b. STUDENT FEES ──
+  // StudentFee: vincula estudiante con arancel (status=true = pagado)
   const studentFeesData = [
-    // School year 2024-2025 students (1-6)
-    { id: 1, studentId: 1, feeId: 1, status: true },
-    { id: 2, studentId: 1, feeId: 2, status: true },
-    { id: 3, studentId: 3, feeId: 1, status: true },
-    { id: 4, studentId: 3, feeId: 2, status: true },
-    { id: 5, studentId: 5, feeId: 2, status: false },
-    { id: 6, studentId: 4, feeId: 2, status: true },
-    // School year 2025-2026 students (7-12)
-    { id: 7, studentId: 7, feeId: 3, status: true },
-    { id: 8, studentId: 8, feeId: 3, status: true },
-    { id: 9, studentId: 8, feeId: 4, status: true },
-    { id: 10, studentId: 10, feeId: 3, status: true },
-    { id: 11, studentId: 10, feeId: 4, status: true },
-    { id: 12, studentId: 12, feeId: 4, status: true },
+    { id: 1, studentId: 7, feeId: 1, status: true },
+    { id: 2, studentId: 8, feeId: 1, status: true },
+    { id: 3, studentId: 8, feeId: 2, status: true },
+    { id: 4, studentId: 10, feeId: 1, status: true },
+    { id: 5, studentId: 10, feeId: 2, status: true },
+    { id: 6, studentId: 12, feeId: 2, status: true },
   ];
   await prisma.studentFee.createMany({ data: studentFeesData });
   console.log('Aranceles por estudiante creados.');
 
   // ── 15. PAYMENT METHODS ──
   const paymentMethodsData = [
-    { id: 1, type: 'Efectivo (Bs.)', active: true },
-    { id: 2, type: 'Efectivo ($)', active: true },
-    { id: 3, type: 'Transferencia', bank: 'Banco Venezuela', accountNumber: '0102-123456-7', identification: 'J-12345678-9', active: true },
-    { id: 4, type: 'Pago Móvil', phone: '0412-1234567', identification: 'V-12345678', owner: 'Colegio Francisco de Paula', active: true },
-    { id: 5, type: 'Transferencia', bank: 'Bank of America', accountNumber: '123456789', active: true },
-    { id: 6, type: 'Zelle', email: 'payments@colegio.com', owner: 'Colegio Francisco de Paula', active: true },
+    { id: 1, type: 'Efectivo', active: true },
+    { id: 2, type: 'Transferencia', active: true },
+    { id: 3, type: 'Pago Móvil', active: true },
   ];
   await prisma.paymentMethod.createMany({ data: paymentMethodsData });
   console.log('Métodos de pago creados.');
 
   // ── 16. EXCHANGE RATES ──
   const exchangesData = [
-    { id: 1, rate: 36.5, date: new Date('2024-09-15') },
-    { id: 2, rate: 42.8, date: new Date('2025-01-15') },
-    { id: 3, rate: 55.2, date: new Date('2025-05-15') },
+    { id: 1, rate: 55.2, date: new Date('2025-09-01') },
+    { id: 2, rate: 60.0, date: new Date('2025-10-01') },
   ];
   await prisma.exchange.createMany({ data: exchangesData });
   console.log('Tasas de cambio creadas.');
@@ -762,84 +734,7 @@ async function main() {
       id: 1,
       paymentMethodId: 1,
       exchangeId: 1,
-      totalAmount: 50.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2024-09-20'),
-      reference: 'REC-001',
-      payerName: 'Carmen Jiménez',
-      payerIdentification: 'V-13579246',
-      payerPhone: '0412-8888888',
-      status: true,
-    },
-    {
-      id: 2,
-      paymentMethodId: 4,
-      exchangeId: 1,
-      totalAmount: 1825.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2024-09-20'),
-      reference: 'PM-001',
-      payerName: 'Carmen Jiménez',
-      payerIdentification: 'V-13579246',
-      payerPhone: '0412-8888888',
-      status: true,
-    },
-    {
-      id: 3,
-      paymentMethodId: 2,
-      exchangeId: 2,
-      totalAmount: 100.0,
-      currency: $Enums.Currency.USD,
-      paymentDate: new Date('2025-02-10'),
-      reference: 'REC-002',
-      payerName: 'José Torrealba',
-      payerIdentification: 'V-24681357',
-      payerPhone: '0412-9999999',
-      status: true,
-    },
-    {
-      id: 4,
-      paymentMethodId: 3,
-      exchangeId: 2,
-      totalAmount: 2140.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2025-02-10'),
-      reference: 'TRF-001',
-      payerName: 'José Torrealba',
-      payerIdentification: 'V-24681357',
-      payerPhone: '0412-9999999',
-      status: true,
-    },
-    {
-      id: 5,
-      paymentMethodId: 5,
-      totalAmount: 200.0,
-      currency: $Enums.Currency.USD,
-      paymentDate: new Date('2025-04-05'),
-      reference: 'TRF-USD-001',
-      payerName: 'Carmen Jiménez',
-      payerIdentification: 'V-13579246',
-      payerPhone: '0412-8888888',
-      status: false,
-    },
-    {
-      id: 6,
-      paymentMethodId: 6,
-      totalAmount: 150.0,
-      currency: $Enums.Currency.USD,
-      paymentDate: new Date('2025-05-20'),
-      reference: 'ZLL-001',
-      payerName: 'José Torrealba',
-      payerIdentification: 'V-24681357',
-      payerPhone: '0412-9999999',
-      status: true,
-    },
-    // ——— PAGOS NUEVOS ESTUDIANTES ———
-    {
-      id: 7,
-      paymentMethodId: 1,
-      exchangeId: 3,
-      totalAmount: 45.0,
+      totalAmount: 55.0,
       currency: $Enums.Currency.VES,
       paymentDate: new Date('2025-10-01'),
       reference: 'REC-003',
@@ -849,9 +744,9 @@ async function main() {
       status: true,
     },
     {
-      id: 8,
-      paymentMethodId: 4,
-      exchangeId: 3,
+      id: 2,
+      paymentMethodId: 3,
+      exchangeId: 1,
       totalAmount: 3312.0,
       currency: $Enums.Currency.VES,
       paymentDate: new Date('2025-10-01'),
@@ -862,9 +757,9 @@ async function main() {
       status: true,
     },
     {
-      id: 9,
-      paymentMethodId: 3,
-      exchangeId: 3,
+      id: 3,
+      paymentMethodId: 2,
+      exchangeId: 1,
       totalAmount: 2208.0,
       currency: $Enums.Currency.VES,
       paymentDate: new Date('2025-10-05'),
@@ -875,8 +770,8 @@ async function main() {
       status: true,
     },
     {
-      id: 10,
-      paymentMethodId: 6,
+      id: 4,
+      paymentMethodId: 2,
       totalAmount: 100.0,
       currency: $Enums.Currency.USD,
       paymentDate: new Date('2025-10-10'),
@@ -893,23 +788,12 @@ async function main() {
   // ── 18. PAYMENT REFERENCES ──
   const paymentReferencesData = [
     { id: 1, studentFeeId: 1, paymentId: 1 },
-    { id: 2, studentFeeId: 1, paymentId: 2 },
-    { id: 3, studentFeeId: 2, paymentId: 2 },
-    { id: 4, studentFeeId: 2, paymentId: 2 },
-    { id: 5, studentFeeId: 3, paymentId: 3 },
-    { id: 6, studentFeeId: 4, paymentId: 4 },
-    { id: 7, studentFeeId: 4, paymentId: 4 },
-    { id: 8, studentFeeId: 5, paymentId: 5 },
-    { id: 9, studentFeeId: 5, paymentId: 5 },
-    { id: 10, studentFeeId: 6, paymentId: 6 },
-    { id: 11, studentFeeId: 6, paymentId: 6 },
-    { id: 12, studentFeeId: 7, paymentId: 7 },
-    { id: 13, studentFeeId: 8, paymentId: 8 },
-    { id: 14, studentFeeId: 9, paymentId: 8 },
-    { id: 15, studentFeeId: 10, paymentId: 9 },
-    { id: 16, studentFeeId: 11, paymentId: 9 },
-    { id: 17, studentFeeId: 12, paymentId: 10 },
-    { id: 18, studentFeeId: 12, paymentId: 10 },
+    { id: 2, studentFeeId: 2, paymentId: 2 },
+    { id: 3, studentFeeId: 3, paymentId: 2 },
+    { id: 4, studentFeeId: 4, paymentId: 3 },
+    { id: 5, studentFeeId: 5, paymentId: 3 },
+    { id: 6, studentFeeId: 6, paymentId: 4 },
+    { id: 7, studentFeeId: 6, paymentId: 4 },
   ];
   await prisma.paymentReference.createMany({ data: paymentReferencesData });
   console.log('Referencias de pago creadas.');

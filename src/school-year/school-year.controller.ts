@@ -40,6 +40,11 @@ export class SchoolYearController {
     return await this.schoolYearService.getSectionById(id);
   }
 
+  @Get('/active')
+  async getActiveSchoolYear() {
+    return await this.schoolYearService.getActiveSchoolYear();
+  }
+
   @Get(':id')
   async getSchoolYearById(@Param('id', ParseIntPipe) id: number) {
     return await this.schoolYearService.getSchoolYearById(id);

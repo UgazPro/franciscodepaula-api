@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { badResponse, baseResponse } from '../utilities/base.dto';
 import {
@@ -191,6 +191,59 @@ export class UsersService {
     }
   }
 
+  async searchRepresentatives(search?: string) {
+    try {
+      const where: any = {
+        user: {
+          role: { role: 'Representante' },
+        },
+      };
+
+      if (search) {
+        where.OR = [
+          { user: { person: { firstNames: { contains: search, mode: 'insensitive' } } } },
+          { user: { person: { lastNames: { contains: search, mode: 'insensitive' } } } },
+          { user: { person: { identificationNumber: { contains: search, mode: 'insensitive' } } } },
+        ];
+      }
+
+      const reps = await this.prismaService.representative.findMany({
+        where,
+        include: {
+          user: {
+            include: {
+              person: true,
+            },
+          },
+          _count: {
+            select: { students: true },
+          },
+        },
+        orderBy: { id: 'asc' },
+        take: search ? 20 : 50,
+      });
+
+      return reps.map((r) => ({
+        id: r.id,
+        relationship: r.relationship,
+        occupation: r.occupation,
+        email: r.user.email,
+        phone: r.user.phone,
+        person: {
+          id: r.user.person.id,
+          firstNames: r.user.person.firstNames,
+          lastNames: r.user.person.lastNames,
+          identificationNumber: r.user.person.identificationNumber,
+        },
+        studentCount: r._count.students,
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
+      return badResponse;
+    }
+  }
+
   //////////////////////////////////////////////////
   // GET STAFF (employees with person & role)
   //////////////////////////////////////////////////
@@ -288,6 +341,13 @@ export class UsersService {
   //////////////////////////////////////////////////
   async createStudent(data: StudentDTO) {
     try {
+      const existingPerson = await this.prismaService.person.findUnique({
+        where: { identificationNumber: data.identificationNumber },
+      });
+      if (existingPerson) {
+        throw new ConflictException('Ya existe una persona con esa cédula de identidad');
+      }
+
       const result = await this.prismaService.$transaction(async (tx) => {
         const person = await tx.person.create({
           data: {
@@ -321,8 +381,10 @@ export class UsersService {
       baseResponse.message = 'Estudiante creado correctamente';
       return result;
     } catch (error) {
-      badResponse.message = String(error);
-      return badResponse;
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(String(error));
     }
   }
 
