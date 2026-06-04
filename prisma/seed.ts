@@ -22,7 +22,7 @@ async function main() {
   console.log('Limpiando datos existentes...');
   const tables = [
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
-    'PaymentReference', 'Payment', 'Exchange', 'PaymentMethod', 'Fee',
+    'Payment', 'Exchange', 'PaymentMethod', 'Fee',
     'ReportCard', 'GradeRecord', 'Evaluation', 'TeacherSubjectSection', 'Subject',
     'StudentEnrollment', 'StudentSection', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
@@ -698,19 +698,6 @@ async function main() {
   await prisma.fee.createMany({ data: feesData });
   console.log('Aranceles creados.');
 
-  // ── 14b. STUDENT FEES ──
-  // StudentFee: vincula estudiante con arancel (status=true = pagado)
-  const studentFeesData = [
-    { id: 1, studentId: 7, feeId: 1, status: true },
-    { id: 2, studentId: 8, feeId: 1, status: true },
-    { id: 3, studentId: 8, feeId: 2, status: true },
-    { id: 4, studentId: 10, feeId: 1, status: true },
-    { id: 5, studentId: 10, feeId: 2, status: true },
-    { id: 6, studentId: 12, feeId: 2, status: true },
-  ];
-  await prisma.studentFee.createMany({ data: studentFeesData });
-  console.log('Aranceles por estudiante creados.');
-
   // ── 15. PAYMENT METHODS ──
   const paymentMethodsData = [
     { id: 1, type: 'Efectivo', active: true },
@@ -785,18 +772,18 @@ async function main() {
   await prisma.payment.createMany({ data: paymentsData });
   console.log('Pagos creados.');
 
-  // ── 18. PAYMENT REFERENCES ──
-  const paymentReferencesData = [
-    { id: 1, studentFeeId: 1, paymentId: 1 },
-    { id: 2, studentFeeId: 2, paymentId: 2 },
-    { id: 3, studentFeeId: 3, paymentId: 2 },
-    { id: 4, studentFeeId: 4, paymentId: 3 },
-    { id: 5, studentFeeId: 5, paymentId: 3 },
-    { id: 6, studentFeeId: 6, paymentId: 4 },
-    { id: 7, studentFeeId: 6, paymentId: 4 },
+  // ── 14b. STUDENT FEES ──
+  // StudentFee: vincula estudiante con arancel y pago (status=true = pagado)
+  const studentFeesData = [
+    { id: 1, studentId: 7, feeId: 1, paymentId: 1, status: true },
+    { id: 2, studentId: 8, feeId: 1, paymentId: 2, status: true },
+    { id: 3, studentId: 8, feeId: 2, paymentId: 2, status: true },
+    { id: 4, studentId: 10, feeId: 1, paymentId: 3, status: true },
+    { id: 5, studentId: 10, feeId: 2, paymentId: 3, status: true },
+    { id: 6, studentId: 12, feeId: 2, paymentId: 4, status: true },
   ];
-  await prisma.paymentReference.createMany({ data: paymentReferencesData });
-  console.log('Referencias de pago creadas.');
+  await prisma.studentFee.createMany({ data: studentFeesData });
+  console.log('Aranceles por estudiante creados.');
 
   // ── Sincronizar secuencias auto-increment ──
   const sequences = [
@@ -805,8 +792,8 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentSection_id_seq', 'StudentEnrollment_id_seq',
-    'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
-    'Payment_id_seq', 'PaymentReference_id_seq',
+    'Fee_id_seq',     'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'Payment_id_seq',
   ];
   for (const seq of sequences) {
     const table = seq.replace('_id_seq', '');

@@ -13,19 +13,14 @@ export class PaymentsService {
         include: {
           paymentMethod: true,
           exchange: true,
-          paymentReferences: {
+          studentFees: {
             include: {
-              studentFee: {
+              student: {
                 include: {
-                  student: {
-                    include: {
-                      person: true,
-                    },
-                  },
-                  fee: true,
+                  person: true,
                 },
               },
-              enrollments: true,
+              fee: true,
             },
           },
         },
@@ -44,18 +39,14 @@ export class PaymentsService {
       const payment = await this.prismaService.payment.findUnique({
         where: { id },
         include: {
-          paymentReferences: {
+          studentFees: {
             include: {
-              studentFee: {
+              student: {
                 include: {
-                  student: {
-                    include: {
-                      person: true,
-                    },
-                  },
-                  fee: true,
+                  person: true,
                 },
               },
+              fee: true,
             },
           },
         },
@@ -87,45 +78,23 @@ export class PaymentsService {
           },
         });
 
-        // Find or create StudentFee
-        let studentFee;
+        // Create StudentFee linked directly to the payment
+        let createdStudentFee;
         if (data.studentId && data.feeId) {
-          studentFee = await tx.studentFee.findUnique({
-            where: {
-              studentId_feeId: { studentId: data.studentId, feeId: data.feeId },
+          createdStudentFee = await tx.studentFee.create({
+            data: {
+              studentId: data.studentId,
+              feeId: data.feeId,
+              paymentId: payment.id,
+              status: true,
             },
           });
-
-          if (!studentFee) {
-            studentFee = await tx.studentFee.create({
-              data: {
-                studentId: data.studentId,
-                feeId: data.feeId,
-                status: false,
-              },
-            });
-          }
         }
 
-        const paymentReference = await tx.paymentReference.create({
-          data: {
-            studentFeeId: studentFee.id,
-            paymentId: payment.id,
-          },
-        });
-
-        // Mark StudentFee as paid
-        if (studentFee) {
-          await tx.studentFee.update({
-            where: { id: studentFee.id },
-            data: { status: true },
-          });
-        }
-
-        // Solo enlazar al enrollment si el fee es "Inscripción"
-        if (data.studentId && studentFee) {
+        // Link enrollment if the fee is "Inscripción"
+        if (data.studentId && createdStudentFee) {
           const feeInfo = await tx.fee.findUnique({
-            where: { id: studentFee.feeId },
+            where: { id: createdStudentFee.feeId },
           });
 
           if (feeInfo?.name === "Inscripción") {
@@ -139,7 +108,7 @@ export class PaymentsService {
             if (enrollment) {
               await tx.studentEnrollment.update({
                 where: { id: enrollment.id },
-                data: { referenceId: paymentReference.id, status: true },
+                data: { status: true },
               });
             }
           }
@@ -313,19 +282,14 @@ export class PaymentsService {
         include: {
           paymentMethod: true,
           exchange: true,
-          paymentReferences: {
+          studentFees: {
             include: {
-              studentFee: {
+              student: {
                 include: {
-                  student: {
-                    include: {
-                      person: true,
-                    },
-                  },
-                  fee: true,
+                  person: true,
                 },
               },
-              enrollments: true,
+              fee: true,
             },
           },
         },
