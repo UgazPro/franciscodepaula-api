@@ -1,7 +1,7 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
 import { Injectable } from '@nestjs/common';
-import { PaymentDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO } from './payments.dto';
+import { PaymentDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -16,6 +16,8 @@ export class PaymentsService {
     studentSearch?: string;
     representativeSearch?: string;
     morosos?: boolean;
+    studentId?: number;
+    schoolYearId?: number;
   }) {
     try {
       const where: any = {};
@@ -82,6 +84,14 @@ export class PaymentsService {
             },
           },
         });
+      }
+
+      if (filters?.studentId) {
+        studentFeeConditions.push({ studentId: filters.studentId });
+      }
+
+      if (filters?.schoolYearId) {
+        studentFeeConditions.push({ fee: { schoolYearId: filters.schoolYearId } });
       }
 
       if (filters?.morosos) {
@@ -361,12 +371,17 @@ export class PaymentsService {
   // FEES
   /////////////////////////////////////////////////
 
-  async getFees() {
+  async getFees(schoolYearId?: number) {
     try {
+      const where: any = {};
+      if (schoolYearId) where.schoolYearId = schoolYearId;
+
       const fees = await this.prismaService.fee.findMany({
+        where,
         include: {
           schoolYear: true,
         },
+        orderBy: { id: 'asc' },
       });
       return fees;
     } catch (error) {
@@ -375,19 +390,93 @@ export class PaymentsService {
     }
   }
 
+  async getFeeById(id: number) {
+    try {
+      const fee = await this.prismaService.fee.findUnique({
+        where: { id },
+        include: { schoolYear: true },
+      });
+      return fee;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
   async createFee(data: FeeDTO) {
     try {
+      const existing = await this.prismaService.fee.findFirst({
+        where: {
+          name: data.name,
+          schoolYearId: data.schoolYearId,
+        },
+      });
+
+      if (existing) {
+        return {
+          success: false,
+          message: `Ya existe un pago de "${data.name}" para este año escolar. Puedes editarlo en lugar de crearlo.`,
+        };
+      }
+
       const fee = await this.prismaService.fee.create({
         data: {
           name: data.name,
           schoolYearId: data.schoolYearId,
           value: data.value,
-          createdAt: data.createdAt,
+          createdAt: data.createdAt ?? new Date(),
           startAt: data.startAt,
           endAt: data.endAt,
         },
       });
       return { success: true, message: 'Tipo de pago creado exitosamente', data: fee };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async updateFee(id: number, data: UpdateFeeDTO) {
+    try {
+      if (data.name) {
+        const current = await this.prismaService.fee.findUnique({ where: { id } });
+        if (current) {
+          const existing = await this.prismaService.fee.findFirst({
+            where: {
+              name: data.name,
+              schoolYearId: current.schoolYearId,
+              id: { not: id },
+            },
+          });
+          if (existing) {
+            return {
+              success: false,
+              message: `Ya existe un pago de "${data.name}" para este año escolar.`,
+            };
+          }
+        }
+      }
+
+      const fee = await this.prismaService.fee.update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.value !== undefined && { value: data.value }),
+          ...(data.startAt !== undefined && { startAt: data.startAt }),
+          ...(data.endAt !== undefined && { endAt: data.endAt }),
+        },
+      });
+      return { success: true, message: 'Tipo de pago actualizado exitosamente', data: fee };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async deleteFee(id: number) {
+    try {
+      await this.prismaService.fee.delete({ where: { id } });
+      return { success: true, message: 'Tipo de pago eliminado exitosamente' };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

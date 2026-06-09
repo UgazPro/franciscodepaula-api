@@ -64,9 +64,10 @@ export class FeeDTO {
   @IsNumber()
   value!: number;
 
+  @IsOptional()
   @Transform(({ value }) => new Date(value))
   @IsDate()
-  createdAt!: Date;
+  createdAt?: Date;
 
   @Transform(({ value }) => new Date(value))
   @IsDate()
@@ -75,6 +76,26 @@ export class FeeDTO {
   @Transform(({ value }) => new Date(value))
   @IsDate()
   endAt!: Date;
+}
+
+export class UpdateFeeDTO {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsNumber()
+  value?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  startAt?: Date;
+
+  @IsOptional()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  endAt?: Date;
 }
 
 // PAYMENT

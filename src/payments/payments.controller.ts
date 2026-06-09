@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { PaymentDTO, FeeDTO } from './payments.dto';
+import { PaymentDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -58,13 +58,28 @@ export class PaymentsController {
   /////////////////////////////////////////////////
 
   @Get('/fees')
-  getFees() {
-    return this.service.getFees();
+  getFees(@Query('schoolYearId') schoolYearId?: string) {
+    return this.service.getFees(schoolYearId ? +schoolYearId : undefined);
+  }
+
+  @Get('/fees/:id')
+  getFee(@Param('id') id: string) {
+    return this.service.getFeeById(+id);
   }
 
   @Post('/fees')
   createFee(@Body() dto: FeeDTO) {
     return this.service.createFee(dto);
+  }
+
+  @Put('/fees/:id')
+  updateFee(@Param('id') id: string, @Body() dto: UpdateFeeDTO) {
+    return this.service.updateFee(+id, dto);
+  }
+
+  @Delete('/fees/:id')
+  deleteFee(@Param('id') id: string) {
+    return this.service.deleteFee(+id);
   }
 
   /////////////////////////////////////////////////
@@ -81,6 +96,8 @@ export class PaymentsController {
     @Query('studentSearch') studentSearch?: string,
     @Query('representativeSearch') representativeSearch?: string,
     @Query('morosos') morosos?: string,
+    @Query('studentId') studentId?: string,
+    @Query('schoolYearId') schoolYearId?: string,
   ) {
     return this.service.getPayments({
       ...(startDate && { startDate }),
@@ -91,6 +108,8 @@ export class PaymentsController {
       ...(studentSearch && { studentSearch }),
       ...(representativeSearch && { representativeSearch }),
       ...(morosos === 'true' && { morosos: true }),
+      ...(studentId && { studentId: Number(studentId) }),
+      ...(schoolYearId && { schoolYearId: Number(schoolYearId) }),
     });
   }
 
