@@ -11,11 +11,13 @@ import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SchoolYearModule } from './school-year/school-year.module';
 import { MainLoadModule } from './main-load/main-load.module';
 import { LocationModule } from './location/location.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     AuthModule,
     UsersModule,
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
@@ -32,7 +34,6 @@ import { LocationModule } from './location/location.module';
     PrismaService,
 
     JwtService,
-
   ],
 })
 export class AppModule {}

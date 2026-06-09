@@ -31,6 +31,15 @@ export class SchoolYearService {
 
   async createSchoolYear(data: CreateSchoolYearDTO) {
     try {
+      const existing = await this.prismaService.schoolYear.findFirst({
+        where: { name: data.name },
+      });
+
+      if (existing) {
+        badResponse.message = 'Ya existe un año escolar con ese nombre.';
+        return badResponse;
+      }
+
       const schoolYear = await this.prismaService.schoolYear.create({
         data: {
           name: data.name,
@@ -40,7 +49,7 @@ export class SchoolYearService {
         },
       });
 
-      return schoolYear;
+      return { success: true, message: 'Año escolar creado exitosamente', data: schoolYear };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -56,6 +65,17 @@ export class SchoolYearService {
       if (!existing) {
         badResponse.message = 'Año escolar no encontrado.';
         return badResponse;
+      }
+
+      if (data.name !== undefined) {
+        const duplicate = await this.prismaService.schoolYear.findFirst({
+          where: { name: data.name, NOT: { id } },
+        });
+
+        if (duplicate) {
+          badResponse.message = 'Ya existe un año escolar con ese nombre.';
+          return badResponse;
+        }
       }
 
       if (data.isActive === true) {
@@ -75,7 +95,7 @@ export class SchoolYearService {
         },
       });
 
-      return updated;
+      return { success: true, message: 'Año escolar actualizado exitosamente', data: updated };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -107,7 +127,7 @@ export class SchoolYearService {
         data: { isActive: newActive },
       });
 
-      return updated;
+      return { success: true, message: 'Estado del año escolar actualizado', data: updated };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -244,29 +264,54 @@ export class SchoolYearService {
       },
     });
 
-    if (exists) {
-      badResponse.message = 'La sección ya existe.';
-      return badResponse;
+      if (exists) {
+        badResponse.message = 'La sección ya existe.';
+        return badResponse;
+      }
+
+      const section = await this.prismaService.section.create({
+        data: {
+          schoolYearId: data.schoolYearId,
+
+          highSchoolLevelId: data.highSchoolLevelId,
+
+          section: data.section,
+        },
+
+        include: {
+          highSchoolLevel: true,
+          schoolYear: true,
+        },
+      });
+
+      return { success: true, message: 'Sección creada exitosamente', data: section };
     }
-
-    return this.prismaService.section.create({
-      data: {
-        schoolYearId: data.schoolYearId,
-
-        highSchoolLevelId: data.highSchoolLevelId,
-
-        section: data.section,
-      },
-
-      include: {
-        highSchoolLevel: true,
-        schoolYear: true,
-      },
-    });
-  }
 
   async updateSection(id: number, section: SectionDTO) {
     try {
+      const existing = await this.prismaService.section.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        badResponse.message = 'Sección no encontrada.';
+        return badResponse;
+      }
+
+      const duplicate = await this.prismaService.section.findFirst({
+        where: {
+          schoolYearId: section.schoolYearId,
+          highSchoolLevelId: section.highSchoolLevelId,
+          section: section.section,
+          NOT: { id },
+        },
+      });
+
+      if (duplicate) {
+        badResponse.message = 'La sección ya existe en este año escolar y nivel.';
+        return badResponse;
+      }
+
       const updatedSection = await this.prismaService.section.update({
         where: { id },
         data: {
@@ -279,7 +324,7 @@ export class SchoolYearService {
           schoolYear: true,
         },
       });
-      return updatedSection;
+      return { success: true, message: 'Sección actualizada exitosamente', data: updatedSection };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -301,7 +346,7 @@ export class SchoolYearService {
         where: { id },
       });
 
-      return { message: 'Sección eliminada correctamente.' };
+      return { success: true, message: 'Sección eliminada exitosamente', data: null };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -311,13 +356,22 @@ export class SchoolYearService {
   // High School Levels CRUD
   async createLevel(data: HighSchoolLevelDTO) {
     try {
+      const existing = await this.prismaService.highSchoolLevel.findFirst({
+        where: { level: data.level },
+      });
+
+      if (existing) {
+        badResponse.message = 'Ya existe un nivel con ese nombre.';
+        return badResponse;
+      }
+
       const level = await this.prismaService.highSchoolLevel.create({
         data: {
           level: data.level,
         },
       });
 
-      return level;
+      return { success: true, message: 'Nivel creado exitosamente', data: level };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -335,6 +389,15 @@ export class SchoolYearService {
         return badResponse;
       }
 
+      const duplicate = await this.prismaService.highSchoolLevel.findFirst({
+        where: { level: data.level, NOT: { id } },
+      });
+
+      if (duplicate) {
+        badResponse.message = 'Ya existe un nivel con ese nombre.';
+        return badResponse;
+      }
+
       const updated = await this.prismaService.highSchoolLevel.update({
         where: { id },
         data: {
@@ -342,7 +405,7 @@ export class SchoolYearService {
         },
       });
 
-      return updated;
+      return { success: true, message: 'Nivel actualizado exitosamente', data: updated };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -374,7 +437,7 @@ export class SchoolYearService {
         where: { id },
       });
 
-      return { message: 'Nivel eliminado correctamente.' };
+      return { success: true, message: 'Nivel eliminado exitosamente', data: null };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

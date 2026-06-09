@@ -485,6 +485,10 @@ model Fee {
 
   createdAt DateTime
 
+  startAt DateTime
+
+  endAt DateTime
+
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
   studentFees StudentFee[]

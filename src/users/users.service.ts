@@ -328,8 +328,7 @@ export class UsersService {
         return user;
       });
 
-      baseResponse.message = 'Usuario creado correctamente';
-      return result;
+      return { success: true, message: 'Usuario creado exitosamente', data: result };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -344,8 +343,9 @@ export class UsersService {
       const existingPerson = await this.prismaService.person.findUnique({
         where: { identificationNumber: data.identificationNumber },
       });
+
       if (existingPerson) {
-        throw new ConflictException('Ya existe una persona con esa cédula de identidad');
+        return { success: false, message: `La cédula "${data.identificationNumber}" ya está registrada por otro estudiante o usuario`, data: null };
       }
 
       const result = await this.prismaService.$transaction(async (tx) => {
@@ -378,8 +378,7 @@ export class UsersService {
         return student;
       });
 
-      baseResponse.message = 'Estudiante creado correctamente';
-      return result;
+      return { success: true, message: 'Estudiante creado exitosamente', data: result };
     } catch (error) {
       if (error instanceof ConflictException || error instanceof BadRequestException) {
         throw error;
@@ -450,9 +449,7 @@ export class UsersService {
         });
       });
 
-      baseResponse.data = result;
-      baseResponse.message = 'Estudiante actualizado correctamente';
-      return baseResponse;
+      return { success: true, message: 'Estudiante actualizado exitosamente', data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
@@ -501,8 +498,7 @@ export class UsersService {
         return employee;
       });
 
-      baseResponse.message = 'Empleado creado correctamente';
-      return result;
+      return { success: true, message: 'Empleado creado exitosamente', data: result };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -560,8 +556,7 @@ export class UsersService {
         return representative;
       });
 
-      baseResponse.message = 'Representante creado correctamente';
-      return result;
+      return { success: true, message: 'Representante creado exitosamente', data: result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
@@ -622,8 +617,7 @@ export class UsersService {
         },
       });
 
-      baseResponse.message = 'Representante actualizado correctamente';
-      return updated;
+      return { success: true, message: 'Representante actualizado exitosamente', data: updated };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
@@ -643,8 +637,7 @@ export class UsersService {
         data: { password: hashed },
       });
 
-      baseResponse.message = 'Contraseña actualizada correctamente';
-      return baseResponse;
+      return { success: true, message: 'Contraseña actualizada exitosamente', data: null };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -663,8 +656,7 @@ export class UsersService {
         },
       });
 
-      baseResponse.message = 'Usuario eliminado correctamente';
-      return baseResponse;
+      return { success: true, message: 'Usuario eliminado exitosamente', data: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
@@ -681,8 +673,7 @@ export class UsersService {
         },
       });
 
-      baseResponse.message = 'Estudiante eliminado correctamente';
-      return baseResponse;
+      return { success: true, message: 'Estudiante eliminado exitosamente', data: null };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;

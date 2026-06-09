@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Post,
+  Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PaymentDTO, FeeDTO } from './payments.dto';
@@ -71,8 +72,26 @@ export class PaymentsController {
   /////////////////////////////////////////////////
 
   @Get()
-  getPayments() {
-    return this.service.getPayments();
+  getPayments(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('exactDate') exactDate?: string,
+    @Query('feeId') feeId?: string,
+    @Query('paymentMethodId') paymentMethodId?: string,
+    @Query('studentSearch') studentSearch?: string,
+    @Query('representativeSearch') representativeSearch?: string,
+    @Query('morosos') morosos?: string,
+  ) {
+    return this.service.getPayments({
+      ...(startDate && { startDate }),
+      ...(endDate && { endDate }),
+      ...(exactDate && { exactDate }),
+      ...(feeId && { feeId: Number(feeId) }),
+      ...(paymentMethodId && { paymentMethodId: Number(paymentMethodId) }),
+      ...(studentSearch && { studentSearch }),
+      ...(representativeSearch && { representativeSearch }),
+      ...(morosos === 'true' && { morosos: true }),
+    });
   }
 
   @Get(':id')

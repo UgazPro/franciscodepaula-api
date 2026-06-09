@@ -67,6 +67,14 @@ export class FeeDTO {
   @Transform(({ value }) => new Date(value))
   @IsDate()
   createdAt!: Date;
+
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  startAt!: Date;
+
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  endAt!: Date;
 }
 
 // PAYMENT

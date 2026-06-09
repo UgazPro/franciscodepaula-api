@@ -9,6 +9,59 @@ const prisma = new PrismaClient({
   }),
 });
 
+// ── Helpers ──
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const maleNames = [
+  'Carlos', 'José', 'Luis', 'Jesús', 'Miguel', 'Jorge', 'Alberto', 'Rafael', 'Manuel', 'Antonio',
+  'Alejandro', 'Diego', 'Santiago', 'Mateo', 'Sebastián', 'Daniel', 'Gabriel', 'Adrián', 'Pablo', 'Samuel',
+  'Andrés', 'David', 'Ángel', 'Juan', 'Julián', 'Fernando', 'Ricardo', 'Eduardo', 'Francisco', 'Iván',
+  'Víctor', 'Héctor', 'Raúl', 'Alfredo', 'Erick', 'Leonardo', 'Marco', 'Hugo', 'Martín', 'Javier',
+  'Cristian', 'Kevin', 'Brandon', 'Pedro', 'Oscar', 'Gregorio', 'Simón', 'Fabián', 'Rubén', 'Ismael',
+];
+
+const femaleNames = [
+  'María', 'Ana', 'Carmen', 'Sofía', 'Valentina', 'Isabella', 'Gabriela', 'Laura', 'Camila', 'Daniela',
+  'Lucía', 'Paula', 'Andrea', 'Marta', 'Elena', 'Rosa', 'Patricia', 'Susana', 'Raquel', 'Liliana',
+  'Verónica', 'Yulissa', 'Francys', 'Nathaly', 'Génesis', 'Luisana', 'Mariangel', 'Oriana', 'Bárbara', 'Alejandra',
+  'Mariela', 'Lorena', 'Karina', 'Yolanda', 'Beatriz', 'Cristina', 'Diana', 'Mónica', 'Irene', 'Silvia',
+  'Natalia', 'Claudia', 'Teresa', 'Ángela', 'Gloria', 'Margarita', 'Ruth', 'Eva', 'Julia', 'Leticia',
+];
+
+const maleLastNames = [
+  'Pérez', 'García', 'Rodríguez', 'Martínez', 'Hernández', 'López', 'González', 'Rivas', 'Castillo', 'Contreras',
+  'Torres', 'Medina', 'Silva', 'Jiménez', 'Díaz', 'Mendoza', 'Rojas', 'Acosta', 'Castro', 'Ortiz',
+  'Molina', 'Álvarez', 'Peña', 'León', 'Navarro', 'Cruz', 'Reyes', 'Mejías', 'Quintero', 'Villalobos',
+  'Machado', 'Rondón', 'Colina', 'Urdaneta', 'Briceño', 'Finol', 'Baez', 'Cárdenas', 'Arias', 'Morales',
+  'Delgado', 'Tovar', 'Guedez', 'Parra', 'Suárez', 'Bravo', 'Figueroa', 'Salazar', 'Paredes', 'Ferrer',
+];
+
+const femaleLastNames = [
+  'Pérez', 'García', 'Rodríguez', 'Martínez', 'Hernández', 'López', 'González', 'Rivas', 'Castillo', 'Contreras',
+  'Torres', 'Medina', 'Silva', 'Jiménez', 'Díaz', 'Mendoza', 'Rojas', 'Acosta', 'Castro', 'Ortiz',
+  'Molina', 'Álvarez', 'Peña', 'León', 'Navarro', 'Cruz', 'Reyes', 'Mejías', 'Quintero', 'Villalobos',
+  'Machado', 'Rondón', 'Colina', 'Urdaneta', 'Briceño', 'Finol', 'Báez', 'Cárdenas', 'Arias', 'Morales',
+  'Delgado', 'Tovar', 'Guedez', 'Parra', 'Suárez', 'Bravo', 'Figueroa', 'Salazar', 'Paredes', 'Ferrer',
+];
+
+const representativeRelations = ['Madre', 'Padre', 'Representante Legal', 'Tío', 'Tía', 'Abuelo', 'Abuela', 'Hermano', 'Hermana'];
+const occupations = ['Abogado(a)', 'Ingeniero(a)', 'Médico(a)', 'Docente', 'Contador(a) Público(a)', 'Arquitecto(a)', 'Comerciante', 'Chofer', 'Enfermero(a)', 'Administrador(a)', 'Psicólogo(a)', 'Odontólogo(a)', 'Empresario(a)', 'Agricultor(a)', 'Ama de Casa'];
+
 async function main() {
   const clearOnly = process.argv.slice(2).includes('--clear-only');
 
@@ -40,19 +93,20 @@ async function main() {
   }
 
   // ── 1. ROLES ──
-  const rolesData = [
-    { id: 1, role: 'Admin' },
-    { id: 2, role: 'Director' },
-    { id: 3, role: 'Subdirector' },
-    { id: 4, role: 'Contador' },
-    { id: 5, role: 'Control de Estudios' },
-    { id: 6, role: 'Docente' },
-    { id: 7, role: 'Representante' },
-  ];
-  await prisma.role.createMany({ data: rolesData });
+  await prisma.role.createMany({
+    data: [
+      { id: 1, role: 'Admin' },
+      { id: 2, role: 'Director' },
+      { id: 3, role: 'Subdirector' },
+      { id: 4, role: 'Contador' },
+      { id: 5, role: 'Control de Estudios' },
+      { id: 6, role: 'Docente' },
+      { id: 7, role: 'Representante' },
+    ],
+  });
   console.log('Roles creados.');
 
-  // ── LOCATION: COUNTRIES ──
+  // ── LOCATION (sin cambios) ──
   const countriesData = [
     { name: 'Afganistán' }, { name: 'Albania' }, { name: 'Alemania' },
     { name: 'Andorra' }, { name: 'Angola' }, { name: 'Antigua y Barbuda' },
@@ -123,9 +177,7 @@ async function main() {
   ];
   await prisma.country.createMany({ data: countriesData });
   const venezuela = await prisma.country.findUnique({ where: { name: 'Venezuela' } });
-  console.log('Países creados.');
 
-  // ── LOCATION: VENEZUELAN STATES ──
   const statesData = [
     { countryId: venezuela!.id, name: 'Amazonas' },
     { countryId: venezuela!.id, name: 'Anzoátegui' },
@@ -154,9 +206,7 @@ async function main() {
   ];
   await prisma.state.createMany({ data: statesData });
   const zulia = await prisma.state.findFirst({ where: { name: 'Zulia', countryId: venezuela!.id } });
-  console.log('Estados creados.');
 
-  // ── LOCATION: ZULIA MUNICIPALITIES ──
   const municipalitiesData = [
     { stateId: zulia!.id, name: 'Almirante Padilla' },
     { stateId: zulia!.id, name: 'Baralt' },
@@ -180,27 +230,18 @@ async function main() {
     { stateId: zulia!.id, name: 'Valmore Rodríguez' },
   ];
   await prisma.municipality.createMany({ data: municipalitiesData });
-  console.log('Municipios creados.');
 
-  // ── LOCATION: ZULIA PARISHES ──
-  const allMunicipalities = await prisma.municipality.findMany({
-    where: { stateId: zulia!.id },
-  });
-  const muniMap = Object.fromEntries(
-    allMunicipalities.map((m) => [m.name, m.id]),
-  );
+  const allMunicipalities = await prisma.municipality.findMany({ where: { stateId: zulia!.id } });
+  const muniMap = Object.fromEntries(allMunicipalities.map((m) => [m.name, m.id]));
 
   const parishesData = [
-    // Almirante Padilla
     { municipalityId: muniMap['Almirante Padilla'], name: 'Isla de Toas' },
     { municipalityId: muniMap['Almirante Padilla'], name: 'Monagas' },
-    // Baralt
     { municipalityId: muniMap['Baralt'], name: 'General Urdaneta' },
     { municipalityId: muniMap['Baralt'], name: 'Libertador' },
     { municipalityId: muniMap['Baralt'], name: 'Marcelino Briceño' },
     { municipalityId: muniMap['Baralt'], name: 'Pueblo Nuevo' },
     { municipalityId: muniMap['Baralt'], name: 'Manuel Guanipa Matos' },
-    // Cabimas
     { municipalityId: muniMap['Cabimas'], name: 'Ambrosio' },
     { municipalityId: muniMap['Cabimas'], name: 'Carmen Herrera' },
     { municipalityId: muniMap['Cabimas'], name: 'Germán Ríos Linares' },
@@ -211,52 +252,42 @@ async function main() {
     { municipalityId: muniMap['Cabimas'], name: 'San Juan' },
     { municipalityId: muniMap['Cabimas'], name: 'Arístides Calvani' },
     { municipalityId: muniMap['Cabimas'], name: 'Nueva Cabimas' },
-    // Catatumbo
     { municipalityId: muniMap['Catatumbo'], name: 'Encontrados' },
     { municipalityId: muniMap['Catatumbo'], name: 'Udón Pérez' },
-    // Colón
     { municipalityId: muniMap['Colón'], name: 'San Carlos del Zulia' },
     { municipalityId: muniMap['Colón'], name: 'Moralito' },
     { municipalityId: muniMap['Colón'], name: 'Santa Bárbara' },
     { municipalityId: muniMap['Colón'], name: 'Urribarrí' },
-    // Francisco Javier Pulgar
     { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Carlos Quevedo' },
     { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Francisco Javier Pulgar' },
     { municipalityId: muniMap['Francisco Javier Pulgar'], name: 'Simón Rodríguez' },
-    // Jesús Enrique Lossada
     { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'José Ramón Yépez' },
     { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'María de los Ángeles' },
     { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'La Concepción' },
     { municipalityId: muniMap['Jesús Enrique Lossada'], name: 'San José' },
-    // Jesús María Semprún
     { municipalityId: muniMap['Jesús María Semprún'], name: 'Jesús María Semprún' },
     { municipalityId: muniMap['Jesús María Semprún'], name: 'Barí' },
-    // La Cañada de Urdaneta
     { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Concepción' },
     { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Andrés Bello' },
     { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Chiquinquirá' },
     { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'El Carmelo' },
     { municipalityId: muniMap['La Cañada de Urdaneta'], name: 'Potreritos' },
-    // Lagunillas
     { municipalityId: muniMap['Lagunillas'], name: 'Alonso de Ojeda' },
     { municipalityId: muniMap['Lagunillas'], name: 'Campo Lara' },
     { municipalityId: muniMap['Lagunillas'], name: 'Eleazar López Contreras' },
     { municipalityId: muniMap['Lagunillas'], name: 'Francisco Javier Pulgar' },
     { municipalityId: muniMap['Lagunillas'], name: 'Libertad' },
     { municipalityId: muniMap['Lagunillas'], name: 'Venezuela' },
-    // Machiques de Perijá
     { municipalityId: muniMap['Machiques de Perijá'], name: 'Machiques' },
     { municipalityId: muniMap['Machiques de Perijá'], name: 'Bartolomé de las Casas' },
     { municipalityId: muniMap['Machiques de Perijá'], name: 'Libertad' },
     { municipalityId: muniMap['Machiques de Perijá'], name: 'Río Negro' },
     { municipalityId: muniMap['Machiques de Perijá'], name: 'San José de Perijá' },
-    // Mara
     { municipalityId: muniMap['Mara'], name: 'Bolívar' },
     { municipalityId: muniMap['Mara'], name: 'Guadalupe' },
     { municipalityId: muniMap['Mara'], name: 'La Sierrita' },
     { municipalityId: muniMap['Mara'], name: 'San Rafael' },
     { municipalityId: muniMap['Mara'], name: 'Ricaurte' },
-    // Maracaibo
     { municipalityId: muniMap['Maracaibo'], name: 'Antonio Borjas Romero' },
     { municipalityId: muniMap['Maracaibo'], name: 'Bolívar' },
     { municipalityId: muniMap['Maracaibo'], name: 'Cacique Mara' },
@@ -275,17 +306,14 @@ async function main() {
     { municipalityId: muniMap['Maracaibo'], name: 'Santa Lucía' },
     { municipalityId: muniMap['Maracaibo'], name: 'San Isidro' },
     { municipalityId: muniMap['Maracaibo'], name: 'Venancio Pulgar' },
-    // Miranda
     { municipalityId: muniMap['Miranda'], name: 'Alta Guajira' },
     { municipalityId: muniMap['Miranda'], name: 'San José' },
     { municipalityId: muniMap['Miranda'], name: 'Ana María Campos' },
     { municipalityId: muniMap['Miranda'], name: 'Faría' },
     { municipalityId: muniMap['Miranda'], name: 'Monagas' },
-    // Rosario de Perijá
     { municipalityId: muniMap['Rosario de Perijá'], name: 'El Rosario' },
     { municipalityId: muniMap['Rosario de Perijá'], name: 'Sixto Zambrano' },
     { municipalityId: muniMap['Rosario de Perijá'], name: 'Nueva Estación' },
-    // San Francisco
     { municipalityId: muniMap['San Francisco'], name: 'San Francisco' },
     { municipalityId: muniMap['San Francisco'], name: 'El Bajo' },
     { municipalityId: muniMap['San Francisco'], name: 'Domitila Flores' },
@@ -293,352 +321,208 @@ async function main() {
     { municipalityId: muniMap['San Francisco'], name: 'Los Cortijos' },
     { municipalityId: muniMap['San Francisco'], name: 'Marcial Hernández' },
     { municipalityId: muniMap['San Francisco'], name: 'José Domingo Rus' },
-    // Santa Rita
     { municipalityId: muniMap['Santa Rita'], name: 'Santa Rita' },
     { municipalityId: muniMap['Santa Rita'], name: 'El Menito' },
     { municipalityId: muniMap['Santa Rita'], name: 'José Cenobio Urribarrí' },
-    // Simón Bolívar
     { municipalityId: muniMap['Simón Bolívar'], name: 'Manuel Manrique' },
     { municipalityId: muniMap['Simón Bolívar'], name: 'Rafael María Baralt' },
     { municipalityId: muniMap['Simón Bolívar'], name: 'Miguel Isidro Niñez' },
-    // Sucre
     { municipalityId: muniMap['Sucre'], name: 'Sucre' },
     { municipalityId: muniMap['Sucre'], name: 'Rómulo Gallegos' },
     { municipalityId: muniMap['Sucre'], name: 'San José' },
-    // Valmore Rodríguez
     { municipalityId: muniMap['Valmore Rodríguez'], name: 'Rafael Urdaneta' },
     { municipalityId: muniMap['Valmore Rodríguez'], name: 'La Victoria' },
     { municipalityId: muniMap['Valmore Rodríguez'], name: 'Raúl Cuenca' },
   ];
   await prisma.parish.createMany({ data: parishesData });
-  console.log('Parroquias creadas.');
+  console.log('Ubicaciones creadas.');
 
-  // ── 2. PERSONAS ──
   const password = await bcrypt.hash('123456', 10);
   const adminPassword = await bcrypt.hash('admin', 10);
 
-  const personsData = [
-    {
-      id: 1,
-      firstNames: 'Luisangel',
-      lastNames: 'Ugaz',
-      identificationNumber: 'V-12345678',
-      birthDate: new Date('1990-01-01'),
-      gender: 'Masculino',
-    },
-    {
-      id: 2,
-      firstNames: 'Daniela',
-      lastNames: 'Quintero',
-      identificationNumber: 'V-87654321',
-      birthDate: new Date('1985-05-15'),
-      gender: 'Femenino',
-    },
-    {
-      id: 3,
-      firstNames: 'Yujenis',
-      lastNames: 'Gonzalez',
-      identificationNumber: 'V-11223344',
-      birthDate: new Date('1982-03-20'),
-      gender: 'Masculino',
-    },
-    {
-      id: 4,
-      firstNames: 'Yorhjan',
-      lastNames: 'Fuentes',
-      identificationNumber: 'V-99887766',
-      birthDate: new Date('1988-07-10'),
-      gender: 'Masculino',
-    },
-    {
-      id: 5,
-      firstNames: 'Yasmeli',
-      lastNames: 'Villalobos',
-      identificationNumber: 'V-55443322',
-      birthDate: new Date('1992-11-25'),
-      gender: 'Femenino',
-    },
-    {
-      id: 6,
-      firstNames: 'Ana',
-      lastNames: 'García Castillo',
-      identificationNumber: 'V-66778899',
-      birthDate: new Date('1991-02-14'),
-      gender: 'Femenino',
-    },
-    {
-      id: 7,
-      firstNames: 'Pedro',
-      lastNames: 'Martínez Rivas',
-      identificationNumber: 'V-44332211',
-      birthDate: new Date('1987-09-30'),
-      gender: 'Masculino',
-    },
-    {
-      id: 8,
-      firstNames: 'Carmen',
-      lastNames: 'Jiménez Díaz',
-      identificationNumber: 'V-13579246',
-      birthDate: new Date('1980-04-18'),
-      gender: 'Femenino',
-    },
-    {
-      id: 9,
-      firstNames: 'José',
-      lastNames: 'Torrealba Campos',
-      identificationNumber: 'V-24681357',
-      birthDate: new Date('1978-08-22'),
-      gender: 'Masculino',
-    },
-    {
-      id: 10,
-      firstNames: 'Luis Miguel',
-      lastNames: 'Paredes Soto',
-      identificationNumber: 'V-31415926',
-      birthDate: new Date('2012-03-10'),
-      gender: 'Masculino',
-    },
-    {
-      id: 11,
-      firstNames: 'Valentina',
-      lastNames: 'Paredes Jiménez',
-      identificationNumber: 'V-27182818',
-      birthDate: new Date('2013-07-22'),
-      gender: 'Femenino',
-    },
-    {
-      id: 12,
-      firstNames: 'Samuel',
-      lastNames: 'Torrealba Jiménez',
-      identificationNumber: 'V-16180339',
-      birthDate: new Date('2011-11-05'),
-      gender: 'Masculino',
-    },
-    {
-      id: 13,
-      firstNames: 'Isabella',
-      lastNames: 'Torrealba Jiménez',
-      identificationNumber: 'V-14142135',
-      birthDate: new Date('2014-01-15'),
-      gender: 'Femenino',
-    },
-    {
-      id: 14,
-      firstNames: 'Diego Alejandro',
-      lastNames: 'García Rodríguez',
-      identificationNumber: 'V-17320508',
-      birthDate: new Date('2012-09-12'),
-      gender: 'Masculino',
-    },
-    {
-      id: 15,
-      firstNames: 'Camila',
-      lastNames: 'Martínez Rodríguez',
-      identificationNumber: 'V-22360679',
-      birthDate: new Date('2013-05-28'),
-      gender: 'Femenino',
-    },
-    // ——— NUEVOS ESTUDIANTES ———
-    {
-      id: 16,
-      firstNames: 'Mateo',
-      lastNames: 'Hernández Rivas',
-      identificationNumber: 'V-30102030',
-      birthDate: new Date('2013-02-14'),
-      gender: 'Masculino',
-    },
-    {
-      id: 17,
-      firstNames: 'Gabriela',
-      lastNames: 'Pérez Castillo',
-      identificationNumber: 'V-31213141',
-      birthDate: new Date('2014-06-20'),
-      gender: 'Femenino',
-    },
-    {
-      id: 18,
-      firstNames: 'Santiago',
-      lastNames: 'Castillo López',
-      identificationNumber: 'V-32223242',
-      birthDate: new Date('2012-10-05'),
-      gender: 'Masculino',
-    },
-    {
-      id: 19,
-      firstNames: 'Sofía',
-      lastNames: 'Medina Torres',
-      identificationNumber: 'V-33233343',
-      birthDate: new Date('2013-12-18'),
-      gender: 'Femenino',
-    },
-    {
-      id: 20,
-      firstNames: 'Andrés',
-      lastNames: 'Rivas Pérez',
-      identificationNumber: 'V-34243444',
-      birthDate: new Date('2014-04-25'),
-      gender: 'Masculino',
-    },
-    {
-      id: 21,
-      firstNames: 'Laura',
-      lastNames: 'Contreras Silva',
-      identificationNumber: 'V-35253545',
-      birthDate: new Date('2012-08-30'),
-      gender: 'Femenino',
-    },
-    // ——— NUEVOS REPRESENTANTES ———
-    {
-      id: 22,
-      firstNames: 'Patricia',
-      lastNames: 'Hernández de Rivas',
-      identificationNumber: 'V-19283746',
-      birthDate: new Date('1981-03-12'),
-      gender: 'Femenino',
-    },
-    {
-      id: 23,
-      firstNames: 'Ricardo',
-      lastNames: 'Pérez Castillo',
-      identificationNumber: 'V-28374651',
-      birthDate: new Date('1979-11-08'),
-      gender: 'Masculino',
-    },
-    {
-      id: 24,
-      firstNames: 'Elena',
-      lastNames: 'Medina de Torres',
-      identificationNumber: 'V-37482910',
-      birthDate: new Date('1983-07-25'),
-      gender: 'Femenino',
-    },
-    {
-      id: 25,
-      firstNames: 'Fernando',
-      lastNames: 'Contreras Silva',
-      identificationNumber: 'V-46573829',
-      birthDate: new Date('1980-05-16'),
-      gender: 'Masculino',
-    },
+  // ── 2. GENERAR 150 ESTUDIANTES ──
+  const TOTAL_STUDENTS = 150;
+  const STUDENT_PERSON_START = 7; // personId 1-6 are staff
+
+  // Generate student persons
+  const studentPersons: { id: number; firstNames: string; lastNames: string; identificationNumber: string; birthDate: Date; gender: string }[] = [];
+  const usedCIs = new Set<number>();
+
+  function generateCI(): string {
+    let ci: number;
+    do { ci = randInt(25000000, 32000000); } while (usedCIs.has(ci));
+    usedCIs.add(ci);
+    return `V-${ci}`;
+  }
+
+  for (let i = 0; i < TOTAL_STUDENTS; i++) {
+    const isMale = Math.random() < 0.5;
+    const firstNames = isMale ? pick(maleNames) : pick(femaleNames);
+    const lastNames = `${pick(isMale ? maleLastNames : femaleLastNames)} ${pick(isMale ? maleLastNames : femaleLastNames)}`;
+    const year = randInt(2008, 2014);
+    const month = randInt(1, 12);
+    const day = randInt(1, 28);
+    studentPersons.push({
+      id: STUDENT_PERSON_START + i,
+      firstNames,
+      lastNames,
+      identificationNumber: generateCI(),
+      birthDate: new Date(year, month - 1, day),
+      gender: isMale ? 'Masculino' : 'Femenino',
+    });
+  }
+
+  // Staff persons (1-6)
+  const staffPersons = [
+    { id: 1, firstNames: 'Luisangel', lastNames: 'Ugaz', identificationNumber: 'V-12345678', birthDate: new Date('1990-01-01'), gender: 'Masculino' },
+    { id: 2, firstNames: 'Daniela', lastNames: 'Quintero', identificationNumber: 'V-87654321', birthDate: new Date('1985-05-15'), gender: 'Femenino' },
+    { id: 3, firstNames: 'Yujenis', lastNames: 'Gonzalez', identificationNumber: 'V-11223344', birthDate: new Date('1982-03-20'), gender: 'Masculino' },
+    { id: 4, firstNames: 'Yorhjan', lastNames: 'Fuentes', identificationNumber: 'V-99887766', birthDate: new Date('1988-07-10'), gender: 'Masculino' },
+    { id: 5, firstNames: 'Yasmeli', lastNames: 'Villalobos', identificationNumber: 'V-55443322', birthDate: new Date('1992-11-25'), gender: 'Femenino' },
+    { id: 6, firstNames: 'Ana', lastNames: 'García Castillo', identificationNumber: 'V-66778899', birthDate: new Date('1991-02-14'), gender: 'Femenino' },
   ];
-  await prisma.person.createMany({ data: personsData });
+
+  await prisma.person.createMany({ data: [...staffPersons, ...studentPersons] });
   console.log('Personas creadas.');
 
   // ── 3. USUARIOS ──
-  const usersData = [
-    { id: 1, personId: 1, roleId: 1, email: 'admin@admin.com', password: adminPassword, phone: '0412-1111111' },
-    { id: 2, personId: 2, roleId: 2, email: 'directora@colegio.com', password, phone: '0412-2222222' },
-    { id: 3, personId: 3, roleId: 3, email: 'subdirector@colegio.com', password, phone: '0412-3333333' },
-    { id: 4, personId: 4, roleId: 4, email: 'administrador@colegio.com', password, phone: '0412-4444444' },
-    { id: 5, personId: 5, roleId: 5, email: 'control@colegio.com', password, phone: '0412-5555555' },
-    { id: 6, personId: 6, roleId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666' },
-    { id: 7, personId: 7, roleId: 6, email: 'pedro.martinez@colegio.com', password, phone: '0412-7777777' },
-    { id: 8, personId: 8, roleId: 7, email: 'carmen.jimenez@correo.com', password, phone: '0412-8888888' },
-    { id: 9, personId: 9, roleId: 7, email: 'jose.torrealba@correo.com', password, phone: '0412-9999999' },
-    { id: 10, personId: 22, roleId: 7, email: 'patricia.hernandez@correo.com', password, phone: '0412-1010101' },
-    { id: 11, personId: 23, roleId: 7, email: 'ricardo.perez@correo.com', password, phone: '0412-1111112' },
-    { id: 12, personId: 24, roleId: 7, email: 'elena.medina@correo.com', password, phone: '0412-1212123' },
-    { id: 13, personId: 25, roleId: 7, email: 'fernando.contreras@correo.com', password, phone: '0412-1313134' },
-  ];
-  await prisma.user.createMany({ data: usersData });
+  // Staff users (1-7)
+  await prisma.user.createMany({
+    data: [
+      { id: 1, personId: 1, roleId: 1, email: 'admin@admin.com', password: adminPassword, phone: '0412-1111111' },
+      { id: 2, personId: 2, roleId: 2, email: 'directora@colegio.com', password, phone: '0412-2222222' },
+      { id: 3, personId: 3, roleId: 3, email: 'subdirector@colegio.com', password, phone: '0412-3333333' },
+      { id: 4, personId: 4, roleId: 4, email: 'administrador@colegio.com', password, phone: '0412-4444444' },
+      { id: 5, personId: 5, roleId: 5, email: 'control@colegio.com', password, phone: '0412-5555555' },
+      { id: 6, personId: 6, roleId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666' },
+    ],
+  });
   console.log('Usuarios creados.');
 
   // ── 4. ESTUDIANTES ──
+  // Define groups
+  const INSCRITOS_DIA = 40;    // enrolled, status=true, with monthly payments
+  const INSCRITOS_MORA = 25;   // enrolled, status=true, only inscription paid
+  const SIN_INSCRIBIR = 50;    // enrolled, status=false, no payments
+  const INACTIVOS = 35;        // no enrollment, student.status=false
+
+  // Shuffle student person ids for varied distribution
+  const studentPersonIds = studentPersons.map(p => p.id);
+  const shuffled = shuffle(studentPersonIds);
+
+  const activeIds = shuffled.slice(0, INSCRITOS_DIA + INSCRITOS_MORA);
+  const pendingIds = shuffled.slice(INSCRITOS_DIA + INSCRITOS_MORA, INSCRITOS_DIA + INSCRITOS_MORA + SIN_INSCRIBIR);
+  const inactiveIds = shuffled.slice(INSCRITOS_DIA + INSCRITOS_MORA + SIN_INSCRIBIR);
+
   const studentsData = [
-    { personId: 10, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', currentParish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 11, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'Catedral', currentParish: 'Catedral', previousSchool: 'U.E. Simón Bolívar', address: 'Av. Principal, Los Chaguaramos, Caracas', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 12, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', currentParish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 13, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'Baruta', currentParish: 'Baruta', previousSchool: 'U.E. Los Samanes', address: 'Calle 5, Urbanización Santa Cruz, Baruta', status: true, admissionDate: new Date('2023-09-01') },
-    { personId: 14, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', currentParish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 15, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'El Recreo', currentParish: 'El Recreo', previousSchool: 'U.E. Don Bosco', address: 'Av. Andrés Bello, Edif. San José, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 16, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Petare', currentParish: 'Petare', previousSchool: 'U.E. José María Vargas', address: 'Calle 3, Petare, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 17, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Pedro', currentParish: 'San Pedro', previousSchool: 'U.E. Santo Domingo', address: 'Av. Los Ilustres, Res. Luz, Caracas', status: true, admissionDate: new Date('2024-09-01') },
-    { personId: 18, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Chacao', parish: 'Chacao', currentParish: 'Chacao', previousSchool: 'U.E. Santo Domingo', address: 'Av. Principal, Edif. Chacao, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 19, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Baruta', parish: 'El Cafetal', currentParish: 'El Cafetal', previousSchool: 'U.E. Los Pinos', address: 'Calle 8, El Cafetal, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 20, birthCountry: 'Venezuela', state: 'Distrito Capital', municipality: 'Libertador', parish: 'San Agustín', currentParish: 'San Agustín', previousSchool: 'U.E. Los Pinos', address: 'Av. San Martín, Qta. Elena, Caracas', status: true, admissionDate: new Date('2025-09-01') },
-    { personId: 21, birthCountry: 'Venezuela', state: 'Miranda', municipality: 'Sucre', parish: 'Los Dos Caminos', currentParish: 'Los Dos Caminos', previousSchool: 'U.E. San Francisco', address: 'Calle 9, Los Dos Caminos, Caracas', status: true, admissionDate: new Date('2025-09-01') },
+    ...activeIds.map(id => ({ personId: id, birthCountry: 'Venezuela', state: 'Zulia', municipality: 'Maracaibo', parish: 'Bolívar', currentParish: 'Bolívar', previousSchool: 'U.E. Anterior', address: 'Dirección de muestra', status: true, admissionDate: new Date('2025-07-01') })),
+    ...pendingIds.map(id => ({ personId: id, birthCountry: 'Venezuela', state: 'Zulia', municipality: 'Maracaibo', parish: 'Bolívar', currentParish: 'Bolívar', previousSchool: 'U.E. Anterior', address: 'Dirección de muestra', status: true, admissionDate: new Date('2025-07-01') })),
+    ...inactiveIds.map(id => ({ personId: id, birthCountry: 'Venezuela', state: 'Zulia', municipality: 'Maracaibo', parish: 'Bolívar', currentParish: 'Bolívar', previousSchool: 'U.E. Anterior', address: 'Dirección de muestra', status: false, admissionDate: new Date('2024-09-01') })),
   ];
   await prisma.student.createMany({ data: studentsData });
   console.log('Estudiantes creados.');
 
+  // Get student DB ids (1:1 mapping since we insert in order)
+  const allStudents = await prisma.student.findMany({ orderBy: { id: 'asc' } });
+  const activeStudents = allStudents.filter(s => s.status);
+
   // ── 5. REPRESENTANTES ──
-  const representativesData = [
-    { userId: 8, relationship: 'Madre', occupation: 'Abogada' },
-    { userId: 9, relationship: 'Padre', occupation: 'Ingeniero' },
-    { userId: 10, relationship: 'Madre', occupation: 'Docente' },
-    { userId: 11, relationship: 'Padre', occupation: 'Médico' },
-    { userId: 12, relationship: 'Madre', occupation: 'Contadora Pública' },
-    { userId: 13, relationship: 'Padre', occupation: 'Arquitecto' },
-  ];
-  await prisma.representative.createMany({ data: representativesData });
+  // Create ~75 representative persons + users
+  const REP_COUNT = 70;
+  const repPersonStart = STUDENT_PERSON_START + TOTAL_STUDENTS;
+
+  const repPersons: { id: number; firstNames: string; lastNames: string; identificationNumber: string; birthDate: Date; gender: string }[] = [];
+  for (let i = 0; i < REP_COUNT; i++) {
+    const isMale = Math.random() < 0.5;
+    const firstNames = isMale ? pick(maleNames) : pick(femaleNames);
+    const lastNames = `${pick(isMale ? maleLastNames : femaleLastNames)} ${pick(isMale ? maleLastNames : femaleLastNames)}`;
+    repPersons.push({
+      id: repPersonStart + i,
+      firstNames,
+      lastNames,
+      identificationNumber: generateCI(),
+      birthDate: new Date(randInt(1970, 1995), randInt(0, 11), randInt(1, 28)),
+      gender: isMale ? 'Masculino' : 'Femenino',
+    });
+  }
+  await prisma.person.createMany({ data: repPersons });
+  console.log('Personas representantes creadas.');
+
+  const repUsersData = repPersons.map((p, i) => ({
+    id: 7 + i, // user ids 7+
+    personId: p.id,
+    roleId: 7,
+    email: `representante${i + 1}@correo.com`,
+    password,
+    phone: `0412-${String(1000000 + i).slice(1)}`,
+  }));
+  await prisma.user.createMany({ data: repUsersData });
+  console.log('Usuarios representantes creados.');
+
+  const repUsers = await prisma.user.findMany({ where: { roleId: 7 }, orderBy: { id: 'asc' } });
+  const repRecords = repUsers.map((u, i) => ({
+    userId: u.id,
+    relationship: pick(representativeRelations),
+    occupation: pick(occupations),
+  }));
+  await prisma.representative.createMany({ data: repRecords });
   console.log('Representantes creados.');
 
   // ── 6. EMPLEADOS ──
-  const employeesData = [
-    { userId: 2, baseHourRate: 0, hireDate: new Date('2020-01-15') },
-    { userId: 3, baseHourRate: 0, hireDate: new Date('2021-03-01') },
-    { userId: 4, baseHourRate: 0, hireDate: new Date('2022-06-01') },
-    { userId: 5, baseHourRate: 0, hireDate: new Date('2023-09-01') },
-    { userId: 6, baseHourRate: 12.5, hireDate: new Date('2020-09-01') },
-    { userId: 7, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
-  ];
-  await prisma.employee.createMany({ data: employeesData });
+  await prisma.employee.createMany({
+    data: [
+      { userId: 2, baseHourRate: 0, hireDate: new Date('2020-01-15') },
+      { userId: 3, baseHourRate: 0, hireDate: new Date('2021-03-01') },
+      { userId: 4, baseHourRate: 0, hireDate: new Date('2022-06-01') },
+      { userId: 5, baseHourRate: 0, hireDate: new Date('2023-09-01') },
+      { userId: 6, baseHourRate: 12.5, hireDate: new Date('2020-09-01') },
+    ],
+  });
   console.log('Empleados creados.');
 
   // ── 7. STUDENT REPRESENTATIVE ──
-  // Representante 1 (Carmen) -> Luis Miguel y Valentina
-  // Representante 2 (José) -> Samuel, Isabella
-  // Ambos representan a Diego y Camila (relación múltiple)
-  const studentRepsData = [
-    { studentId: 1, representativeId: 1 },
-    { studentId: 2, representativeId: 1 },
-    { studentId: 3, representativeId: 2 },
-    { studentId: 4, representativeId: 2 },
-    { studentId: 5, representativeId: 1 },
-    { studentId: 5, representativeId: 2 },
-    { studentId: 6, representativeId: 1 },
-    { studentId: 6, representativeId: 2 },
-    // Nuevos: representantes 3-6, estudiantes 7-12
-    { studentId: 7, representativeId: 3 },
-    { studentId: 8, representativeId: 4 },
-    { studentId: 9, representativeId: 4 },
-    { studentId: 10, representativeId: 5 },
-    { studentId: 11, representativeId: 5 },
-    { studentId: 12, representativeId: 6 },
-  ];
+  const representatives = await prisma.representative.findMany({ orderBy: { id: 'asc' } });
+  const studentRepsData: { studentId: number; representativeId: number }[] = [];
+  // Distribute: each representative gets ~2 students
+  for (let i = 0; i < allStudents.length; i++) {
+    const repIdx = i % representatives.length;
+    studentRepsData.push({ studentId: allStudents[i].id, representativeId: representatives[repIdx].id });
+  }
   await prisma.studentRepresentative.createMany({ data: studentRepsData });
   console.log('Relaciones estudiante-representante creadas.');
 
   // ── 8. HIGH SCHOOL LEVELS ──
-  const levelsData = [
-    { id: 1, level: '1er Año' },
-    { id: 2, level: '2do Año' },
-    { id: 3, level: '3er Año' },
-    { id: 4, level: '4to Año' },
-    { id: 5, level: '5to Año' },
-  ];
-  await prisma.highSchoolLevel.createMany({ data: levelsData });
+  await prisma.highSchoolLevel.createMany({
+    data: [
+      { id: 1, level: '1er Año' },
+      { id: 2, level: '2do Año' },
+      { id: 3, level: '3er Año' },
+      { id: 4, level: '4to Año' },
+      { id: 5, level: '5to Año' },
+    ],
+  });
   console.log('Niveles creados.');
 
-  // ── 9. SCHOOL YEARS ──
-  const schoolYearsData = [
-    { id: 1, name: '2025-2026', startDate: new Date('2025-09-15'), endDate: new Date('2026-07-15'), isActive: true },
-  ];
-  await prisma.schoolYear.createMany({ data: schoolYearsData });
-  console.log('Años escolares creados.');
+  // ── 9. SCHOOL YEAR ──
+  await prisma.schoolYear.createMany({
+    data: [
+      { id: 1, name: '2025-2026', startDate: new Date('2025-07-01'), endDate: new Date('2026-06-30'), isActive: true },
+    ],
+  });
+  console.log('Año escolar creado.');
 
   // ── 10. PERIODS ──
-  const periodsData = [
-    { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
-    { id: 2, schoolYearId: 1, period: '2do Lapso', startDate: new Date('2026-01-12'), endDate: new Date('2026-04-10') },
-    { id: 3, schoolYearId: 1, period: '3er Lapso', startDate: new Date('2026-04-13'), endDate: new Date('2026-07-15') },
-  ];
-  await prisma.period.createMany({ data: periodsData });
+  await prisma.period.createMany({
+    data: [
+      { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
+      { id: 2, schoolYearId: 1, period: '2do Lapso', startDate: new Date('2026-01-12'), endDate: new Date('2026-04-10') },
+      { id: 3, schoolYearId: 1, period: '3er Lapso', startDate: new Date('2026-04-13'), endDate: new Date('2026-06-30') },
+    ],
+  });
   console.log('Períodos creados.');
 
   // ── 11. SECTIONS ──
-  // Todos los niveles tienen secciones A y B
-  const sectionsData = [
+  const sectionData = [
     { id: 1, schoolYearId: 1, highSchoolLevelId: 1, section: 'A' },
     { id: 2, schoolYearId: 1, highSchoolLevelId: 1, section: 'B' },
     { id: 3, schoolYearId: 1, highSchoolLevelId: 2, section: 'A' },
@@ -650,138 +534,170 @@ async function main() {
     { id: 9, schoolYearId: 1, highSchoolLevelId: 5, section: 'A' },
     { id: 10, schoolYearId: 1, highSchoolLevelId: 5, section: 'B' },
   ];
-  await prisma.section.createMany({ data: sectionsData });
+  await prisma.section.createMany({ data: sectionData });
   console.log('Secciones creadas.');
 
-  // ── 12. STUDENT SECTIONS ──
-  // Los estudiantes 1-6 (viejos) se distribuyen en 3er-5to año, los 7-12 (nuevos) en 1er-2do año
-  const studentSectionsData = [
-    { studentId: 1, sectionId: 5, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 2, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 3, sectionId: 9, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 4, sectionId: 10, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 5, sectionId: 7, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 6, sectionId: 8, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 7, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 8, sectionId: 2, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 9, sectionId: 3, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 10, sectionId: 4, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 11, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 12, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
-  ];
+  const sections = await prisma.section.findMany({ orderBy: { id: 'asc' } });
+
+  // ── 12. STUDENT SECTIONS + 13. STUDENT ENROLLMENTS ──
+  // Only active students (INSCRITOS_DIA + INSCRITOS_MORA + SIN_INSCRIBIR = 115)
+  const studentsWithEnrollment = allStudents.filter(s => s.status); // 115
+
+  const studentSectionsData: { studentId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
+  const enrollmentsData: { studentId: number; schoolYearId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
+
+  // Distribute evenly across 10 sections
+  for (let i = 0; i < studentsWithEnrollment.length; i++) {
+    const sectionIdx = i % sections.length;
+    const section = sections[sectionIdx];
+    // First INSCRITOS_DIA + INSCRITOS_MORA have enrollment.status = true
+    const isEnrolled = i < (INSCRITOS_DIA + INSCRITOS_MORA);
+    studentSectionsData.push({
+      studentId: studentsWithEnrollment[i].id,
+      sectionId: section.id,
+      enrollmentDate: new Date('2025-09-15'),
+      status: true,
+    });
+    enrollmentsData.push({
+      studentId: studentsWithEnrollment[i].id,
+      schoolYearId: 1,
+      sectionId: section.id,
+      enrollmentDate: new Date('2025-09-15'),
+      status: isEnrolled,
+    });
+  }
   await prisma.studentSection.createMany({ data: studentSectionsData });
   console.log('Inscripciones en secciones creadas.');
 
-  // ── 13. STUDENT ENROLLMENTS ──
-  const enrollmentsData = [
-    { studentId: 1, schoolYearId: 1, sectionId: 5, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 2, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 3, schoolYearId: 1, sectionId: 9, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 4, schoolYearId: 1, sectionId: 10, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 5, schoolYearId: 1, sectionId: 7, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 6, schoolYearId: 1, sectionId: 8, enrollmentDate: new Date('2025-09-15'), status: false },
-    { studentId: 7, schoolYearId: 1, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 8, schoolYearId: 1, sectionId: 2, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 9, schoolYearId: 1, sectionId: 3, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 10, schoolYearId: 1, sectionId: 4, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 11, schoolYearId: 1, sectionId: 1, enrollmentDate: new Date('2025-09-15'), status: true },
-    { studentId: 12, schoolYearId: 1, sectionId: 6, enrollmentDate: new Date('2025-09-15'), status: true },
-  ];
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
 
-  // ── 14. FEES ──
-  const feesData = [
-    { id: 1, name: 'Inscripción', schoolYearId: 1, value: 55, createdAt: new Date('2025-09-01') },
-    { id: 2, name: 'Mensualidad', schoolYearId: 1, value: 380, createdAt: new Date('2025-09-01') },
+  // ── 14. FEES (11 tipos) ──
+  const months = [
+    { name: 'Inscripción', value: 55, startAt: new Date('2025-07-01'), endAt: new Date('2025-10-31') },
+    { name: 'Septiembre', value: 380, startAt: new Date('2025-09-01'), endAt: new Date('2025-09-30') },
+    { name: 'Octubre', value: 380, startAt: new Date('2025-10-01'), endAt: new Date('2025-10-31') },
+    { name: 'Noviembre', value: 380, startAt: new Date('2025-11-01'), endAt: new Date('2025-11-30') },
+    { name: 'Diciembre', value: 380, startAt: new Date('2025-12-01'), endAt: new Date('2025-12-31') },
+    { name: 'Enero', value: 380, startAt: new Date('2026-01-01'), endAt: new Date('2026-01-31') },
+    { name: 'Febrero', value: 380, startAt: new Date('2026-02-01'), endAt: new Date('2026-02-28') },
+    { name: 'Marzo', value: 380, startAt: new Date('2026-03-01'), endAt: new Date('2026-03-31') },
+    { name: 'Abril', value: 380, startAt: new Date('2026-04-01'), endAt: new Date('2026-04-30') },
+    { name: 'Mayo', value: 380, startAt: new Date('2026-05-01'), endAt: new Date('2026-05-31') },
+    { name: 'Junio', value: 380, startAt: new Date('2026-06-01'), endAt: new Date('2026-06-30') },
   ];
+
+  const feesData = months.map((m, i) => ({
+    id: i + 1,
+    name: m.name,
+    schoolYearId: 1,
+    value: m.value,
+    createdAt: new Date('2025-07-01'),
+    startAt: m.startAt,
+    endAt: m.endAt,
+  }));
   await prisma.fee.createMany({ data: feesData });
   console.log('Aranceles creados.');
 
   // ── 15. PAYMENT METHODS ──
-  const paymentMethodsData = [
-    { id: 1, type: 'Efectivo', active: true },
-    { id: 2, type: 'Transferencia', active: true },
-    { id: 3, type: 'Pago Móvil', active: true },
-  ];
-  await prisma.paymentMethod.createMany({ data: paymentMethodsData });
+  await prisma.paymentMethod.createMany({
+    data: [
+      { id: 1, type: 'Efectivo', active: true },
+      { id: 2, type: 'Transferencia', active: true },
+      { id: 3, type: 'Pago Móvil', active: true },
+    ],
+  });
   console.log('Métodos de pago creados.');
 
   // ── 16. EXCHANGE RATES ──
-  const exchangesData = [
-    { id: 1, rate: 55.2, date: new Date('2025-09-01') },
-    { id: 2, rate: 60.0, date: new Date('2025-10-01') },
-  ];
-  await prisma.exchange.createMany({ data: exchangesData });
+  await prisma.exchange.createMany({
+    data: [
+      { id: 1, rate: 55.2, date: new Date('2025-09-01') },
+      { id: 2, rate: 60.0, date: new Date('2025-10-01') },
+    ],
+  });
   console.log('Tasas de cambio creadas.');
 
-  // ── 17. PAYMENTS ──
-  const paymentsData = [
-    {
-      id: 1,
-      paymentMethodId: 1,
-      exchangeId: 1,
-      totalAmount: 55.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2025-10-01'),
-      reference: 'REC-003',
-      payerName: 'Patricia Hernández de Rivas',
-      payerIdentification: 'V-19283746',
-      payerPhone: '0412-1010101',
+  // ── 17. PAYMENTS + STUDENT FEES ──
+  // Students with active enrollment: first 65 (40 al día + 25 morosos)
+  const enrolledStudents = studentsWithEnrollment.slice(0, INSCRITOS_DIA + INSCRITOS_MORA);
+  const alDiaStudents = studentsWithEnrollment.slice(0, INSCRITOS_DIA);
+  const morososStudents = studentsWithEnrollment.slice(INSCRITOS_DIA, INSCRITOS_DIA + INSCRITOS_MORA);
+
+  const paymentMethods = [1, 2, 3];
+  let paymentId = 0;
+  let studentFeeId = 0;
+  const paymentsData: any[] = [];
+  const studentFeesData: { id: number; studentId: number; feeId: number; paymentId: number; status: boolean }[] = [];
+
+  function addPayment(student: typeof enrolledStudents[0], feeId: number, payerName: string, payerId: string) {
+    paymentId++;
+    const pm = pick(paymentMethods);
+    const currency = pm === 1 ? $Enums.Currency.VES : pick([$Enums.Currency.VES, $Enums.Currency.USD]);
+    const totalAmount = currency === $Enums.Currency.USD ? 10 : (feeId === 1 ? 55 : 380);
+
+    paymentsData.push({
+      id: paymentId,
+      paymentMethodId: pm,
+      exchangeId: currency === $Enums.Currency.VES ? pick([1, 2]) : null,
+      totalAmount,
+      currency,
+      paymentDate: new Date(2025, pick([8, 9, 10]), randInt(1, 28)),
+      reference: `REF-${String(paymentId).padStart(3, '0')}`,
+      payerName,
+      payerIdentification: payerId,
+      payerPhone: `0412-${String(1000000 + paymentId).slice(1)}`,
       status: true,
-    },
-    {
-      id: 2,
-      paymentMethodId: 3,
-      exchangeId: 1,
-      totalAmount: 3312.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2025-10-01'),
-      reference: 'PM-002',
-      payerName: 'Ricardo Pérez Castillo',
-      payerIdentification: 'V-28374651',
-      payerPhone: '0412-1111112',
+    });
+
+    studentFeeId++;
+    studentFeesData.push({
+      id: studentFeeId,
+      studentId: student.id,
+      feeId,
+      paymentId,
       status: true,
-    },
-    {
-      id: 3,
-      paymentMethodId: 2,
-      exchangeId: 1,
-      totalAmount: 2208.0,
-      currency: $Enums.Currency.VES,
-      paymentDate: new Date('2025-10-05'),
-      reference: 'TRF-002',
-      payerName: 'Elena Medina de Torres',
-      payerIdentification: 'V-37482910',
-      payerPhone: '0412-1212123',
-      status: true,
-    },
-    {
-      id: 4,
-      paymentMethodId: 2,
-      totalAmount: 100.0,
-      currency: $Enums.Currency.USD,
-      paymentDate: new Date('2025-10-10'),
-      reference: 'ZLL-002',
-      payerName: 'Fernando Contreras Silva',
-      payerIdentification: 'V-46573829',
-      payerPhone: '0412-1313134',
-      status: true,
-    },
-  ];
+    });
+  }
+
+  // Get a representative name for each student
+  // We'll use the first representative of each student
+  const repMap = new Map<number, { name: string; id: string }>();
+  for (const sr of studentRepsData) {
+    if (!repMap.has(sr.studentId)) {
+      const rep = representatives.find(r => r.id === sr.representativeId);
+      if (rep) {
+        const repPerson = repPersons.find(p => p.id === repUsers.find(u => u.id === rep.userId)?.personId);
+        if (repPerson) {
+          repMap.set(sr.studentId, {
+            name: `${repPerson.firstNames} ${repPerson.lastNames}`,
+            id: repPerson.identificationNumber,
+          });
+        }
+      }
+    }
+  }
+
+  // Inscripción payments for ALL 65 enrolled students
+  for (const student of enrolledStudents) {
+    const rep = repMap.get(student.id) || { name: 'Representante', id: 'V-00000000' };
+    addPayment(student, 1, rep.name, rep.id);
+  }
+
+  // Monthly payments for the 40 "al día" students
+  const monthlyFeeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; // Sep-Jun
+  for (const student of alDiaStudents) {
+    // Each "al día" student has paid between 3 and 6 random months
+    const paidMonths = shuffle(monthlyFeeIds).slice(0, randInt(3, 6));
+    const rep = repMap.get(student.id) || { name: 'Representante', id: 'V-00000000' };
+    for (const feeId of paidMonths) {
+      addPayment(student, feeId, rep.name, rep.id);
+    }
+  }
+
   await prisma.payment.createMany({ data: paymentsData });
   console.log('Pagos creados.');
 
-  // ── 14b. STUDENT FEES ──
-  // StudentFee: vincula estudiante con arancel y pago (status=true = pagado)
-  const studentFeesData = [
-    { id: 1, studentId: 7, feeId: 1, paymentId: 1, status: true },
-    { id: 2, studentId: 8, feeId: 1, paymentId: 2, status: true },
-    { id: 3, studentId: 8, feeId: 2, paymentId: 2, status: true },
-    { id: 4, studentId: 10, feeId: 1, paymentId: 3, status: true },
-    { id: 5, studentId: 10, feeId: 2, paymentId: 3, status: true },
-    { id: 6, studentId: 12, feeId: 2, paymentId: 4, status: true },
-  ];
   await prisma.studentFee.createMany({ data: studentFeesData });
   console.log('Aranceles por estudiante creados.');
 
@@ -792,7 +708,7 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentSection_id_seq', 'StudentEnrollment_id_seq',
-    'Fee_id_seq',     'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];
   for (const seq of sequences) {

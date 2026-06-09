@@ -28,7 +28,7 @@ export class AuthService {
       });
 
       if (!findUser) {
-        badResponse.message = 'Usuario o contraseña incorrectos';
+        badResponse.message = 'Usuario no registrado';
         return badResponse;
       }
 
@@ -36,8 +36,9 @@ export class AuthService {
         credentials.password,
         findUser.password,
       );
+
       if (!isValid) {
-        badResponse.message = 'Usuario o contraseña incorrectos';
+        badResponse.message = 'Contraseña incorrecta';
         return badResponse;
       }
 

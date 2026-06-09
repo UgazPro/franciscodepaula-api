@@ -128,7 +128,7 @@ export class EnrollmentService {
         },
       });
 
-      return enrollment;
+      return { success: true, message: 'Inscripción creada exitosamente', data: enrollment };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -169,7 +169,7 @@ export class EnrollmentService {
         },
       });
 
-      return enrollment;
+      return { success: true, message: 'Matrícula actualizada exitosamente', data: enrollment };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -260,7 +260,7 @@ export class EnrollmentService {
         },
       });
 
-      return studentSection;
+      return { success: true, message: 'Sección asignada exitosamente', data: studentSection };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -300,7 +300,7 @@ export class EnrollmentService {
         },
       });
 
-      return studentSection;
+      return { success: true, message: 'Sección actualizada exitosamente', data: studentSection };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -391,7 +391,7 @@ export class EnrollmentService {
         },
       });
 
-      return relation;
+      return { success: true, message: 'Representante asignado exitosamente', data: relation };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -416,7 +416,7 @@ export class EnrollmentService {
         where: { id: relation.id },
       });
 
-      return { message: 'Representante removido correctamente', success: true };
+      return { success: true, message: 'Representante removido exitosamente', data: null };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -563,6 +563,6 @@ export class EnrollmentService {
       return { student, enrollment };
     });
 
-    return result;
+    return { success: true, message: 'Matrícula creada exitosamente', data: result };
   }
 }
