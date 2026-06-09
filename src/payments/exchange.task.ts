@@ -8,7 +8,7 @@ export class ExchangeTask {
 
   constructor(private readonly prismaService: PrismaService) {}
 
-  @Cron('0 */2 * * *')
+  @Cron('5 16 * * *')
   async syncDolarRate() {
     try {
       const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
