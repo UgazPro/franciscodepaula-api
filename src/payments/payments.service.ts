@@ -343,7 +343,7 @@ export class PaymentsService {
   async getExchangeRates() {
     try {
       const rates = await this.prismaService.exchange.findMany({
-        orderBy: { date: 'desc' },
+        orderBy: { id: 'desc' },
       });
       return rates;
     } catch (error) {

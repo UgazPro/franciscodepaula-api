@@ -9,7 +9,6 @@ import { UsersModule } from './users/users.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SchoolYearModule } from './school-year/school-year.module';
-import { MainLoadModule } from './main-load/main-load.module';
 import { LocationModule } from './location/location.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -25,7 +24,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     PaymentsModule,
     EnrollmentModule,
     SchoolYearModule,
-    MainLoadModule,
     LocationModule,
   ],
   controllers: [AppController],
