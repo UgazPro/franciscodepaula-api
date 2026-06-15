@@ -160,6 +160,81 @@ export class PaymentsService {
     }
   }
 
+  async getStudentsWithDebts() {
+    try {
+      const students = await this.prismaService.student.findMany({
+        where: { status: true },
+        include: {
+          person: true,
+          enrollments: {
+            include: {
+              schoolYear: {
+                include: {
+                  fees: true,
+                },
+              },
+              section: {
+                include: {
+                  highSchoolLevel: true,
+                },
+              },
+            },
+          },
+          representatives: {
+            include: {
+              representative: {
+                include: {
+                  user: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          studentFees: {
+            where: { status: true },
+            select: { feeId: true },
+          },
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      const result = students
+        .filter((student) => {
+          const allFeeIds = new Set<number>();
+          for (const enrollment of student.enrollments) {
+            for (const fee of enrollment.schoolYear.fees) {
+              allFeeIds.add(fee.id);
+            }
+          }
+
+          if (allFeeIds.size === 0) return false;
+
+          const paidFeeIds = new Set(student.studentFees.map((sf) => sf.feeId));
+
+          for (const feeId of allFeeIds) {
+            if (!paidFeeIds.has(feeId)) return true;
+          }
+
+          return false;
+        })
+        .map((student) => ({
+          ...student,
+          paidFeeIds: [
+            ...new Set(student.studentFees.map((sf) => sf.feeId)),
+          ],
+          studentFees: undefined,
+        }));
+
+      return result;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
   async getPaymentById(id: number) {
     try {
       const payment = await this.prismaService.payment.findUnique({
