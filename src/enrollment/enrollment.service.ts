@@ -523,7 +523,6 @@ export class EnrollmentService {
         const representative = await tx.representative.create({
           data: {
             userId: repUser.id,
-            relationship: data.representativeRelation,
             occupation: data.representativeProfession,
           },
         });
@@ -536,6 +535,8 @@ export class EnrollmentService {
         data: {
           studentId: student.id,
           representativeId,
+          relationship: data.representativeRelation,
+          isPrimary: true,
         },
       });
 

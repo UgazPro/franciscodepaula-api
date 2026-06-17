@@ -5,7 +5,8 @@ import {
   UserDTO,
   StudentDTO,
   EmployeeDTO,
-  RepresentativeDTO,
+  CreateRepresentativeDTO,
+  UpdateRepresentativeDTO,
   UserPassword,
 } from './users.dto';
 import * as bcrypt from 'bcryptjs';
@@ -191,13 +192,17 @@ export class UsersService {
     }
   }
 
-  async searchRepresentatives(search?: string) {
+  async searchRepresentatives(search?: string, view?: string, minStudents?: number) {
     try {
       const where: any = {
         user: {
           role: { role: 'Representante' },
         },
       };
+
+      if (view === 'active') {
+        where.user.status = true;
+      }
 
       const reps = await this.prismaService.representative.findMany({
         where,
@@ -212,14 +217,14 @@ export class UsersService {
           },
         },
         orderBy: { id: 'asc' },
-        take: search ? 20 : 50,
+        take: search ? 20 : 200,
       });
 
       const normalizedQuery = search
         ? search.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
         : '';
 
-      const filtered = search
+      let filtered = search
         ? reps.filter((r) => {
             const fn = (r.user.person.firstNames ?? '')
               .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -231,9 +236,12 @@ export class UsersService {
           })
         : reps;
 
+      if (minStudents !== undefined) {
+        filtered = filtered.filter((r) => r._count.students >= minStudents);
+      }
+
       return filtered.map((r) => ({
         id: r.id,
-        relationship: r.relationship,
         occupation: r.occupation,
         email: r.user.email,
         phone: r.user.phone,
@@ -244,6 +252,7 @@ export class UsersService {
           identificationNumber: r.user.person.identificationNumber,
         },
         studentCount: r._count.students,
+        status: r.user.status,
       }));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -263,7 +272,6 @@ export class UsersService {
       if (!trimmed) return [];
 
       const persons = await this.prismaService.person.findMany({
-        take: 200,
         include: {
           student: true,
           user: {
@@ -301,6 +309,7 @@ export class UsersService {
             return {
               id: person.student.id,
               type: 'student',
+              studentStatus: person.student.status,
               person: {
                 id: person.id,
                 firstNames: person.firstNames,
@@ -331,9 +340,7 @@ export class UsersService {
         })
         .filter(Boolean);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      badResponse.message = message;
-      return badResponse;
+      return [];
     }
   }
 
@@ -599,21 +606,27 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
-  // CREATE REPRESENTATIVE
+  // CREATE REPRESENTATIVE (must link to a student)
   //////////////////////////////////////////////////
-  async createRepresentative(data: RepresentativeDTO) {
+  async createRepresentative(data: CreateRepresentativeDTO) {
     try {
-      const passwordSource = data.studentIdentification || data.identificationNumber;
-      const hashedPassword = await bcrypt.hash(passwordSource, 10);
+      const hashedPassword = await bcrypt.hash(data.identificationNumber, 10);
 
       const result = await this.prismaService.$transaction(async (tx) => {
+        // Verify student exists
+        const student = await tx.student.findUnique({
+          where: { id: data.studentId },
+          include: { representatives: { include: { representative: true } } },
+        });
+        if (!student) {
+          throw new BadRequestException('Estudiante no encontrado');
+        }
+
         const role = await tx.role.findUnique({
           where: { role: 'Representante' },
         });
-
         if (!role) {
-          badResponse.message = 'Rol de representante no encontrado';
-          return badResponse;
+          throw new BadRequestException('Rol de representante no encontrado');
         }
 
         const person = await tx.person.create({
@@ -641,8 +654,18 @@ export class UsersService {
         const representative = await tx.representative.create({
           data: {
             userId: user.id,
-            relationship: data.relationship,
             occupation: data.occupation,
+          },
+        });
+
+        // Determine isPrimary: true only if student has no primary rep yet
+        const hasPrimary = student.representatives.some((sr) => sr.isPrimary === true);
+        await tx.studentRepresentative.create({
+          data: {
+            studentId: data.studentId,
+            representativeId: representative.id,
+            relationship: data.relationship,
+            isPrimary: !hasPrimary,
           },
         });
 
@@ -657,7 +680,7 @@ export class UsersService {
     }
   }
 
-  async updateRepresentative(id: number, data: RepresentativeDTO) {
+  async updateRepresentative(id: number, data: UpdateRepresentativeDTO) {
     try {
       const rep = await this.prismaService.representative.findUnique({
         where: { id },
@@ -705,7 +728,6 @@ export class UsersService {
       const updated = await this.prismaService.representative.update({
         where: { id },
         data: {
-          relationship: data.relationship,
           occupation: data.occupation,
         },
       });

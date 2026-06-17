@@ -103,9 +103,9 @@ export class StudentDTO extends PersonDTO {
 }
 
 //////////////////////////////////////////////////
-// REPRESENTATIVE DTO
+// CREATE REPRESENTATIVE DTO (requires student link)
 //////////////////////////////////////////////////
-export class RepresentativeDTO extends PersonDTO {
+export class CreateRepresentativeDTO extends PersonDTO {
   @IsEmail()
   email!: string;
 
@@ -115,15 +115,29 @@ export class RepresentativeDTO extends PersonDTO {
 
   @IsOptional()
   @IsString()
+  occupation!: string;
+
+  @IsNumber()
+  studentId!: number;
+
+  @IsString()
   relationship!: string;
+}
+
+//////////////////////////////////////////////////
+// UPDATE REPRESENTATIVE DTO (only person data)
+//////////////////////////////////////////////////
+export class UpdateRepresentativeDTO extends PersonDTO {
+  @IsEmail()
+  email!: string;
+
+  @IsOptional()
+  @IsString()
+  phone!: string;
 
   @IsOptional()
   @IsString()
   occupation!: string;
-
-  @IsOptional()
-  @IsString()
-  studentIdentification?: string;
 }
 
 //////////////////////////////////////////////////

@@ -4,7 +4,8 @@ import {
   UserDTO,
   StudentDTO,
   EmployeeDTO,
-  RepresentativeDTO,
+  CreateRepresentativeDTO,
+  UpdateRepresentativeDTO,
   UserPassword,
 } from './users.dto';
 
@@ -66,6 +67,36 @@ export class UsersController {
     return await this.usersService.searchPersons(q);
   }
 
+  //////////////////////////////////////////////////
+  // REPRESENTATIVES
+  //////////////////////////////////////////////////
+
+  @Get('representatives')
+  async getRepresentatives(
+    @Query('search') search?: string,
+    @Query('view') view?: string,
+    @Query('minStudents') minStudents?: string,
+  ) {
+    return await this.usersService.searchRepresentatives(
+      search,
+      view,
+      minStudents ? +minStudents : undefined,
+    );
+  }
+
+  @Post('representatives')
+  async createRepresentative(@Body() data: CreateRepresentativeDTO) {
+    return await this.usersService.createRepresentative(data);
+  }
+
+  @Put('representatives/:id')
+  async updateRepresentative(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateRepresentativeDTO,
+  ) {
+    return await this.usersService.updateRepresentative(id, data);
+  }
+
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return await this.usersService.getUserById(id);
@@ -121,27 +152,5 @@ export class UsersController {
   @Post('employees')
   async createEmployee(@Body() data: EmployeeDTO) {
     return await this.usersService.createEmployee(data);
-  }
-
-  //////////////////////////////////////////////////
-  // REPRESENTATIVES
-  //////////////////////////////////////////////////
-
-  @Get('representatives')
-  async getRepresentatives(@Query('search') search?: string) {
-    return await this.usersService.searchRepresentatives(search);
-  }
-
-  @Post('representatives')
-  async createRepresentative(@Body() data: RepresentativeDTO) {
-    return await this.usersService.createRepresentative(data);
-  }
-
-  @Put('representatives/:id')
-  async updateRepresentative(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() data: RepresentativeDTO,
-  ) {
-    return await this.usersService.updateRepresentative(id, data);
   }
 }
