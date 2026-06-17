@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '@/prisma/prisma.service';
+import { badResponse, baseResponse } from '@/utilities/base.dto';
 
 @Injectable()
 export class ExchangeTask {
@@ -34,9 +35,11 @@ export class ExchangeTask {
           },
         });
         this.logger.debug(`Tasa del dólar actualizada: ${lastRate} → ${newRate}`);
+        baseResponse.message = `Tasa del dólar actualizada: ${lastRate} → ${newRate}`;
       }
     } catch (error: any) {
       this.logger.error('Error al sincronizar tasa del dólar', error.message);
+      badResponse.message = `Error al sincronizar tasa del dólar: ${error.message}`;
     }
   }
 }

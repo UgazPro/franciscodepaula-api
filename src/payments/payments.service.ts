@@ -417,7 +417,7 @@ export class PaymentsService {
 
   async getExchangeRates() {
     try {
-      const rates = await this.prismaService.exchange.findMany({
+      const rates = await this.prismaService.exchange.findFirst({
         orderBy: { id: 'desc' },
       });
       return rates;
@@ -561,6 +561,27 @@ export class PaymentsService {
   /////////////////////////////////////////////////
   // PAYMENTS
   /////////////////////////////////////////////////
+
+  async deletePayment(id: number) {
+    try {
+      const payment = await this.prismaService.payment.findUnique({
+        where: { id },
+        include: { studentFees: true },
+      });
+
+      if (!payment) return badResponse;
+
+      await this.prismaService.$transaction(async (tx) => {
+        await tx.studentFee.deleteMany({ where: { paymentId: id } });
+        await tx.payment.delete({ where: { id } });
+      });
+
+      return { success: true, message: 'Pago eliminado exitosamente' };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 
   async updatePayment(id: number, data: PaymentDTO) {
     try {

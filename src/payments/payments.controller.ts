@@ -137,4 +137,9 @@ export class PaymentsController {
     return this.service.updatePayment(+id, dto);
   }
 
+  @Delete(':id')
+  deletePayment(@Param('id') id: string) {
+    return this.service.deletePayment(+id);
+  }
+
 }
