@@ -61,6 +61,11 @@ export class UsersController {
     );
   }
 
+  @Get('search')
+  async searchPersons(@Query('q') q: string) {
+    return await this.usersService.searchPersons(q);
+  }
+
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return await this.usersService.getUserById(id);

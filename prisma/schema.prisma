@@ -141,7 +141,6 @@ model Representative {
 
   userId Int @unique
 
-  relationship String?
   occupation   String?
 
   user User @relation(fields: [userId], references: [id])
@@ -158,6 +157,9 @@ model StudentRepresentative {
 
   studentId        Int
   representativeId Int
+
+  relationship String?
+  isPrimary   Boolean? @default(false)
 
   student Student @relation(fields: [studentId], references: [id])
 

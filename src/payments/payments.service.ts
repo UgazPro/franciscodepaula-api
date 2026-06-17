@@ -299,7 +299,8 @@ export class PaymentsService {
           });
 
           if (!feeInfo) {
-            throw new Error('Tipo de pago no encontrado.');
+            badResponse.message = 'Tipo de pago no encontrado.';
+            throw new Error(badResponse.message);
           }
 
           if (feeInfo.name === "Inscripción") {
@@ -327,7 +328,8 @@ export class PaymentsService {
             });
 
             if (!activeEnrollment) {
-              throw new Error('El estudiante no tiene una inscripción activa. Debe registrar el pago de inscripción primero.');
+              badResponse.message = 'El estudiante no tiene una inscripción activa. Debe registrar el pago de inscripción primero.';
+              throw new Error(badResponse.message);
             }
           }
         }

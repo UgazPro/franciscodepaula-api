@@ -199,14 +199,6 @@ export class UsersService {
         },
       };
 
-      if (search) {
-        where.OR = [
-          { user: { person: { firstNames: { contains: search, mode: 'insensitive' } } } },
-          { user: { person: { lastNames: { contains: search, mode: 'insensitive' } } } },
-          { user: { person: { identificationNumber: { contains: search, mode: 'insensitive' } } } },
-        ];
-      }
-
       const reps = await this.prismaService.representative.findMany({
         where,
         include: {
@@ -223,7 +215,23 @@ export class UsersService {
         take: search ? 20 : 50,
       });
 
-      return reps.map((r) => ({
+      const normalizedQuery = search
+        ? search.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        : '';
+
+      const filtered = search
+        ? reps.filter((r) => {
+            const fn = (r.user.person.firstNames ?? '')
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const ln = (r.user.person.lastNames ?? '')
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const id = (r.user.person.identificationNumber ?? '')
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            return fn.includes(normalizedQuery) || ln.includes(normalizedQuery) || id.includes(normalizedQuery);
+          })
+        : reps;
+
+      return filtered.map((r) => ({
         id: r.id,
         relationship: r.relationship,
         occupation: r.occupation,
@@ -237,6 +245,91 @@ export class UsersService {
         },
         studentCount: r._count.students,
       }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      badResponse.message = message;
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // SEARCH PERSONS (global search for header)
+  //////////////////////////////////////////////////
+  async searchPersons(q: string) {
+    try {
+      if (!q || q.length < 2) return [];
+
+      const trimmed = q.trim();
+      if (!trimmed) return [];
+
+      const persons = await this.prismaService.person.findMany({
+        take: 200,
+        include: {
+          student: true,
+          user: {
+            include: {
+              role: true,
+              employee: true,
+              representative: true,
+            },
+          },
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      // Accent-insensitive post-filter
+      const normalizedQuery = trimmed
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+      return persons
+        .filter((person) => {
+          const fullName = `${person.firstNames ?? ''} ${person.lastNames ?? ''}`
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+          const id = (person.identificationNumber ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+          return fullName.includes(normalizedQuery) || id.includes(normalizedQuery);
+        })
+        .slice(0, 20)
+        .map((person) => {
+          if (person.student) {
+            return {
+              id: person.student.id,
+              type: 'student',
+              person: {
+                id: person.id,
+                firstNames: person.firstNames,
+                lastNames: person.lastNames,
+                identificationNumber: person.identificationNumber,
+                profilePhoto: person.profilePhoto,
+              },
+              role: undefined,
+            };
+          }
+
+          if (person.user) {
+            return {
+              id: person.user.id,
+              type: person.user.employee ? 'employee' : 'representative',
+              person: {
+                id: person.id,
+                firstNames: person.firstNames,
+                lastNames: person.lastNames,
+                identificationNumber: person.identificationNumber,
+                profilePhoto: person.profilePhoto,
+              },
+              role: person.user.role.role,
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
