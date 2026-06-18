@@ -25,6 +25,9 @@ export class UsersController {
   // Get Students
   @Get('students')
   async getStudents(
+    @Query('page') page?: string,
+    @Query('take') take?: string,
+    @Query('search') search?: string,
     @Query('view') view?: string,
     @Query('levelId') levelId?: string,
     @Query('section') section?: string,
@@ -34,6 +37,9 @@ export class UsersController {
     @Query('ageExact') ageExact?: string,
   ) {
     return await this.usersService.getStudents(
+      page ? +page : undefined,
+      take ? +take : undefined,
+      search,
       view,
       levelId ? +levelId : undefined,
       section,
@@ -73,11 +79,15 @@ export class UsersController {
 
   @Get('representatives')
   async getRepresentatives(
+    @Query('page') page?: string,
+    @Query('take') take?: string,
     @Query('search') search?: string,
     @Query('view') view?: string,
     @Query('minStudents') minStudents?: string,
   ) {
     return await this.usersService.searchRepresentatives(
+      page ? +page : undefined,
+      take ? +take : undefined,
       search,
       view,
       minStudents ? +minStudents : undefined,

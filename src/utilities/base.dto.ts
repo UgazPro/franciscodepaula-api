@@ -16,4 +16,23 @@ export const badResponse: DtoBaseResponse = {
     data: null
 }
 
+export interface PaginationMeta {
+    page: number;
+    take: number;
+    totalCount: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+}
+
+export interface PaginatedResult<T> {
+    data: T[];
+    meta: PaginationMeta;
+}
+
+export interface PaginationParams {
+    page?: number;
+    take?: number;
+}
+
 

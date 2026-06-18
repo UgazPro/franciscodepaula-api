@@ -97,6 +97,9 @@ export class PaymentsController {
 
   @Get()
   getPayments(
+    @Query('page') page?: string,
+    @Query('take') take?: string,
+    @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('exactDate') exactDate?: string,
@@ -109,6 +112,9 @@ export class PaymentsController {
     @Query('schoolYearId') schoolYearId?: string,
   ) {
     return this.service.getPayments({
+      ...(page && { page: Number(page) }),
+      ...(take && { take: Number(take) }),
+      ...(search && { search }),
       ...(startDate && { startDate }),
       ...(endDate && { endDate }),
       ...(exactDate && { exactDate }),

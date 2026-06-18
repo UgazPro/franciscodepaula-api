@@ -8,6 +8,9 @@ export class PaymentsService {
   constructor(private prismaService: PrismaService) {}
 
   async getPayments(filters?: {
+    page?: number;
+    take?: number;
+    search?: string;
     startDate?: string;
     endDate?: string;
     exactDate?: string;
@@ -55,8 +58,8 @@ export class PaymentsService {
           student: {
             person: {
               OR: [
-                { firstNames: { contains: filters.studentSearch, mode: 'insensitive' } },
-                { lastNames: { contains: filters.studentSearch, mode: 'insensitive' } },
+                { firstNames: { contains: filters.studentSearch, mode: 'insensitive' as const } },
+                { lastNames: { contains: filters.studentSearch, mode: 'insensitive' as const } },
                 { identificationNumber: { contains: filters.studentSearch } },
               ],
             },
@@ -73,8 +76,8 @@ export class PaymentsService {
                   user: {
                     person: {
                       OR: [
-                        { firstNames: { contains: filters.representativeSearch, mode: 'insensitive' } },
-                        { lastNames: { contains: filters.representativeSearch, mode: 'insensitive' } },
+                        { firstNames: { contains: filters.representativeSearch, mode: 'insensitive' as const } },
+                        { lastNames: { contains: filters.representativeSearch, mode: 'insensitive' as const } },
                         { identificationNumber: { contains: filters.representativeSearch } },
                       ],
                     },
@@ -92,6 +95,34 @@ export class PaymentsService {
 
       if (filters?.schoolYearId) {
         studentFeeConditions.push({ fee: { schoolYearId: filters.schoolYearId } });
+      }
+
+      // Generic search (across student name, payer, reference, concept)
+      if (filters?.search) {
+        const s = filters.search;
+        studentFeeConditions.push({
+          OR: [
+            {
+              student: {
+                person: {
+                  OR: [
+                    { firstNames: { contains: s, mode: 'insensitive' as const } },
+                    { lastNames: { contains: s, mode: 'insensitive' as const } },
+                    { identificationNumber: { contains: s } },
+                  ],
+                },
+              },
+            },
+            { payerName: { contains: s, mode: 'insensitive' as const } },
+            { payerIdentification: { contains: s } },
+            { reference: { contains: s } },
+            {
+              fee: {
+                name: { contains: s, mode: 'insensitive' as const },
+              },
+            },
+          ],
+        });
       }
 
       if (filters?.morosos) {
@@ -134,22 +165,54 @@ export class PaymentsService {
         where.studentFees = { some: { AND: studentFeeConditions } };
       }
 
-      const payments = await this.prismaService.payment.findMany({
-        where,
-        include: {
-          paymentMethod: true,
-          exchange: true,
-          studentFees: {
-            include: {
-              student: {
-                include: {
-                  person: true,
-                },
+      const include = {
+        paymentMethod: true,
+        exchange: true,
+        studentFees: {
+          include: {
+            student: {
+              include: {
+                person: true,
               },
-              fee: true,
             },
+            fee: true,
           },
         },
+      };
+
+      // If pagination params provided, use skip/take + count
+      if (filters?.page !== undefined && filters?.take !== undefined) {
+        const { page, take } = filters;
+        const skip = (page - 1) * take;
+
+        const [data, totalCount] = await Promise.all([
+          this.prismaService.payment.findMany({
+            where,
+            include,
+            skip,
+            take,
+            orderBy: { id: 'desc' },
+          }),
+          this.prismaService.payment.count({ where }),
+        ]);
+
+        return {
+          data,
+          meta: {
+            page,
+            take,
+            totalCount,
+            totalPages: Math.ceil(totalCount / take),
+            hasNext: page < Math.ceil(totalCount / take),
+            hasPrev: page > 1,
+          },
+        };
+      }
+
+      // No pagination → return all (backwards compatible)
+      const payments = await this.prismaService.payment.findMany({
+        where,
+        include,
         orderBy: { id: 'desc' },
       });
 

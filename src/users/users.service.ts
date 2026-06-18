@@ -38,9 +38,12 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
-  // GET ALL STUDENTS
+  // GET ALL STUDENTS (paginated)
   //////////////////////////////////////////////////
   async getStudents(
+    page?: number,
+    take?: number,
+    search?: string,
     view?: string,
     levelId?: number,
     section?: string,
@@ -80,6 +83,22 @@ export class UsersService {
       if (gender) {
         if (!where.person) where.person = {};
         where.person.gender = gender;
+      }
+
+      // Search filter
+      if (search) {
+        const personSearch = {
+          OR: [
+            { firstNames: { contains: search, mode: 'insensitive' as const } },
+            { lastNames: { contains: search, mode: 'insensitive' as const } },
+            { identificationNumber: { contains: search } },
+          ],
+        };
+        if (where.person) {
+          where.person = { ...where.person, ...personSearch };
+        } else {
+          where.person = personSearch;
+        }
       }
 
       // Age filter → birthDate range
@@ -137,33 +156,64 @@ export class UsersService {
         }
       }
 
-      const students = await this.prismaService.student.findMany({
-        where,
-        include: {
-          person: true,
-          enrollments: {
-            include: {
-              section: {
-                include: {
-                  highSchoolLevel: true,
-                },
+      const include = {
+        person: true,
+        enrollments: {
+          include: {
+            section: {
+              include: {
+                highSchoolLevel: true,
               },
             },
           },
-          representatives: {
-            include: {
-              representative: {
-                include: {
-                  user: {
-                    include: {
-                      person: true,
-                    },
+        },
+        representatives: {
+          include: {
+            representative: {
+              include: {
+                user: {
+                  include: {
+                    person: true,
                   },
                 },
               },
             },
           },
         },
+      };
+
+      // If pagination params provided, use skip/take + count
+      if (page !== undefined && take !== undefined) {
+        const skip = (page - 1) * take;
+
+        const [data, totalCount] = await Promise.all([
+          this.prismaService.student.findMany({
+            where,
+            include,
+            skip,
+            take,
+            orderBy: { id: 'asc' },
+          }),
+          this.prismaService.student.count({ where }),
+        ]);
+
+        return {
+          data,
+          meta: {
+            page,
+            take,
+            totalCount,
+            totalPages: Math.ceil(totalCount / take),
+            hasNext: page < Math.ceil(totalCount / take),
+            hasPrev: page > 1,
+          },
+        };
+      }
+
+      // No pagination → return all (backwards compatible)
+      const students = await this.prismaService.student.findMany({
+        where,
+        include,
         orderBy: { id: 'asc' },
       });
 
@@ -192,73 +242,156 @@ export class UsersService {
     }
   }
 
-  async searchRepresentatives(search?: string, view?: string, minStudents?: number) {
+  async searchRepresentatives(
+    page?: number,
+    take?: number,
+    search?: string,
+    view?: string,
+    minStudents?: number,
+  ) {
     try {
-      const where: any = {
+      const baseWhere: any = {
         user: {
           role: { role: 'Representante' },
         },
       };
 
       if (view === 'active') {
-        where.user.status = true;
+        baseWhere.user.status = true;
       }
 
-      const reps = await this.prismaService.representative.findMany({
-        where,
-        include: {
-          user: {
+      if (search) {
+        baseWhere.user.person = {
+          OR: [
+            { firstNames: { contains: search, mode: 'insensitive' as const } },
+            { lastNames: { contains: search, mode: 'insensitive' as const } },
+            { identificationNumber: { contains: search } },
+          ],
+        };
+      }
+
+      // minStudents filter: get qualifying rep IDs first
+      let repIdFilter: number[] | undefined;
+      if (minStudents !== undefined) {
+        const repsWithCount = await this.prismaService.representative.findMany({
+          where: baseWhere,
+          select: { id: true, _count: { select: { students: true } } },
+        });
+        repIdFilter = repsWithCount
+          .filter((r) => r._count.students >= minStudents)
+          .map((r) => r.id);
+
+        const whereForCount = { id: { in: repIdFilter }, user: { role: { role: 'Representante' } } };
+
+        if (page !== undefined && take !== undefined) {
+          const totalCount = repIdFilter.length;
+          if (totalCount === 0) {
+            return { data: [], meta: { page, take, totalCount: 0, totalPages: 0, hasNext: false, hasPrev: false } };
+          }
+
+          const skip = (page - 1) * take;
+          const reps = await this.prismaService.representative.findMany({
+            where: whereForCount,
             include: {
-              person: true,
+              user: { include: { person: true } },
+              _count: { select: { students: true } },
             },
+            skip,
+            take,
+            orderBy: { id: 'asc' },
+          });
+
+          return {
+            data: reps.map((r) => this.formatRep(r)),
+            meta: {
+              page,
+              take,
+              totalCount,
+              totalPages: Math.ceil(totalCount / take),
+              hasNext: page < Math.ceil(totalCount / take),
+              hasPrev: page > 1,
+            },
+          };
+        }
+
+        // Backwards compatible without pagination
+        const reps = await this.prismaService.representative.findMany({
+          where: whereForCount,
+          include: {
+            user: { include: { person: true } },
+            _count: { select: { students: true } },
           },
-          _count: {
-            select: { students: true },
+          orderBy: { id: 'asc' },
+          take: search ? 20 : 200,
+        });
+
+        return reps.map((r) => this.formatRep(r));
+      }
+
+      // No minStudents filter
+      if (page !== undefined && take !== undefined) {
+        const skip = (page - 1) * take;
+        const [reps, totalCount] = await Promise.all([
+          this.prismaService.representative.findMany({
+            where: baseWhere,
+            include: {
+              user: { include: { person: true } },
+              _count: { select: { students: true } },
+            },
+            skip,
+            take,
+            orderBy: { id: 'asc' },
+          }),
+          this.prismaService.representative.count({ where: baseWhere }),
+        ]);
+
+        return {
+          data: reps.map((r) => this.formatRep(r)),
+          meta: {
+            page,
+            take,
+            totalCount,
+            totalPages: Math.ceil(totalCount / take),
+            hasNext: page < Math.ceil(totalCount / take),
+            hasPrev: page > 1,
           },
+        };
+      }
+
+      // Backwards compatible: return all
+      const reps = await this.prismaService.representative.findMany({
+        where: baseWhere,
+        include: {
+          user: { include: { person: true } },
+          _count: { select: { students: true } },
         },
         orderBy: { id: 'asc' },
         take: search ? 20 : 200,
       });
 
-      const normalizedQuery = search
-        ? search.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-        : '';
-
-      let filtered = search
-        ? reps.filter((r) => {
-            const fn = (r.user.person.firstNames ?? '')
-              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-            const ln = (r.user.person.lastNames ?? '')
-              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-            const id = (r.user.person.identificationNumber ?? '')
-              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-            return fn.includes(normalizedQuery) || ln.includes(normalizedQuery) || id.includes(normalizedQuery);
-          })
-        : reps;
-
-      if (minStudents !== undefined) {
-        filtered = filtered.filter((r) => r._count.students >= minStudents);
-      }
-
-      return filtered.map((r) => ({
-        id: r.id,
-        occupation: r.occupation,
-        email: r.user.email,
-        phone: r.user.phone,
-        person: {
-          id: r.user.person.id,
-          firstNames: r.user.person.firstNames,
-          lastNames: r.user.person.lastNames,
-          identificationNumber: r.user.person.identificationNumber,
-        },
-        studentCount: r._count.students,
-        status: r.user.status,
-      }));
+      return reps.map((r) => this.formatRep(r));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       badResponse.message = message;
       return badResponse;
     }
+  }
+
+  private formatRep(r: any) {
+    return {
+      id: r.id,
+      occupation: r.occupation,
+      email: r.user.email,
+      phone: r.user.phone,
+      person: {
+        id: r.user.person.id,
+        firstNames: r.user.person.firstNames,
+        lastNames: r.user.person.lastNames,
+        identificationNumber: r.user.person.identificationNumber,
+      },
+      studentCount: r._count.students,
+      status: r.user.status,
+    };
   }
 
   //////////////////////////////////////////////////
