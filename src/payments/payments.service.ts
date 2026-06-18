@@ -257,7 +257,6 @@ export class PaymentsService {
             },
           },
           studentFees: {
-            where: { status: true },
             select: { feeId: true },
           },
         },
@@ -323,6 +322,63 @@ export class PaymentsService {
     }
   }
 
+  private async processStudentFees(
+    tx: any,
+    paymentId: number,
+    items: { studentId: number; feeId: number }[],
+  ) {
+    for (const item of items) {
+      const feeInfo = await tx.fee.findUnique({
+        where: { id: item.feeId },
+      });
+
+      if (!feeInfo) {
+        badResponse.message = `Tipo de pago ID ${item.feeId} no encontrado.`;
+        throw new Error(badResponse.message);
+      }
+
+      // Handle enrollment logic
+      if (feeInfo.name === "Inscripción") {
+        const enrollment = await tx.studentEnrollment.findFirst({
+          where: {
+            studentId: item.studentId,
+            schoolYearId: feeInfo.schoolYearId,
+          },
+        });
+
+        if (enrollment) {
+          await tx.studentEnrollment.update({
+            where: { id: enrollment.id },
+            data: { status: true },
+          });
+        }
+      } else {
+        const activeEnrollment = await tx.studentEnrollment.findFirst({
+          where: {
+            studentId: item.studentId,
+            schoolYearId: feeInfo.schoolYearId,
+            status: true,
+          },
+        });
+
+        if (!activeEnrollment) {
+          badResponse.message = `El estudiante ID ${item.studentId} no tiene una inscripción activa. Debe registrar el pago de inscripción primero.`;
+          throw new Error(badResponse.message);
+        }
+      }
+
+      // Create StudentFee with status = false (abono / partial payment marker)
+      await tx.studentFee.create({
+        data: {
+          studentId: item.studentId,
+          feeId: item.feeId,
+          paymentId,
+          status: false,
+        },
+      });
+    }
+  }
+
   async createPayment(data: PaymentDTO) {
     try {
       const result = await this.prismaService.$transaction(async (tx) => {
@@ -342,59 +398,14 @@ export class PaymentsService {
           },
         });
 
-        // Create StudentFee linked directly to the payment
-        let createdStudentFee;
-        if (data.studentId && data.feeId) {
-          createdStudentFee = await tx.studentFee.create({
-            data: {
-              studentId: data.studentId,
-              feeId: data.feeId,
-              paymentId: payment.id,
-              status: true,
-            },
-          });
-        }
-
-        // Link enrollment if the fee is "Inscripción"
-        if (data.studentId && createdStudentFee) {
-          const feeInfo = await tx.fee.findUnique({
-            where: { id: createdStudentFee.feeId },
-          });
-
-          if (!feeInfo) {
-            badResponse.message = 'Tipo de pago no encontrado.';
-            throw new Error(badResponse.message);
-          }
-
-          if (feeInfo.name === "Inscripción") {
-            const enrollment = await tx.studentEnrollment.findFirst({
-              where: {
-                studentId: data.studentId,
-                schoolYearId: feeInfo.schoolYearId,
-              },
-            });
-
-            if (enrollment) {
-              await tx.studentEnrollment.update({
-                where: { id: enrollment.id },
-                data: { status: true },
-              });
-            }
-          } else {
-            // Monthly fees require an active enrollment
-            const activeEnrollment = await tx.studentEnrollment.findFirst({
-              where: {
-                studentId: data.studentId,
-                schoolYearId: feeInfo.schoolYearId,
-                status: true,
-              },
-            });
-
-            if (!activeEnrollment) {
-              badResponse.message = 'El estudiante no tiene una inscripción activa. Debe registrar el pago de inscripción primero.';
-              throw new Error(badResponse.message);
-            }
-          }
+        // Determine which student-fee pairs to process
+        if (data.studentFees && data.studentFees.length > 0) {
+          await this.processStudentFees(tx, payment.id, data.studentFees);
+        } else if (data.studentId && data.feeId) {
+          // Legacy: single student + single fee
+          await this.processStudentFees(tx, payment.id, [
+            { studentId: data.studentId, feeId: data.feeId },
+          ]);
         }
 
         return payment;
@@ -650,35 +661,50 @@ export class PaymentsService {
 
   async updatePayment(id: number, data: PaymentDTO) {
     try {
-      const payment = await this.prismaService.payment.update({
-        where: { id },
-        data: {
-          paymentMethodId: data.paymentMethodId,
-          exchangeId: data.exchangeId,
-          currency: data.currency,
-          totalAmount: data.totalAmount,
-          reference: data.reference,
-          payerName: data.payerName,
-          payerIdentification: data.payerIdentification,
-          payerPhone: data.payerPhone,
-          description: data.description,
-          status: data.status,
-        },
-        include: {
-          paymentMethod: true,
-          exchange: true,
-          studentFees: {
-            include: {
-              student: {
-                include: {
-                  person: true,
-                },
+      const payment = await this.prismaService.$transaction(async (tx) => {
+        const updated = await tx.payment.update({
+          where: { id },
+          data: {
+            paymentMethodId: data.paymentMethodId,
+            exchangeId: data.exchangeId,
+            currency: data.currency,
+            totalAmount: data.totalAmount,
+            reference: data.reference,
+            payerName: data.payerName,
+            payerIdentification: data.payerIdentification,
+            payerPhone: data.payerPhone,
+            description: data.description,
+            status: data.status,
+          },
+        });
+
+        // Rebuild studentFees if provided
+        const items = data.studentFees && data.studentFees.length > 0
+          ? data.studentFees
+          : (data.studentId && data.feeId
+              ? [{ studentId: data.studentId, feeId: data.feeId }]
+              : null);
+
+        if (items) {
+          await tx.studentFee.deleteMany({ where: { paymentId: id } });
+          await this.processStudentFees(tx, id, items);
+        }
+
+        return tx.payment.findUnique({
+          where: { id },
+          include: {
+            paymentMethod: true,
+            exchange: true,
+            studentFees: {
+              include: {
+                student: { include: { person: true } },
+                fee: true,
               },
-              fee: true,
             },
           },
-        },
+        });
       });
+
       return { success: true, message: 'Pago actualizado exitosamente', data: payment };
     } catch (error) {
       badResponse.message = String(error);

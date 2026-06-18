@@ -1,11 +1,13 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsDate,
   IsEnum,
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 import { Currency } from '../../generated/prisma/client';
 
@@ -98,6 +100,15 @@ export class UpdateFeeDTO {
   endAt?: Date;
 }
 
+// STUDENT FEE ITEM (for multi-student multi-fee payments)
+export class StudentFeeItemDTO {
+  @IsNumber()
+  studentId!: number;
+
+  @IsNumber()
+  feeId!: number;
+}
+
 // PAYMENT
 export class PaymentDTO {
   @IsNumber()
@@ -136,14 +147,23 @@ export class PaymentDTO {
   @IsDate()
   paymentDate!: Date;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  // Legacy single-fee fields (still supported for backwards compat)
+  @IsOptional()
   @IsNumber()
-  feeId!: number;
+  feeId?: number;
 
   @IsOptional()
   @IsNumber()
   studentId?: number;
 
+  // NEW: Array of student-fee pairs for multi payments
   @IsOptional()
-  @IsString()
-  description?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StudentFeeItemDTO)
+  studentFees?: StudentFeeItemDTO[];
 }
