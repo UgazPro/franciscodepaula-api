@@ -333,7 +333,7 @@ export class PaymentsService {
       });
 
       if (!feeInfo) {
-        badResponse.message = `Tipo de pago ID ${item.feeId} no encontrado.`;
+        badResponse.message = `Concepto de pago ID ${item.feeId} no encontrado.`;
         throw new Error(badResponse.message);
       }
 
@@ -580,7 +580,7 @@ export class PaymentsService {
           endAt: data.endAt,
         },
       });
-      return { success: true, message: 'Tipo de pago creado exitosamente', data: fee };
+      return { success: true, message: 'Concepto de pago creado exitosamente', data: fee };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -617,7 +617,7 @@ export class PaymentsService {
           ...(data.endAt !== undefined && { endAt: data.endAt }),
         },
       });
-      return { success: true, message: 'Tipo de pago actualizado exitosamente', data: fee };
+      return { success: true, message: 'Concepto de pago actualizado exitosamente', data: fee };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

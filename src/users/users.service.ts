@@ -519,12 +519,16 @@ export class UsersService {
               id: person.student.id,
               type: 'student',
               studentStatus: person.student.status,
+              email: person.user?.email ?? null,
+              phone: person.user?.phone ?? null,
               person: {
                 id: person.id,
                 firstNames: person.firstNames,
                 lastNames: person.lastNames,
                 identificationNumber: person.identificationNumber,
                 profilePhoto: person.profilePhoto,
+                birthDate: person.birthDate,
+                gender: person.gender,
               },
               role: undefined,
             };
@@ -534,12 +538,18 @@ export class UsersService {
             return {
               id: person.user.id,
               type: person.user.employee ? 'employee' : 'representative',
+              email: person.user.email ?? null,
+              phone: person.user.phone ?? null,
+              userStatus: person.user.status,
+              occupation: person.user.representative?.occupation ?? null,
               person: {
                 id: person.id,
                 firstNames: person.firstNames,
                 lastNames: person.lastNames,
                 identificationNumber: person.identificationNumber,
                 profilePhoto: person.profilePhoto,
+                birthDate: person.birthDate,
+                gender: person.gender,
               },
               role: person.user.role.role,
             };
@@ -598,6 +608,106 @@ export class UsersService {
       }
 
       return user;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // GET STUDENT BY ID
+  //////////////////////////////////////////////////
+  async getStudentById(studentId: number) {
+    try {
+      const student = await this.prismaService.student.findUnique({
+        where: { id: studentId },
+        include: {
+          person: {
+            include: {
+              user: {
+                select: { email: true, phone: true },
+              },
+            },
+          },
+          enrollments: {
+            include: {
+              section: {
+                include: {
+                  highSchoolLevel: true,
+                },
+              },
+            },
+            orderBy: { id: 'desc' },
+          },
+          representatives: {
+            include: {
+              representative: {
+                include: {
+                  user: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!student) {
+        return { success: false, message: 'Estudiante no encontrado' };
+      }
+
+      return { success: true, data: student };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // GET REPRESENTATIVE BY ID
+  //////////////////////////////////////////////////
+  async getRepresentativeById(userId: number) {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: { id: userId },
+        include: {
+          person: true,
+          role: true,
+          representative: {
+            include: {
+              students: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                      enrollments: {
+                        include: {
+                          section: {
+                            include: {
+                              highSchoolLevel: true,
+                            },
+                          },
+                        },
+                        orderBy: { id: 'desc' },
+                        take: 1,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user || !user.representative) {
+        return { success: false, message: 'Representante no encontrado' };
+      }
+
+      return { success: true, data: user };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

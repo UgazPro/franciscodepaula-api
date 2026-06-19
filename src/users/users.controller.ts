@@ -73,6 +73,11 @@ export class UsersController {
     return await this.usersService.searchPersons(q);
   }
 
+  @Get('students/:studentId')
+  async getStudentById(@Param('studentId', ParseIntPipe) studentId: number) {
+    return await this.usersService.getStudentById(studentId);
+  }
+
   //////////////////////////////////////////////////
   // REPRESENTATIVES
   //////////////////////////////////////////////////
@@ -92,6 +97,11 @@ export class UsersController {
       view,
       minStudents ? +minStudents : undefined,
     );
+  }
+
+  @Get('representatives/:id')
+  async getRepresentativeById(@Param('id', ParseIntPipe) id: number) {
+    return await this.usersService.getRepresentativeById(id);
   }
 
   @Post('representatives')
