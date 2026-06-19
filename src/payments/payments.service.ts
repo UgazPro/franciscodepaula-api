@@ -626,8 +626,24 @@ export class PaymentsService {
 
   async deleteFee(id: number) {
     try {
+      const fee = await this.prismaService.fee.findUnique({
+        where: { id },
+        include: { studentFees: { take: 1 } },
+      });
+
+      if (!fee) {
+        return { success: false, message: 'El concepto de pago no existe' };
+      }
+
+      if (fee.studentFees.length > 0) {
+        return {
+          success: false,
+          message: `No se puede eliminar "${fee.name}" porque ya tiene pagos registrados asociados`,
+        };
+      }
+
       await this.prismaService.fee.delete({ where: { id } });
-      return { success: true, message: 'Tipo de pago eliminado exitosamente' };
+      return { success: true, message: 'Concepto de pago eliminado exitosamente' };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
