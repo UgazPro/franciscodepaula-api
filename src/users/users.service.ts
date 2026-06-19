@@ -294,6 +294,21 @@ export class UsersService {
             where: whereForCount,
             include: {
               user: { include: { person: true } },
+              students: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                      enrollments: {
+                        include: { section: { include: { highSchoolLevel: true } } },
+                        orderBy: { id: 'desc' },
+                        take: 1,
+                      },
+                      _count: { select: { studentFees: true } },
+                    },
+                  },
+                },
+              },
               _count: { select: { students: true } },
             },
             skip,
@@ -319,6 +334,21 @@ export class UsersService {
           where: whereForCount,
           include: {
             user: { include: { person: true } },
+            students: {
+              include: {
+                student: {
+                  include: {
+                    person: true,
+                    enrollments: {
+                      include: { section: true },
+                      orderBy: { id: 'desc' },
+                      take: 1,
+                    },
+                    _count: { select: { studentFees: true } },
+                  },
+                },
+              },
+            },
             _count: { select: { students: true } },
           },
           orderBy: { id: 'asc' },
@@ -336,6 +366,21 @@ export class UsersService {
             where: baseWhere,
             include: {
               user: { include: { person: true } },
+              students: {
+                include: {
+                  student: {
+                    include: {
+                      person: true,
+                      enrollments: {
+                        include: { section: { include: { highSchoolLevel: true } } },
+                        orderBy: { id: 'desc' },
+                        take: 1,
+                      },
+                      _count: { select: { studentFees: true } },
+                    },
+                  },
+                },
+              },
               _count: { select: { students: true } },
             },
             skip,
@@ -363,6 +408,21 @@ export class UsersService {
         where: baseWhere,
         include: {
           user: { include: { person: true } },
+          students: {
+            include: {
+              student: {
+                include: {
+                  person: true,
+                  enrollments: {
+                    include: { section: true },
+                    orderBy: { id: 'desc' },
+                    take: 1,
+                  },
+                  _count: { select: { studentFees: true } },
+                },
+              },
+            },
+          },
           _count: { select: { students: true } },
         },
         orderBy: { id: 'asc' },
@@ -391,6 +451,22 @@ export class UsersService {
       },
       studentCount: r._count.students,
       status: r.user.status,
+      students: (r.students ?? []).map((sr: any) => ({
+        id: sr.student.id,
+        firstNames: sr.student.person.firstNames,
+        lastNames: sr.student.person.lastNames,
+        identificationNumber: sr.student.person.identificationNumber,
+        status: sr.student.status ?? false,
+        section: (() => {
+          const enrollment = sr.student.enrollments?.[0];
+          return enrollment
+            ? `${enrollment.section?.highSchoolLevel?.level ?? ""} - ${enrollment.section?.section ?? ""}`
+            : null;
+        })(),
+        relationship: sr.relationship ?? null,
+        birthDate: sr.student.person.birthDate ?? null,
+        paymentCount: sr.student._count?.studentFees ?? 0,
+      })),
     };
   }
 
