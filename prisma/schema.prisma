@@ -38,17 +38,17 @@ model Role {
 //////////////////////////////////////////////////
 
 model Person {
-  id                     Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  profilePhoto           String?
-  firstNames             String
-  lastNames              String
-  identificationNumber   String   @unique
-  birthDate              DateTime
-  gender                 String?
+  profilePhoto         String?
+  firstNames           String
+  lastNames            String
+  identificationNumber String   @unique
+  birthDate            DateTime
+  gender               String?
 
-  user                   User?
-  student                Student?
+  user    User?
+  student Student?
 }
 
 //////////////////////////////////////////////////
@@ -61,7 +61,7 @@ model User {
   personId Int @unique
   roleId   Int
 
-  email    String @unique
+  email    String  @unique
   password String
   phone    String?
 
@@ -88,11 +88,11 @@ model Student {
 
   personId Int @unique
 
-  birthCountry  String?
-  state         String?
-  municipality  String?
-  parish        String?
-  currentParish String?
+  birthCountry   String?
+  state          String?
+  municipality   String?
+  parish         String?
+  currentParish  String?
   previousSchool String?
   address        String?
 
@@ -102,34 +102,13 @@ model Student {
 
   person Person @relation(fields: [personId], references: [id])
 
-  studentSections StudentSection[]
-  enrollments     StudentEnrollment[]
-  studentFees     StudentFee[]
+  enrollments StudentEnrollment[]
+  studentFees StudentFee[]
 
   representatives StudentRepresentative[]
 
   gradeRecords GradeRecord[]
-  reportCards ReportCard[]
-}
-
-//////////////////////////////////////////////////
-// STUDENT SECTION
-//////////////////////////////////////////////////
-
-model StudentSection {
-  id Int @id @default(autoincrement())
-
-  studentId Int
-  sectionId Int
-
-  enrollmentDate DateTime?
-
-  status Boolean?
-
-  student Student @relation(fields: [studentId], references: [id])
-  section Section @relation(fields: [sectionId], references: [id])
-
-  @@unique([studentId, sectionId])
+  reportCards  ReportCard[]
 }
 
 //////////////////////////////////////////////////
@@ -141,7 +120,7 @@ model Representative {
 
   userId Int @unique
 
-  occupation   String?
+  occupation String?
 
   user User @relation(fields: [userId], references: [id])
 
@@ -159,7 +138,7 @@ model StudentRepresentative {
   representativeId Int
 
   relationship String?
-  isPrimary   Boolean? @default(false)
+  isPrimary    Boolean? @default(false)
 
   student Student @relation(fields: [studentId], references: [id])
 
@@ -177,7 +156,7 @@ model Employee {
 
   userId Int @unique
 
-  baseHourRate Decimal? @db.Decimal(10,2)
+  baseHourRate Decimal? @db.Decimal(10, 2)
 
   hireDate DateTime?
 
@@ -212,8 +191,6 @@ model SchoolYear {
   sections    Section[]
   enrollments StudentEnrollment[]
 
-  reportCards ReportCard[]
-
   fees Fee[]
 }
 
@@ -234,6 +211,8 @@ model Period {
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
   evaluations Evaluation[]
+
+  reportCards ReportCard[]
 }
 
 //////////////////////////////////////////////////
@@ -264,10 +243,11 @@ model Section {
 
   highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
 
-  students    StudentSection[]
   enrollments StudentEnrollment[]
 
   assignments TeacherSubjectSection[]
+
+  @@unique([schoolYearId, highSchoolLevelId, section])
 }
 
 //////////////////////////////////////////////////
@@ -282,6 +262,8 @@ model StudentEnrollment {
   sectionId    Int
 
   enrollmentDate DateTime?
+
+  paymentReferenceId Int?
 
   status Boolean?
 
@@ -319,6 +301,8 @@ model TeacherSubjectSection {
   subjectId Int
   sectionId Int
 
+  assignedAt DateTime? @default(now())
+
   status Boolean?
 
   employee Employee @relation(fields: [teacherId], references: [id])
@@ -336,21 +320,38 @@ model TeacherSubjectSection {
 // EVALUATION
 //////////////////////////////////////////////////
 
+model EvaluationType {
+  id Int @id @default(autoincrement())
+
+  evaluationType String
+
+  evaluations Evaluation[]
+}
+
 model Evaluation {
   id Int @id @default(autoincrement())
 
   teacherSubjectSectionId Int
   periodId                Int
+  evaluationTypeId        Int
 
-  title String
+  topic String
 
-  percentage Decimal @db.Decimal(5,2)
+  objectives String?
+
+  percentage Decimal @db.Decimal(5, 2)
+
+  maxScore Decimal @db.Decimal(5, 2)
 
   dueDate DateTime?
+
+  createdAt DateTime @default(now())
 
   teacherSubjectSection TeacherSubjectSection @relation(fields: [teacherSubjectSectionId], references: [id])
 
   period Period @relation(fields: [periodId], references: [id])
+
+  evaluationType EvaluationType @relation(fields: [evaluationTypeId], references: [id])
 
   grades GradeRecord[]
 }
@@ -365,7 +366,7 @@ model GradeRecord {
   studentId    Int
   evaluationId Int
 
-  score Decimal? @db.Decimal(5,2)
+  score Decimal? @db.Decimal(5, 2)
 
   observations String?
 
@@ -392,11 +393,11 @@ model ReportCard {
 
   studentId Int
 
-  academicPeriodId Int
+  teacherSubjectSectionId Int
 
-  term Int
+  periodId Int
 
-  average Decimal? @db.Decimal(5,2)
+  average Decimal? @db.Decimal(5, 2)
 
   observations String?
 
@@ -404,9 +405,9 @@ model ReportCard {
 
   student Student @relation(fields: [studentId], references: [id])
 
-  schoolYear SchoolYear @relation(fields: [academicPeriodId], references: [id])
+  period Period @relation(fields:[periodId], references:[id])
 
-  @@unique([studentId, academicPeriodId, term])
+  @@unique([studentId])
 }
 
 //////////////////////////////////////////////////
@@ -414,8 +415,8 @@ model ReportCard {
 //////////////////////////////////////////////////
 
 model Country {
-  id     Int     @id @default(autoincrement())
-  name   String  @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
 
   states State[]
 }
@@ -425,7 +426,7 @@ model State {
   countryId Int
   name      String
 
-  country       Country        @relation(fields: [countryId], references: [id])
+  country        Country        @relation(fields: [countryId], references: [id])
   municipalities Municipality[]
 }
 
@@ -434,7 +435,7 @@ model Municipality {
   stateId Int
   name    String
 
-  state   State   @relation(fields: [stateId], references: [id])
+  state    State    @relation(fields: [stateId], references: [id])
   parishes Parish[]
 }
 
@@ -483,7 +484,7 @@ model Fee {
 
   schoolYearId Int
 
-  value Int
+  value Decimal @db.Decimal(10,2)
 
   createdAt DateTime
 
@@ -525,7 +526,7 @@ model StudentFee {
 model Exchange {
   id Int @id @default(autoincrement())
 
-  rate Decimal @db.Decimal(10,2)
+  rate Decimal @db.Decimal(10, 2)
 
   date DateTime
 
@@ -541,7 +542,7 @@ model Payment {
 
   paymentMethodId Int
 
-  totalAmount Decimal @db.Decimal(12,2)
+  totalAmount Decimal @db.Decimal(12, 2)
 
   currency Currency
 
@@ -603,7 +604,7 @@ model EmployeeWorkHour {
 
   payrollPeriodId Int
 
-  assignedHours Decimal @db.Decimal(8,2)
+  assignedHours Decimal @db.Decimal(8, 2)
 
   approvedBy Int?
 
@@ -631,17 +632,17 @@ model PayrollRecord {
 
   payrollPeriodId Int
 
-  hourlyRate Decimal? @db.Decimal(10,2)
+  hourlyRate Decimal? @db.Decimal(10, 2)
 
-  workedHours Decimal? @db.Decimal(8,2)
+  workedHours Decimal? @db.Decimal(8, 2)
 
-  grossSalary Decimal? @db.Decimal(12,2)
+  grossSalary Decimal? @db.Decimal(12, 2)
 
-  deductions Decimal? @default(0) @db.Decimal(12,2)
+  deductions Decimal? @default(0) @db.Decimal(12, 2)
 
-  bonuses Decimal? @default(0) @db.Decimal(12,2)
+  bonuses Decimal? @default(0) @db.Decimal(12, 2)
 
-  netSalary Decimal? @db.Decimal(12,2)
+  netSalary Decimal? @db.Decimal(12, 2)
 
   currency String? @default("USD")
 
@@ -673,7 +674,7 @@ model PayrollAdjustment {
 
   concept String
 
-  amount Decimal @db.Decimal(10,2)
+  amount Decimal @db.Decimal(10, 2)
 
   payrollRecord PayrollRecord @relation(fields: [payrollRecordId], references: [id])
 }

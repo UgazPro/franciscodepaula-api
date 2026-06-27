@@ -56,6 +56,12 @@ export class UsersController {
     return await this.usersService.getStaff();
   }
 
+  // Get Teachers (staff with role "Docente")
+  @Get('staff/teachers')
+  async getTeachers() {
+    return await this.usersService.getTeachers();
+  }
+
   // Check identification number uniqueness
   @Get('check-identification')
   async checkIdentification(

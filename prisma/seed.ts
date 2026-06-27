@@ -86,7 +86,7 @@ async function main() {
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
     'Payment', 'Exchange', 'PaymentMethod', 'Fee',
     'ReportCard', 'GradeRecord', 'Evaluation', 'TeacherSubjectSection', 'Subject',
-    'StudentEnrollment', 'StudentSection', 'Section', 'Period', 'SchoolYear',
+    'StudentEnrollment', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
     'Student', 'User', 'Person', 'Role',
     'Parish', 'Municipality', 'State', 'Country',
@@ -579,10 +579,9 @@ async function main() {
 
   const sections = await prisma.section.findMany({ orderBy: { id: 'asc' } });
 
-  // ── 13. STUDENT SECTIONS + ENROLLMENTS ──
+  // ── 13. ENROLLMENTS ──
   const studentsWithEnrollment = allStudents.filter(s => s.status); // 200
 
-  const studentSectionsData: { studentId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
   const enrollmentsData: { studentId: number; schoolYearId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
 
   for (let i = 0; i < studentsWithEnrollment.length; i++) {
@@ -590,12 +589,6 @@ async function main() {
     const section = sections[sectionIdx];
     const isEnrolled = i < ENROLLED_COUNT; // first 155 have enrollment.status=true
 
-    studentSectionsData.push({
-      studentId: studentsWithEnrollment[i].id,
-      sectionId: section.id,
-      enrollmentDate: new Date('2025-09-15'),
-      status: true,
-    });
     enrollmentsData.push({
       studentId: studentsWithEnrollment[i].id,
       schoolYearId: 1,
@@ -604,8 +597,6 @@ async function main() {
       status: isEnrolled,
     });
   }
-  await prisma.studentSection.createMany({ data: studentSectionsData });
-  console.log('Inscripciones en secciones creadas.');
 
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
@@ -854,7 +845,7 @@ async function main() {
     'Student_id_seq', 'Representative_id_seq', 'Employee_id_seq',
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
-    'StudentSection_id_seq', 'StudentEnrollment_id_seq',
+    'StudentEnrollment_id_seq',
     'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];

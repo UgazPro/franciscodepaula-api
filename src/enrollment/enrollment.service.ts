@@ -177,12 +177,12 @@ export class EnrollmentService {
   }
 
   /////////////////////////////////////////////////
-  // STUDENT SECTIONS
+  // STUDENT SECTION ASSIGNMENTS (via enrollment)
   /////////////////////////////////////////////////
 
   async getStudentSections() {
     try {
-      const sections = await this.prismaService.studentSection.findMany({
+      const sections = await this.prismaService.studentEnrollment.findMany({
         include: {
           student: {
             include: {
@@ -195,6 +195,7 @@ export class EnrollmentService {
               schoolYear: true,
             },
           },
+          schoolYear: true,
         },
         orderBy: { id: 'asc' },
       });
@@ -226,10 +227,20 @@ export class EnrollmentService {
         return badResponse;
       }
 
-      const exists = await this.prismaService.studentSection.findFirst({
+      const schoolYear = await this.prismaService.schoolYear.findUnique({
+        where: { id: data.schoolYearId },
+      });
+
+      if (!schoolYear) {
+        badResponse.message = 'Año escolar no encontrado';
+        return badResponse;
+      }
+
+      const exists = await this.prismaService.studentEnrollment.findFirst({
         where: {
           studentId: data.studentId,
           sectionId: data.sectionId,
+          schoolYearId: data.schoolYearId,
         },
       });
 
@@ -238,9 +249,10 @@ export class EnrollmentService {
         return badResponse;
       }
 
-      const studentSection = await this.prismaService.studentSection.create({
+      const enrollment = await this.prismaService.studentEnrollment.create({
         data: {
           studentId: data.studentId,
+          schoolYearId: data.schoolYearId,
           sectionId: data.sectionId,
           enrollmentDate: data.enrollmentDate,
           status: data.status ?? true,
@@ -257,10 +269,11 @@ export class EnrollmentService {
               schoolYear: true,
             },
           },
+          schoolYear: true,
         },
       });
 
-      return { success: true, message: 'Sección asignada exitosamente', data: studentSection };
+      return { success: true, message: 'Sección asignada exitosamente', data: enrollment };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -269,7 +282,7 @@ export class EnrollmentService {
 
   async updateStudentSection(id: number, data: StudentSectionDTO) {
     try {
-      const existing = await this.prismaService.studentSection.findUnique({
+      const existing = await this.prismaService.studentEnrollment.findUnique({
         where: { id },
       });
 
@@ -278,9 +291,10 @@ export class EnrollmentService {
         return badResponse;
       }
 
-      const studentSection = await this.prismaService.studentSection.update({
+      const enrollment = await this.prismaService.studentEnrollment.update({
         where: { id },
         data: {
+          schoolYearId: data.schoolYearId,
           sectionId: data.sectionId,
           enrollmentDate: data.enrollmentDate,
           status: data.status,
@@ -297,10 +311,11 @@ export class EnrollmentService {
               schoolYear: true,
             },
           },
+          schoolYear: true,
         },
       });
 
-      return { success: true, message: 'Sección actualizada exitosamente', data: studentSection };
+      return { success: true, message: 'Sección actualizada exitosamente', data: enrollment };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -540,17 +555,7 @@ export class EnrollmentService {
         },
       });
 
-      // 6. Create student section
-      await tx.studentSection.create({
-        data: {
-          studentId: student.id,
-          sectionId: data.sectionId,
-          enrollmentDate: data.enrollmentDate,
-          status: true,
-        },
-      });
-
-      // 7. Create enrollment
+      // 6. Create enrollment
       const enrollment = await tx.studentEnrollment.create({
         data: {
           studentId: student.id,

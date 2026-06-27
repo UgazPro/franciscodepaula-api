@@ -10,6 +10,8 @@ import { PaymentsModule } from './payments/payments.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { SchoolYearModule } from './school-year/school-year.module';
 import { LocationModule } from './location/location.module';
+import { SubjectsModule } from './subjects/subjects.module';
+import { TeacherAssignmentModule } from './teacher-assignment/teacher-assignment.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -25,6 +27,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     EnrollmentModule,
     SchoolYearModule,
     LocationModule,
+    SubjectsModule,
+    TeacherAssignmentModule,
   ],
   controllers: [AppController],
   providers: [

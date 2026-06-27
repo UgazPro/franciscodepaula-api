@@ -588,6 +588,31 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
+  // GET TEACHERS (staff with role "Docente")
+  //////////////////////////////////////////////////
+  async getTeachers() {
+    try {
+      const teachers = await this.prismaService.user.findMany({
+        where: {
+          employee: { isNot: null },
+          role: { role: 'Docente' },
+        },
+        include: {
+          person: true,
+          role: true,
+          employee: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+
+      return teachers;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
   // GET USER BY ID
   //////////////////////////////////////////////////
   async getUserById(id: number) {

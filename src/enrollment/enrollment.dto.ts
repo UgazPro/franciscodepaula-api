@@ -33,6 +33,9 @@ export class StudentSectionDTO {
   studentId!: number;
 
   @IsNumber()
+  schoolYearId!: number;
+
+  @IsNumber()
   sectionId!: number;
 
   @IsOptional()
