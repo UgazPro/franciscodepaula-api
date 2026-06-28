@@ -224,7 +224,8 @@ model HighSchoolLevel {
 
   level String
 
-  sections Section[]
+  sections      Section[]
+  levelSubjects LevelSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -287,7 +288,23 @@ model Subject {
 
   status Boolean?
 
-  assignments TeacherSubjectSection[]
+  levelSubjects LevelSubject[]
+}
+
+//////////////////////////////////////////////////
+// LEVEL SUBJECT
+//////////////////////////////////////////////////
+
+model LevelSubject {
+  id                Int             @id @default(autoincrement())
+  highSchoolLevelId Int
+  subjectId         Int
+
+  highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
+  subject         Subject         @relation(fields: [subjectId], references: [id])
+
+  @@unique([highSchoolLevelId, subjectId])
+  teacherSubjectSections TeacherSubjectSection[]
 }
 
 //////////////////////////////////////////////////
@@ -298,7 +315,7 @@ model TeacherSubjectSection {
   id Int @id @default(autoincrement())
 
   teacherId Int
-  subjectId Int
+  levelSubjectId Int
   sectionId Int
 
   assignedAt DateTime? @default(now())
@@ -307,13 +324,14 @@ model TeacherSubjectSection {
 
   employee Employee @relation(fields: [teacherId], references: [id])
 
-  subject Subject @relation(fields: [subjectId], references: [id])
+  levelSubject LevelSubject @relation(fields:[levelSubjectId], references:[id])
 
   section Section @relation(fields: [sectionId], references: [id])
 
   evaluations Evaluation[]
 
-  @@unique([teacherId, subjectId, sectionId])
+  @@unique([teacherId, levelSubjectId, sectionId])
+  reportCards ReportCard[]
 }
 
 //////////////////////////////////////////////////
@@ -404,6 +422,8 @@ model ReportCard {
   generatedAt DateTime @default(now())
 
   student Student @relation(fields: [studentId], references: [id])
+
+  teacherSubjectSection TeacherSubjectSection @relation(fields: [teacherSubjectSectionId], references: [id])
 
   period Period @relation(fields:[periodId], references:[id])
 

@@ -20,6 +20,11 @@ export class TeacherAssignmentController {
     return await this.service.findAll();
   }
 
+  @Get('overview')
+  async getOverview() {
+    return await this.service.getOverview();
+  }
+
   @Post()
   async create(@Body() data: CreateTeacherAssignmentDTO) {
     return await this.service.create(data);

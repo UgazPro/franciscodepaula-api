@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsInt } from 'class-validator';
 
 export class CreateSubjectDTO {
   @IsString()
@@ -17,4 +17,9 @@ export class UpdateSubjectDTO {
   @IsOptional()
   @IsString()
   code?: string;
+}
+
+export class AssignSubjectToLevelDTO {
+  @IsInt()
+  subjectId!: number;
 }

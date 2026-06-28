@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateTeacherAssignmentDTO, UpdateTeacherAssignmentDTO } from './teacher-assignment.dto';
 import { badResponse } from '@/utilities/base.dto';
@@ -115,6 +115,115 @@ export class TeacherAssignmentService {
 
       const msg = updated.status ? 'Asignación activada exitosamente' : 'Asignación desactivada exitosamente';
       return { success: true, message: msg, data: updated };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // OVERVIEW — levels with sections, subjects & teacher assignments
+  //////////////////////////////////////////////////
+
+  async getOverview() {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+      });
+      if (!activeSchoolYear) {
+        throw new NotFoundException('No hay un año escolar activo');
+      }
+
+      const levels = await this.prisma.highSchoolLevel.findMany({
+        orderBy: { level: 'asc' },
+      });
+
+      const sections = await this.prisma.section.findMany({
+        where: { schoolYearId: activeSchoolYear.id },
+        include: { highSchoolLevel: true },
+      });
+
+      const enrollments = await this.prisma.studentEnrollment.findMany({
+        where: {
+          status: true,
+          schoolYearId: activeSchoolYear.id,
+        },
+        include: {
+          student: { include: { person: true } },
+          section: true,
+        },
+      });
+
+      const levelSubjects = await this.prisma.levelSubject.findMany({
+        include: { subject: true },
+      });
+
+      const assignments = await this.prisma.teacherSubjectSection.findMany({
+        where: { status: true },
+        include: {
+          employee: {
+            include: { user: { include: { person: true } } },
+          },
+        },
+      });
+
+      const result = levels.map((level) => {
+        const levelSections = sections.filter((s) => s.highSchoolLevelId === level.id);
+        const levelEnrollments = enrollments.filter((e) =>
+          levelSections.some((s) => s.id === e.sectionId),
+        );
+
+        const totalStudents = levelEnrollments.length;
+        const maleStudents = levelEnrollments.filter(
+          (e) => e.student.person.gender === 'Masculino',
+        ).length;
+        const femaleStudents = levelEnrollments.filter(
+          (e) => e.student.person.gender === 'Femenino',
+        ).length;
+
+        const levelSubjectsForLevel = levelSubjects.filter(
+          (ls) => ls.highSchoolLevelId === level.id,
+        );
+
+        const sectionsData = levelSections.map((section) => {
+          const subjectsData = levelSubjectsForLevel.map((ls) => {
+            const assignment = assignments.find(
+              (a) => a.subjectId === ls.subjectId && a.sectionId === section.id,
+            );
+
+            return {
+              subjectId: ls.subject.id,
+              subject: ls.subject.subject,
+              subjectCode: ls.subject.code,
+              assignment: assignment
+                ? {
+                    id: assignment.id,
+                    teacherId: assignment.teacherId,
+                    teacherName: `${assignment.employee.user.person.firstNames} ${assignment.employee.user.person.lastNames}`,
+                    status: assignment.status,
+                  }
+                : null,
+            };
+          });
+
+          return {
+            sectionId: section.id,
+            section: section.section,
+            subjects: subjectsData,
+          };
+        });
+
+        return {
+          highSchoolLevelId: level.id,
+          level: level.level,
+          totalStudents,
+          maleStudents,
+          femaleStudents,
+          sections: sectionsData,
+        };
+      });
+
+      return result;
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;

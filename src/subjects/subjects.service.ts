@@ -111,4 +111,95 @@ export class SubjectsService {
       return badResponse;
     }
   }
+
+  //////////////////////////////////////////////////
+  // LEVEL SUBJECTS (subject ↔ highSchoolLevel)
+  //////////////////////////////////////////////////
+
+  async getSubjectsByLevel(levelId: number) {
+    try {
+      const levelSubjects = await this.prisma.levelSubject.findMany({
+        where: { highSchoolLevelId: levelId },
+        include: { subject: true },
+        orderBy: { subject: { subject: 'asc' } },
+      });
+      return levelSubjects.map((ls) => ls.subject);
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async assignSubjectToLevel(levelId: number, subjectId: number) {
+    try {
+      const level = await this.prisma.highSchoolLevel.findUnique({ where: { id: levelId } });
+      if (!level) {
+        badResponse.message = 'Nivel no encontrado.';
+        return badResponse;
+      }
+
+      const subject = await this.prisma.subject.findUnique({ where: { id: subjectId } });
+      if (!subject) {
+        badResponse.message = 'Materia no encontrada.';
+        return badResponse;
+      }
+
+      const existing = await this.prisma.levelSubject.findUnique({
+        where: { highSchoolLevelId_subjectId: { highSchoolLevelId: levelId, subjectId } },
+      });
+      if (existing) {
+        badResponse.message = 'La materia ya está asignada a este nivel.';
+        return badResponse;
+      }
+
+      const created = await this.prisma.levelSubject.create({
+        data: { highSchoolLevelId: levelId, subjectId },
+        include: { subject: true },
+      });
+
+      return { success: true, message: 'Materia asignada al nivel exitosamente', data: created };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async removeSubjectFromLevel(levelId: number, subjectId: number) {
+    try {
+      const existing = await this.prisma.levelSubject.findUnique({
+        where: { highSchoolLevelId_subjectId: { highSchoolLevelId: levelId, subjectId } },
+      });
+      if (!existing) {
+        badResponse.message = 'La materia no está asignada a este nivel.';
+        return badResponse;
+      }
+
+      await this.prisma.levelSubject.delete({
+        where: { highSchoolLevelId_subjectId: { highSchoolLevelId: levelId, subjectId } },
+      });
+
+      return { success: true, message: 'Materia removida del nivel exitosamente', data: null };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async getAllLevelSubjects() {
+    try {
+      const levels = await this.prisma.highSchoolLevel.findMany({
+        include: {
+          levelSubjects: {
+            include: { subject: true },
+            orderBy: { subject: { subject: 'asc' } },
+          },
+        },
+        orderBy: { level: 'asc' },
+      });
+      return levels;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 }
