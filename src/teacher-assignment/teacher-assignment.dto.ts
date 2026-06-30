@@ -1,14 +1,18 @@
-import { IsInt, IsOptional } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsArray } from 'class-validator';
 
 export class CreateTeacherAssignmentDTO {
   @IsInt()
   teacherId!: number;
 
   @IsInt()
-  subjectId!: number;
+  levelSubjectId!: number;
 
   @IsInt()
-  sectionId!: number;
+  schoolYearId!: number;
+
+  @IsOptional()
+  @IsInt()
+  sectionId?: number;
 }
 
 export class UpdateTeacherAssignmentDTO {
@@ -18,9 +22,51 @@ export class UpdateTeacherAssignmentDTO {
 
   @IsOptional()
   @IsInt()
-  subjectId?: number;
+  levelSubjectId?: number;
+
+  @IsOptional()
+  @IsInt()
+  schoolYearId?: number;
 
   @IsOptional()
   @IsInt()
   sectionId?: number;
+}
+
+export class CreateSpecialGroupDTO {
+  @IsInt()
+  teacherId!: number;
+
+  @IsInt()
+  levelSubjectId!: number;
+
+  @IsInt()
+  schoolYearId!: number;
+
+  @IsString()
+  groupName!: string;
+}
+
+export class UpdateSpecialGroupDTO {
+  @IsOptional()
+  @IsInt()
+  teacherId?: number;
+
+  @IsOptional()
+  @IsInt()
+  levelSubjectId?: number;
+
+  @IsOptional()
+  @IsInt()
+  schoolYearId?: number;
+
+  @IsOptional()
+  @IsString()
+  groupName?: string;
+}
+
+export class AddStudentsToSpecialGroupDTO {
+  @IsArray()
+  @IsInt({ each: true })
+  studentEnrollmentIds!: number[];
 }

@@ -85,7 +85,7 @@ async function main() {
   const tables = [
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
     'Payment', 'Exchange', 'PaymentMethod', 'Fee',
-    'ReportCard', 'GradeRecord', 'Evaluation', 'TeacherSubjectSection', 'Subject',
+    'ReportCard', 'GradeRecord', 'Evaluation', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
     'StudentEnrollment', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
     'Student', 'User', 'Person', 'Role',
@@ -300,8 +300,9 @@ async function main() {
     return `V-${ci}`;
   }
 
-  // Staff persons (1-7)
+  // Staff persons (1-19)
   const staffPersons = [
+    // Existing staff
     { id: 1, firstNames: 'Luisangel', lastNames: 'Ugaz', identificationNumber: 'V-12345678', birthDate: new Date('1990-01-01'), gender: 'Masculino' },
     { id: 2, firstNames: 'Daniela', lastNames: 'Quintero', identificationNumber: 'V-87654321', birthDate: new Date('1985-05-15'), gender: 'Femenino' },
     { id: 3, firstNames: 'Yujenis', lastNames: 'Gonzalez', identificationNumber: 'V-11223344', birthDate: new Date('1982-03-20'), gender: 'Femenino' },
@@ -309,10 +310,23 @@ async function main() {
     { id: 5, firstNames: 'Yasmeli', lastNames: 'Villalobos', identificationNumber: 'V-55443322', birthDate: new Date('1992-11-25'), gender: 'Femenino' },
     { id: 6, firstNames: 'Ana', lastNames: 'García Castillo', identificationNumber: 'V-66778899', birthDate: new Date('1991-02-14'), gender: 'Femenino' },
     { id: 7, firstNames: 'Diana', lastNames: 'Pereira', identificationNumber: 'V-11122233', birthDate: new Date('1987-08-22'), gender: 'Femenino' },
+    // New docentes (8-19)
+    { id: 8, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 9, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 10, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 11, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 12, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 13, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 14, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 15, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 16, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 17, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 18, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 19, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
   ];
 
-  // Student persons (8-257)
-  const STUDENT_PERSON_START = 8;
+  // Student persons (20-269)
+  const STUDENT_PERSON_START = 20;
   const TOTAL_STUDENTS = 250;
 
   const studentPersons: { id: number; firstNames: string; lastNames: string; identificationNumber: string; birthDate: Date; gender: string }[] = [];
@@ -333,9 +347,9 @@ async function main() {
     });
   }
 
-  // Representative persons (258-387)
+  // Representative persons (270-399)
   const REP_COUNT = 130;
-  const REP_PERSON_START = STUDENT_PERSON_START + TOTAL_STUDENTS; // 258
+  const REP_PERSON_START = STUDENT_PERSON_START + TOTAL_STUDENTS; // 270
 
   const repPersons: { id: number; firstNames: string; lastNames: string; identificationNumber: string; birthDate: Date; gender: string }[] = [];
   for (let i = 0; i < REP_COUNT; i++) {
@@ -357,6 +371,7 @@ async function main() {
 
   // ── 4. USERS ──
   const staffUserData = [
+    // Existing staff
     { id: 1, personId: 1, roleId: 1, email: 'admin@admin.com', password: adminPassword, phone: '0412-1111111', status: true },
     { id: 2, personId: 2, roleId: 2, email: 'directora@colegio.com', password, phone: '0412-2222222', status: true },
     { id: 3, personId: 3, roleId: 3, email: 'subdirector@colegio.com', password, phone: '0412-3333333', status: true },
@@ -364,11 +379,24 @@ async function main() {
     { id: 5, personId: 5, roleId: 5, email: 'control@colegio.com', password, phone: '0412-5555555', status: true },
     { id: 6, personId: 6, roleId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666', status: true },
     { id: 7, personId: 7, roleId: 1, email: 'diana@pereira.com', password: adminPassword, phone: '0412-7777777', status: true },
+    // New docentes (8-19)
+    { id: 8, personId: 8, roleId: 6, email: 'docente8@colegio.com', password, phone: '0412-8888888', status: true },
+    { id: 9, personId: 9, roleId: 6, email: 'docente9@colegio.com', password, phone: '0412-9999999', status: true },
+    { id: 10, personId: 10, roleId: 6, email: 'docente10@colegio.com', password, phone: '0412-1010101', status: true },
+    { id: 11, personId: 11, roleId: 6, email: 'docente11@colegio.com', password, phone: '0412-1111110', status: true },
+    { id: 12, personId: 12, roleId: 6, email: 'docente12@colegio.com', password, phone: '0412-1212121', status: true },
+    { id: 13, personId: 13, roleId: 6, email: 'docente13@colegio.com', password, phone: '0412-1313131', status: true },
+    { id: 14, personId: 14, roleId: 6, email: 'docente14@colegio.com', password, phone: '0412-1414141', status: true },
+    { id: 15, personId: 15, roleId: 6, email: 'docente15@colegio.com', password, phone: '0412-1515151', status: true },
+    { id: 16, personId: 16, roleId: 6, email: 'docente16@colegio.com', password, phone: '0412-1616161', status: true },
+    { id: 17, personId: 17, roleId: 6, email: 'docente17@colegio.com', password, phone: '0412-1717171', status: true },
+    { id: 18, personId: 18, roleId: 6, email: 'docente18@colegio.com', password, phone: '0412-1818181', status: true },
+    { id: 19, personId: 19, roleId: 6, email: 'docente19@colegio.com', password, phone: '0412-1919191', status: true },
   ];
   await prisma.user.createMany({ data: staffUserData });
 
   const repUsersData = repPersons.map((p, i) => ({
-    id: 8 + i,
+    id: 20 + i,
     personId: p.id,
     roleId: 7,
     email: `representante${i + 1}@correo.com`,
@@ -522,11 +550,25 @@ async function main() {
   // ── 8. EMPLOYEES ──
   await prisma.employee.createMany({
     data: [
+      // Existing employees
       { userId: 2, baseHourRate: 0, hireDate: new Date('2020-01-15') },
       { userId: 3, baseHourRate: 0, hireDate: new Date('2021-03-01') },
       { userId: 4, baseHourRate: 0, hireDate: new Date('2022-06-01') },
       { userId: 5, baseHourRate: 0, hireDate: new Date('2023-09-01') },
       { userId: 6, baseHourRate: 12.5, hireDate: new Date('2020-09-01') },
+      // New docentes employees (8-19)
+      { userId: 8, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
+      { userId: 9, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
+      { userId: 10, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
+      { userId: 11, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
+      { userId: 12, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
+      { userId: 13, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
+      { userId: 14, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
+      { userId: 15, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
+      { userId: 16, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
+      { userId: 17, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
+      { userId: 18, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
+      { userId: 19, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
     ],
   });
   console.log('Empleados creados.');
@@ -543,7 +585,81 @@ async function main() {
   });
   console.log('Niveles creados.');
 
-  // ── 10. SCHOOL YEAR ──
+  // ── 10. SUBJECTS ──
+  const subjectsData = [
+    { id: 1, subject: 'Matemática', code: 'MAT', status: true },
+    { id: 2, subject: 'Lengua y Literatura', code: 'LYL', status: true },
+    { id: 3, subject: 'Ciencias Naturales', code: 'CN', status: true },
+    { id: 4, subject: 'Historia Universal', code: 'HU', status: true },
+    { id: 5, subject: 'Geografía', code: 'GEO', status: true },
+    { id: 6, subject: 'Inglés', code: 'ING', status: true },
+    { id: 7, subject: 'Educación Física', code: 'EF', status: true },
+    { id: 8, subject: 'Arte y Cultura', code: 'AC', status: true },
+    { id: 9, subject: 'Formación Ciudadana', code: 'FC', status: true },
+    { id: 10, subject: 'Química', code: 'QUI', status: true },
+    { id: 11, subject: 'Física', code: 'FIS', status: true },
+    { id: 12, subject: 'Biología', code: 'BIO', status: true },
+    { id: 13, subject: 'CRP', code: 'CRP', status: true },
+  ];
+  await prisma.subject.createMany({ data: subjectsData });
+  console.log('Materias creadas.');
+
+  // ── 11. LEVEL SUBJECTS ──
+  const levelSubjectsData = [
+    // 1er Año
+    { highSchoolLevelId: 1, subjectId: 1 },
+    { highSchoolLevelId: 1, subjectId: 2 },
+    { highSchoolLevelId: 1, subjectId: 3 },
+    { highSchoolLevelId: 1, subjectId: 4 },
+    { highSchoolLevelId: 1, subjectId: 5 },
+    { highSchoolLevelId: 1, subjectId: 7 },
+    { highSchoolLevelId: 1, subjectId: 8 },
+    { highSchoolLevelId: 1, subjectId: 9 },
+    // 2do Año
+    { highSchoolLevelId: 2, subjectId: 1 },
+    { highSchoolLevelId: 2, subjectId: 2 },
+    { highSchoolLevelId: 2, subjectId: 3 },
+    { highSchoolLevelId: 2, subjectId: 4 },
+    { highSchoolLevelId: 2, subjectId: 6 },
+    { highSchoolLevelId: 2, subjectId: 7 },
+    { highSchoolLevelId: 2, subjectId: 8 },
+    { highSchoolLevelId: 2, subjectId: 9 },
+    // 3er Año
+    { highSchoolLevelId: 3, subjectId: 1 },
+    { highSchoolLevelId: 3, subjectId: 2 },
+    { highSchoolLevelId: 3, subjectId: 3 },
+    { highSchoolLevelId: 3, subjectId: 4 },
+    { highSchoolLevelId: 3, subjectId: 6 },
+    { highSchoolLevelId: 3, subjectId: 7 },
+    { highSchoolLevelId: 3, subjectId: 10 },
+    { highSchoolLevelId: 3, subjectId: 12 },
+    // 4to Año
+    { highSchoolLevelId: 4, subjectId: 1 },
+    { highSchoolLevelId: 4, subjectId: 2 },
+    { highSchoolLevelId: 4, subjectId: 4 },
+    { highSchoolLevelId: 4, subjectId: 6 },
+    { highSchoolLevelId: 4, subjectId: 10 },
+    { highSchoolLevelId: 4, subjectId: 11 },
+    { highSchoolLevelId: 4, subjectId: 12 },
+    // 5to Año
+    { highSchoolLevelId: 5, subjectId: 1 },
+    { highSchoolLevelId: 5, subjectId: 2 },
+    { highSchoolLevelId: 5, subjectId: 4 },
+    { highSchoolLevelId: 5, subjectId: 6 },
+    { highSchoolLevelId: 5, subjectId: 10 },
+    { highSchoolLevelId: 5, subjectId: 11 },
+    { highSchoolLevelId: 5, subjectId: 12 },
+    // CRP en todos los niveles
+    { highSchoolLevelId: 1, subjectId: 13 },
+    { highSchoolLevelId: 2, subjectId: 13 },
+    { highSchoolLevelId: 3, subjectId: 13 },
+    { highSchoolLevelId: 4, subjectId: 13 },
+    { highSchoolLevelId: 5, subjectId: 13 },
+  ];
+  await prisma.levelSubject.createMany({ data: levelSubjectsData });
+  console.log('Materias por nivel creadas.');
+
+  // ── 12. SCHOOL YEAR ──
   await prisma.schoolYear.createMany({
     data: [
       { id: 1, name: '2025-2026', startDate: new Date('2025-07-01'), endDate: new Date('2026-06-30'), isActive: true },
@@ -551,7 +667,7 @@ async function main() {
   });
   console.log('Año escolar creado.');
 
-  // ── 11. PERIODS ──
+  // ── 13. PERIODS ──
   await prisma.period.createMany({
     data: [
       { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
@@ -561,7 +677,7 @@ async function main() {
   });
   console.log('Períodos creados.');
 
-  // ── 12. SECTIONS ──
+  // ── 14. SECTIONS ──
   const sectionData = [
     { id: 1, schoolYearId: 1, highSchoolLevelId: 1, section: 'A' },
     { id: 2, schoolYearId: 1, highSchoolLevelId: 1, section: 'B' },
@@ -579,7 +695,7 @@ async function main() {
 
   const sections = await prisma.section.findMany({ orderBy: { id: 'asc' } });
 
-  // ── 13. ENROLLMENTS ──
+  // ── 15. ENROLLMENTS ──
   const studentsWithEnrollment = allStudents.filter(s => s.status); // 200
 
   const enrollmentsData: { studentId: number; schoolYearId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
@@ -601,7 +717,108 @@ async function main() {
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
   console.log('Matrículas oficiales creadas.');
 
-  // ── 14. FEES ──
+  // ── 16. TEACHING GROUPS ──
+  const allLevelSubjects = await prisma.levelSubject.findMany();
+  const allSections = await prisma.section.findMany();
+  const allSchoolYears = await prisma.schoolYear.findMany();
+  
+  // Get all docente employees (users 6, 8-19)
+  const docenteUserIds = [6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+  const docenteEmployees = await prisma.employee.findMany({
+    where: { userId: { in: docenteUserIds } },
+  });
+
+  if (docenteEmployees.length > 0) {
+    const assignmentData = allSections.flatMap((section) =>
+      allLevelSubjects
+        .filter((ls) => ls.highSchoolLevelId === section.highSchoolLevelId)
+        .map((ls, index) => ({
+          teacherId: docenteEmployees[index % docenteEmployees.length].id,
+          levelSubjectId: ls.id,
+          schoolYearId: section.schoolYearId,
+          sectionId: section.id,
+          assignedAt: new Date('2025-09-01'),
+          status: true,
+        })),
+    );
+    await prisma.teachingGroup.createMany({ data: assignmentData });
+    console.log(`Grupos docentes creados (${assignmentData.length}).`);
+  } else {
+    console.log('⚠️ No se encontraron empleados docentes para asignar materias.');
+  }
+
+  // ── 16b. CRP TEACHING GROUPS ──
+  const crpNames = ['Karate', 'Pintura', 'Bordado', 'Ajedrez', 'Música', 'Danza'];
+  const crpLevelSubjects = await prisma.levelSubject.findMany({
+    where: { subject: { code: 'CRP' } },
+  });
+  
+  // Get CRP docente employees (users 8-13, one per CRP)
+  const crpDocenteUserIds = [8, 9, 10, 11, 12, 13];
+  const crpDocenteEmployees = await prisma.employee.findMany({
+    where: { userId: { in: crpDocenteUserIds } },
+  });
+
+  if (crpLevelSubjects.length > 0 && crpDocenteEmployees.length >= 6) {
+    // Create CRP TeachingGroups for each CRP × each level
+    const crpData = crpNames.flatMap((name, crpIndex) =>
+      crpLevelSubjects.map((ls) => ({
+        teacherId: crpDocenteEmployees[crpIndex].id,
+        levelSubjectId: ls.id,
+        schoolYearId: 1,
+        sectionId: null as number | null,
+        groupName: name,
+        isSpecialGroup: true,
+        assignedAt: new Date('2025-09-01'),
+        status: true,
+      })),
+    );
+    await prisma.teachingGroup.createMany({ data: crpData });
+    console.log(`Grupos CRP creados (${crpData.length}).`);
+  } else {
+    console.log('⚠️ No se encontraron suficientes empleados para asignar CRPs.');
+  }
+
+  // ── 16c. STUDENT TEACHING GROUPS (CRPs) ──
+  // Add students from different levels to CRPs
+  const crpTeachingGroups = await prisma.teachingGroup.findMany({
+    where: { isSpecialGroup: true },
+    include: { levelSubject: { include: { highSchoolLevel: true } } },
+  });
+  const allEnrollments = await prisma.studentEnrollment.findMany({
+    where: { status: true },
+    include: { section: { include: { highSchoolLevel: true } } },
+  });
+
+  const studentGroupData: { studentEnrollmentId: number; teachingGroupId: number }[] = [];
+
+  for (const crpGroup of crpTeachingGroups) {
+    // Get the level of this CRP
+    const levelId = crpGroup.levelSubject.highSchoolLevelId;
+    
+    // Filter enrollments from this level
+    const levelEnrollments = allEnrollments.filter(
+      (e) => e.section.highSchoolLevelId === levelId
+    );
+    
+    // Select 5-10 random students from this level
+    const studentCount = Math.min(randInt(5, 10), levelEnrollments.length);
+    const selectedEnrollments = pickN(levelEnrollments, studentCount);
+    
+    for (const enrollment of selectedEnrollments) {
+      studentGroupData.push({
+        studentEnrollmentId: enrollment.id,
+        teachingGroupId: crpGroup.id,
+      });
+    }
+  }
+
+  if (studentGroupData.length > 0) {
+    await prisma.studentTeachingGroup.createMany({ data: studentGroupData });
+    console.log(`Estudiantes asignados a CRPs (${studentGroupData.length} registros).`);
+  }
+
+  // ── 17. FEES ──
   // Fee 1: Inscripción $60 (01/07/2025 - 30/06/2026)
   // Fees 2-13: Monthly $90 each (Sep 2025 - Aug 2026)
   const feeDefinitions = [
@@ -635,7 +852,7 @@ async function main() {
   const FEE_INSCRIPCION = 1;
   const MONTHLY_FEE_IDS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
-  // ── 15. PAYMENT METHODS ──
+  // ── 18. PAYMENT METHODS ──
   await prisma.paymentMethod.createMany({
     data: [
       { id: 1, type: 'Pago móvil', active: true },
@@ -646,7 +863,7 @@ async function main() {
   });
   console.log('Métodos de pago creados.');
 
-  // ── 16. EXCHANGE ──
+  // ── 19. EXCHANGE ──
   const EXCHANGE_RATE = 602.3324;
   await prisma.exchange.createMany({
     data: [
@@ -655,7 +872,7 @@ async function main() {
   });
   console.log('Tasa de cambio creada.');
 
-  // ── 17. PAYMENTS + STUDENT FEES (BUNDLED) ──
+  // ── 20. PAYMENTS + STUDENT FEES (BUNDLED) ──
   // Determine which payment group each enrolled student belongs to
   const FULLY_PAID = 50;
   const MOSTLY_PAID = 40;
@@ -846,7 +1063,7 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentEnrollment_id_seq',
-    'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'LevelSubject_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];
   for (const seq of sequences) {

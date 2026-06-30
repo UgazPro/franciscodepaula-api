@@ -62,6 +62,11 @@ export class UsersController {
     return await this.usersService.getTeachers();
   }
 
+  @Get('roles')
+  async getRoles() {
+    return await this.usersService.getRoles();
+  }
+
   // Check identification number uniqueness
   @Get('check-identification')
   async checkIdentification(
@@ -178,5 +183,13 @@ export class UsersController {
   @Post('employees')
   async createEmployee(@Body() data: EmployeeDTO) {
     return await this.usersService.createEmployee(data);
+  }
+
+  @Put('employees/:id')
+  async updateEmployee(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: EmployeeDTO,
+  ) {
+    return await this.usersService.updateEmployee(id, data);
   }
 }

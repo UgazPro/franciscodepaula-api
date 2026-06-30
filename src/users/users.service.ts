@@ -613,6 +613,21 @@ export class UsersService {
   }
 
   //////////////////////////////////////////////////
+  // GET ROLES
+  //////////////////////////////////////////////////
+  async getRoles() {
+    try {
+      const roles = await this.prismaService.role.findMany({
+        orderBy: { id: 'asc' },
+      });
+      return roles;
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
   // GET USER BY ID
   //////////////////////////////////////////////////
   async getUserById(id: number) {
@@ -943,6 +958,60 @@ export class UsersService {
       });
 
       return { success: true, message: 'Empleado creado exitosamente', data: result };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  // UPDATE EMPLOYEE
+  //////////////////////////////////////////////////
+  async updateEmployee(id: number, data: EmployeeDTO) {
+    try {
+      const result = await this.prismaService.$transaction(async (tx) => {
+        const user = await tx.user.findUnique({
+          where: { id },
+          include: { person: true, employee: true },
+        });
+        if (!user) throw new BadRequestException('Usuario no encontrado');
+
+        await tx.person.update({
+          where: { id: user.personId },
+          data: {
+            profilePhoto: data.profilePhoto,
+            firstNames: data.firstNames,
+            lastNames: data.lastNames,
+            identificationNumber: data.identificationNumber,
+            birthDate: data.birthDate,
+            gender: data.gender,
+          },
+        });
+
+        const userData: any = {
+          email: data.email,
+          roleId: data.roleId,
+          phone: data.phone,
+        };
+        if (data.password) {
+          userData.password = await bcrypt.hash(data.password, 10);
+        }
+        await tx.user.update({ where: { id }, data: userData });
+
+        if (user.employee) {
+          await tx.employee.update({
+            where: { id: user.employee.id },
+            data: {
+              baseHourRate: data.baseHourRate,
+              hireDate: data.hireDate,
+            },
+          });
+        }
+
+        return { id };
+      });
+
+      return { success: true, message: 'Empleado actualizado exitosamente', data: result };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
