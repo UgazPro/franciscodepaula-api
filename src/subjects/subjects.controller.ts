@@ -4,7 +4,6 @@ import {
   Post,
   Delete,
   Put,
-  Patch,
   Body,
   Param,
   ParseIntPipe,
@@ -39,7 +38,7 @@ export class SubjectsController {
     return await this.subjectsService.update(id, data);
   }
 
-  @Patch(':id/toggle-status')
+  @Put(':id/toggle-status')
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     return await this.subjectsService.toggleStatus(id);
   }

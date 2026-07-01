@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Patch,
   Delete,
   Body,
   Param,
@@ -45,7 +44,7 @@ export class TeacherAssignmentController {
     return await this.service.update(id, data);
   }
 
-  @Patch(':id/toggle-status')
+  @Put(':id/toggle-status')
   async toggleStatus(@Param('id', ParseIntPipe) id: number) {
     return await this.service.toggleStatus(id);
   }
@@ -82,7 +81,7 @@ export class TeacherAssignmentController {
     return await this.service.updateSpecialGroup(id, data);
   }
 
-  @Patch('special-groups/:id/toggle-status')
+  @Put('special-groups/:id/toggle-status')
   async toggleSpecialGroupStatus(@Param('id', ParseIntPipe) id: number) {
     return await this.service.toggleSpecialGroupStatus(id);
   }
