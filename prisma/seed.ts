@@ -310,19 +310,6 @@ async function main() {
     { id: 5, firstNames: 'Yasmeli', lastNames: 'Villalobos', identificationNumber: 'V-55443322', birthDate: new Date('1992-11-25'), gender: 'Femenino' },
     { id: 6, firstNames: 'Ana', lastNames: 'García Castillo', identificationNumber: 'V-66778899', birthDate: new Date('1991-02-14'), gender: 'Femenino' },
     { id: 7, firstNames: 'Diana', lastNames: 'Pereira', identificationNumber: 'V-11122233', birthDate: new Date('1987-08-22'), gender: 'Femenino' },
-    // New docentes (8-19)
-    { id: 8, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 9, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
-    { id: 10, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 11, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
-    { id: 12, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 13, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
-    { id: 14, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 15, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
-    { id: 16, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 17, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
-    { id: 18, firstNames: pick(maleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
-    { id: 19, firstNames: pick(femaleNames), lastNames: `${pick(lastNames)} ${pick(lastNames)}`, identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
   ];
 
   // Student persons (20-269)
@@ -404,18 +391,6 @@ async function main() {
     { id: 5, personId: 5, email: 'control@colegio.com', password, phone: '0412-5555555', status: true },
     { id: 6, personId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666', status: true },
     { id: 7, personId: 7, email: 'diana@pereira.com', password: adminPassword, phone: '0412-7777777', status: true },
-    { id: 8, personId: 8, email: 'docente8@colegio.com', password, phone: '0412-8888888', status: true },
-    { id: 9, personId: 9, email: 'docente9@colegio.com', password, phone: '0412-9999999', status: true },
-    { id: 10, personId: 10, email: 'docente10@colegio.com', password, phone: '0412-1010101', status: true },
-    { id: 11, personId: 11, email: 'docente11@colegio.com', password, phone: '0412-1111110', status: true },
-    { id: 12, personId: 12, email: 'docente12@colegio.com', password, phone: '0412-1212121', status: true },
-    { id: 13, personId: 13, email: 'docente13@colegio.com', password, phone: '0412-1313131', status: true },
-    { id: 14, personId: 14, email: 'docente14@colegio.com', password, phone: '0412-1414141', status: true },
-    { id: 15, personId: 15, email: 'docente15@colegio.com', password, phone: '0412-1515151', status: true },
-    { id: 16, personId: 16, email: 'docente16@colegio.com', password, phone: '0412-1616161', status: true },
-    { id: 17, personId: 17, email: 'docente17@colegio.com', password, phone: '0412-1717171', status: true },
-    { id: 18, personId: 18, email: 'docente18@colegio.com', password, phone: '0412-1818181', status: true },
-    { id: 19, personId: 19, email: 'docente19@colegio.com', password, phone: '0412-1919191', status: true },
     { id: 150, personId: 420, email: 'dionel.silva@colegio.com', password, phone: '0412-1500000', status: true },
     { id: 151, personId: 421, email: 'jean.cambar@colegio.com', password, phone: '0412-1510000', status: true },
     { id: 152, personId: 422, email: 'domingo.arroyo@colegio.com', password, phone: '0412-1520000', status: true },
@@ -453,7 +428,6 @@ async function main() {
   const staffRoleMap: [number, number[]][] = [
     [1, [1]], [2, [2]], [3, [3]], [4, [4]], [5, [5]], [6, [6]], [7, [1]],
   ];
-  for (let id = 8; id <= 19; id++) staffRoleMap.push([id, [6]]);
   for (let id = 150; id <= 169; id++) staffRoleMap.push([id, [6]]);
 
   const userRoleData = [
@@ -647,19 +621,6 @@ async function main() {
       { userId: 4, baseHourRate: 0, hireDate: new Date('2022-06-01') },
       { userId: 5, baseHourRate: 0, hireDate: new Date('2023-09-01') },
       { userId: 6, baseHourRate: 12.5, hireDate: new Date('2020-09-01') },
-      // New docentes employees (8-19)
-      { userId: 8, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
-      { userId: 9, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
-      { userId: 10, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
-      { userId: 11, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
-      { userId: 12, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
-      { userId: 13, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
-      { userId: 14, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
-      { userId: 15, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
-      { userId: 16, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
-      { userId: 17, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
-      { userId: 18, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
-      { userId: 19, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
       // Named docentes (150-169)
       { userId: 150, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
       { userId: 151, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
