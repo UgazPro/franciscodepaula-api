@@ -366,7 +366,33 @@ async function main() {
     });
   }
 
-  await prisma.person.createMany({ data: [...staffPersons, ...studentPersons, ...repPersons] });
+  // New docente persons (420-439)
+  const docentePersons = [
+    { id: 420, firstNames: 'Dionel', lastNames: 'Silva', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 421, firstNames: 'Jean', lastNames: 'Cambar', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 422, firstNames: 'Domingo', lastNames: 'Arroyo', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 423, firstNames: 'Leonel', lastNames: 'Madueño', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 424, firstNames: 'Manuel', lastNames: 'Romero', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 425, firstNames: 'Engelberth', lastNames: 'Sanchez', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 426, firstNames: 'Luis', lastNames: 'Duran', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 427, firstNames: 'Maria', lastNames: 'Maturana', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 428, firstNames: 'Edyoly', lastNames: 'Valbuena', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 429, firstNames: 'Yldelfonso', lastNames: 'Vasquez', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 430, firstNames: 'Luis', lastNames: 'Urdaneta', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 431, firstNames: 'Pedro', lastNames: 'Orozco', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 432, firstNames: 'Nelvis', lastNames: 'Zambrano', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 433, firstNames: 'Jose Raul', lastNames: 'Jimenez', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 434, firstNames: 'Geryk', lastNames: 'Nuñez', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 435, firstNames: 'Betty', lastNames: 'Chacín', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 436, firstNames: 'Dameris', lastNames: 'Peña', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 437, firstNames: 'Yralina', lastNames: 'Quintero', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Femenino' },
+    { id: 438, firstNames: 'Jesus', lastNames: 'Erdenes', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+    { id: 439, firstNames: 'Luis Angel', lastNames: 'Ugaz', identificationNumber: generateCI(), birthDate: new Date(randInt(1980, 1995), randInt(0, 11), randInt(1, 28)), gender: 'Masculino' },
+  ];
+
+  const yarelysPerson = { id: 440, firstNames: 'Yarelys', lastNames: 'Orozco', identificationNumber: generateCI(), birthDate: new Date(2009, 5, 15), gender: 'Femenino' };
+
+  await prisma.person.createMany({ data: [...staffPersons, ...studentPersons, ...repPersons, ...docentePersons, yarelysPerson] });
   console.log('Personas creadas.');
 
   // ── 4. USERS ──
@@ -392,6 +418,27 @@ async function main() {
     { id: 17, personId: 17, roleId: 6, email: 'docente17@colegio.com', password, phone: '0412-1717171', status: true },
     { id: 18, personId: 18, roleId: 6, email: 'docente18@colegio.com', password, phone: '0412-1818181', status: true },
     { id: 19, personId: 19, roleId: 6, email: 'docente19@colegio.com', password, phone: '0412-1919191', status: true },
+    // New docentes by name (150-169)
+    { id: 150, personId: 420, roleId: 6, email: 'dionel.silva@colegio.com', password, phone: '0412-1500000', status: true },
+    { id: 151, personId: 421, roleId: 6, email: 'jean.cambar@colegio.com', password, phone: '0412-1510000', status: true },
+    { id: 152, personId: 422, roleId: 6, email: 'domingo.arroyo@colegio.com', password, phone: '0412-1520000', status: true },
+    { id: 153, personId: 423, roleId: 6, email: 'leonel.madueno@colegio.com', password, phone: '0412-1530000', status: true },
+    { id: 154, personId: 424, roleId: 6, email: 'manuel.romero@colegio.com', password, phone: '0412-1540000', status: true },
+    { id: 155, personId: 425, roleId: 6, email: 'engelberth.sanchez@colegio.com', password, phone: '0412-1550000', status: true },
+    { id: 156, personId: 426, roleId: 6, email: 'luis.duran@colegio.com', password, phone: '0412-1560000', status: true },
+    { id: 157, personId: 427, roleId: 6, email: 'maria.maturana@colegio.com', password, phone: '0412-1570000', status: true },
+    { id: 158, personId: 428, roleId: 6, email: 'edyoly.valbuena@colegio.com', password, phone: '0412-1580000', status: true },
+    { id: 159, personId: 429, roleId: 6, email: 'yldelfonso.vasquez@colegio.com', password, phone: '0412-1590000', status: true },
+    { id: 160, personId: 430, roleId: 6, email: 'luis.urdaneta@colegio.com', password, phone: '0412-1600000', status: true },
+    { id: 161, personId: 431, roleId: 6, email: 'pedro.orozco@colegio.com', password, phone: '0412-1610000', status: true },
+    { id: 162, personId: 432, roleId: 6, email: 'nelvis.zambrano@colegio.com', password, phone: '0412-1620000', status: true },
+    { id: 163, personId: 433, roleId: 6, email: 'joseraul.jimenez@colegio.com', password, phone: '0412-1630000', status: true },
+    { id: 164, personId: 434, roleId: 6, email: 'geryk.nunez@colegio.com', password, phone: '0412-1640000', status: true },
+    { id: 165, personId: 435, roleId: 6, email: 'betty.chacin@colegio.com', password, phone: '0412-1650000', status: true },
+    { id: 166, personId: 436, roleId: 6, email: 'dameris.pena@colegio.com', password, phone: '0412-1660000', status: true },
+    { id: 167, personId: 437, roleId: 6, email: 'yralina.quintero@colegio.com', password, phone: '0412-1670000', status: true },
+    { id: 168, personId: 438, roleId: 6, email: 'jesus.erdenes@colegio.com', password, phone: '0412-1680000', status: true },
+    { id: 169, personId: 439, roleId: 6, email: 'luisangel.docente@colegio.com', password, phone: '0412-1690000', status: true },
   ];
   await prisma.user.createMany({ data: staffUserData });
 
@@ -446,7 +493,7 @@ async function main() {
         previousSchool: pick(schoolsList),
         address: `${pick(addressOptions)} #${randInt(1, 200)}`,
         status: true,
-        admissionDate: new Date('2025-07-01'),
+        admissionDate: new Date('2026-07-01'),
       };
     }),
     ...pendingIds.map(id => {
@@ -461,7 +508,7 @@ async function main() {
         previousSchool: pick(schoolsList),
         address: `${pick(addressOptions)} #${randInt(1, 200)}`,
         status: true,
-        admissionDate: new Date('2025-07-01'),
+        admissionDate: new Date('2026-07-01'),
       };
     }),
     ...inactiveIds.map(id => ({
@@ -474,10 +521,26 @@ async function main() {
       previousSchool: 'U.E. Anterior',
       address: 'Dirección de muestra',
       status: false,
-      admissionDate: new Date('2024-09-01'),
+      admissionDate: new Date('2025-09-01'),
     })),
   ];
   await prisma.student.createMany({ data: studentsData });
+
+  // Yarelys Orozco — estudiante adicional en 5to año
+  await prisma.student.create({
+    data: {
+      personId: 440,
+      birthCountry: 'Venezuela',
+      state: 'Zulia',
+      municipality: 'Maracaibo',
+      parish: 'Bolívar',
+      currentParish: 'Bolívar',
+      previousSchool: 'U.E. Colegio Francisco de Paula',
+      address: 'Av. 15 con Calle 10 #100',
+      status: true,
+      admissionDate: new Date('2026-07-01'),
+    },
+  });
   console.log('Estudiantes creados.');
 
   const allStudents = await prisma.student.findMany({ orderBy: { id: 'asc' } });
@@ -537,6 +600,19 @@ async function main() {
   }
 
   await prisma.studentRepresentative.createMany({ data: studentRepPairs });
+
+  // Yarelys Orozco — StudentRepresentative
+  const yarelysStudent = await prisma.student.findUnique({ where: { personId: 440 } });
+  const repPedro = await prisma.representative.findUnique({ where: { userId: 161 } });
+  const repYujenis = await prisma.representative.findUnique({ where: { userId: 3 } });
+  if (yarelysStudent && repPedro && repYujenis) {
+    await prisma.studentRepresentative.createMany({
+      data: [
+        { studentId: yarelysStudent.id, representativeId: repPedro.id, relationship: 'Padre', isPrimary: true },
+        { studentId: yarelysStudent.id, representativeId: repYujenis.id, relationship: 'Madre', isPrimary: false },
+      ],
+    });
+  }
   console.log('Relaciones estudiante-representante creadas.');
 
   // Build student → primary rep map for payment bundling
@@ -545,6 +621,10 @@ async function main() {
     if (pair.isPrimary) {
       studentPrimaryRepMap.set(pair.studentId, pair.representativeId);
     }
+  }
+  // Also add Yarelys
+  if (yarelysStudent && repPedro) {
+    studentPrimaryRepMap.set(yarelysStudent.id, repPedro.id);
   }
 
   // ── 8. EMPLOYEES ──
@@ -569,9 +649,39 @@ async function main() {
       { userId: 17, baseHourRate: 12.5, hireDate: new Date('2021-09-01') },
       { userId: 18, baseHourRate: 12.5, hireDate: new Date('2022-09-01') },
       { userId: 19, baseHourRate: 12.5, hireDate: new Date('2023-09-01') },
+      // Named docentes (150-169)
+      { userId: 150, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 151, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 152, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 153, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 154, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 155, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 156, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 157, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 158, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 159, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 160, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 161, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 162, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 163, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 164, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 165, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 166, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 167, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 168, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
+      { userId: 169, baseHourRate: 12.5, hireDate: new Date('2024-09-01') },
     ],
   });
   console.log('Empleados creados.');
+
+  // ── 8b. REPRESENTATIVES FOR YARELYS ──
+  await prisma.representative.createMany({
+    data: [
+      { userId: 161, occupation: 'Docente' },
+      { userId: 3, occupation: 'Subdirectora' },
+    ],
+  });
+  console.log('Representantes adicionales (Pedro Orozco, Yujenis Gonzalez) creados.');
 
   // ── 9. HIGH SCHOOL LEVELS ──
   await prisma.highSchoolLevel.createMany({
@@ -587,19 +697,22 @@ async function main() {
 
   // ── 10. SUBJECTS ──
   const subjectsData = [
-    { id: 1, subject: 'Matemática', code: 'MAT', status: true },
-    { id: 2, subject: 'Lengua y Literatura', code: 'LYL', status: true },
-    { id: 3, subject: 'Ciencias Naturales', code: 'CN', status: true },
-    { id: 4, subject: 'Historia Universal', code: 'HU', status: true },
-    { id: 5, subject: 'Geografía', code: 'GEO', status: true },
-    { id: 6, subject: 'Inglés', code: 'ING', status: true },
-    { id: 7, subject: 'Educación Física', code: 'EF', status: true },
-    { id: 8, subject: 'Arte y Cultura', code: 'AC', status: true },
-    { id: 9, subject: 'Formación Ciudadana', code: 'FC', status: true },
-    { id: 10, subject: 'Química', code: 'QUI', status: true },
-    { id: 11, subject: 'Física', code: 'FIS', status: true },
-    { id: 12, subject: 'Biología', code: 'BIO', status: true },
-    { id: 13, subject: 'CRP', code: 'CRP', status: true },
+    { id: 1, subject: 'Lengua y Literatura', code: 'LYL', status: true },
+    { id: 2, subject: 'Idiomas', code: 'IDI', status: true },
+    { id: 3, subject: 'Matemáticas', code: 'MAT', status: true },
+    { id: 4, subject: 'Educación Física', code: 'EF', status: true },
+    { id: 5, subject: 'Arte y Patrimonio', code: 'AP', status: true },
+    { id: 6, subject: 'Biología Ambiente y Tecnología', code: 'BAT', status: true },
+    { id: 7, subject: 'Geografía Historia y Ciudadanía', code: 'GHC', status: true },
+    { id: 8, subject: 'Física', code: 'FIS', status: true },
+    { id: 9, subject: 'Química', code: 'QUI', status: true },
+    { id: 10, subject: 'Formación para la Soberanía Nacional', code: 'FSN', status: true },
+    { id: 11, subject: 'Ciencias de la Tierra', code: 'CT', status: true },
+    { id: 12, subject: 'Robótica', code: 'ROB', status: true },
+    { id: 13, subject: 'Música', code: 'MUS', status: true },
+    { id: 14, subject: 'CRP', code: 'CRP', status: true },
+    { id: 15, subject: 'Orientación Vocacional', code: 'OV', status: true },
+    { id: 16, subject: 'Metodología', code: 'MET', status: true },
   ];
   await prisma.subject.createMany({ data: subjectsData });
   console.log('Materias creadas.');
@@ -612,18 +725,24 @@ async function main() {
     { highSchoolLevelId: 1, subjectId: 3 },
     { highSchoolLevelId: 1, subjectId: 4 },
     { highSchoolLevelId: 1, subjectId: 5 },
+    { highSchoolLevelId: 1, subjectId: 6 },
     { highSchoolLevelId: 1, subjectId: 7 },
-    { highSchoolLevelId: 1, subjectId: 8 },
-    { highSchoolLevelId: 1, subjectId: 9 },
+    { highSchoolLevelId: 1, subjectId: 12 },
+    { highSchoolLevelId: 1, subjectId: 13 },
+    { highSchoolLevelId: 1, subjectId: 14 },
+    { highSchoolLevelId: 1, subjectId: 15 },
     // 2do Año
     { highSchoolLevelId: 2, subjectId: 1 },
     { highSchoolLevelId: 2, subjectId: 2 },
     { highSchoolLevelId: 2, subjectId: 3 },
     { highSchoolLevelId: 2, subjectId: 4 },
+    { highSchoolLevelId: 2, subjectId: 5 },
     { highSchoolLevelId: 2, subjectId: 6 },
     { highSchoolLevelId: 2, subjectId: 7 },
-    { highSchoolLevelId: 2, subjectId: 8 },
-    { highSchoolLevelId: 2, subjectId: 9 },
+    { highSchoolLevelId: 2, subjectId: 12 },
+    { highSchoolLevelId: 2, subjectId: 13 },
+    { highSchoolLevelId: 2, subjectId: 14 },
+    { highSchoolLevelId: 2, subjectId: 15 },
     // 3er Año
     { highSchoolLevelId: 3, subjectId: 1 },
     { highSchoolLevelId: 3, subjectId: 2 },
@@ -631,30 +750,40 @@ async function main() {
     { highSchoolLevelId: 3, subjectId: 4 },
     { highSchoolLevelId: 3, subjectId: 6 },
     { highSchoolLevelId: 3, subjectId: 7 },
-    { highSchoolLevelId: 3, subjectId: 10 },
+    { highSchoolLevelId: 3, subjectId: 8 },
+    { highSchoolLevelId: 3, subjectId: 9 },
     { highSchoolLevelId: 3, subjectId: 12 },
+    { highSchoolLevelId: 3, subjectId: 13 },
+    { highSchoolLevelId: 3, subjectId: 14 },
+    { highSchoolLevelId: 3, subjectId: 15 },
     // 4to Año
     { highSchoolLevelId: 4, subjectId: 1 },
     { highSchoolLevelId: 4, subjectId: 2 },
+    { highSchoolLevelId: 4, subjectId: 3 },
     { highSchoolLevelId: 4, subjectId: 4 },
     { highSchoolLevelId: 4, subjectId: 6 },
+    { highSchoolLevelId: 4, subjectId: 7 },
+    { highSchoolLevelId: 4, subjectId: 8 },
+    { highSchoolLevelId: 4, subjectId: 9 },
     { highSchoolLevelId: 4, subjectId: 10 },
-    { highSchoolLevelId: 4, subjectId: 11 },
     { highSchoolLevelId: 4, subjectId: 12 },
+    { highSchoolLevelId: 4, subjectId: 14 },
+    { highSchoolLevelId: 4, subjectId: 15 },
+    { highSchoolLevelId: 4, subjectId: 16 },
     // 5to Año
     { highSchoolLevelId: 5, subjectId: 1 },
     { highSchoolLevelId: 5, subjectId: 2 },
+    { highSchoolLevelId: 5, subjectId: 3 },
     { highSchoolLevelId: 5, subjectId: 4 },
     { highSchoolLevelId: 5, subjectId: 6 },
+    { highSchoolLevelId: 5, subjectId: 7 },
+    { highSchoolLevelId: 5, subjectId: 8 },
+    { highSchoolLevelId: 5, subjectId: 9 },
     { highSchoolLevelId: 5, subjectId: 10 },
     { highSchoolLevelId: 5, subjectId: 11 },
-    { highSchoolLevelId: 5, subjectId: 12 },
-    // CRP en todos los niveles
-    { highSchoolLevelId: 1, subjectId: 13 },
-    { highSchoolLevelId: 2, subjectId: 13 },
-    { highSchoolLevelId: 3, subjectId: 13 },
-    { highSchoolLevelId: 4, subjectId: 13 },
-    { highSchoolLevelId: 5, subjectId: 13 },
+    { highSchoolLevelId: 5, subjectId: 14 },
+    { highSchoolLevelId: 5, subjectId: 15 },
+    { highSchoolLevelId: 5, subjectId: 16 },
   ];
   await prisma.levelSubject.createMany({ data: levelSubjectsData });
   console.log('Materias por nivel creadas.');
@@ -662,7 +791,7 @@ async function main() {
   // ── 12. SCHOOL YEAR ──
   await prisma.schoolYear.createMany({
     data: [
-      { id: 1, name: '2025-2026', startDate: new Date('2025-07-01'), endDate: new Date('2026-06-30'), isActive: true },
+      { id: 1, name: '2026-2027', startDate: new Date('2026-07-01'), endDate: new Date('2027-06-30'), isActive: true },
     ],
   });
   console.log('Año escolar creado.');
@@ -670,9 +799,9 @@ async function main() {
   // ── 13. PERIODS ──
   await prisma.period.createMany({
     data: [
-      { id: 1, schoolYearId: 1, period: '1er Lapso', startDate: new Date('2025-09-15'), endDate: new Date('2025-12-19') },
-      { id: 2, schoolYearId: 1, period: '2do Lapso', startDate: new Date('2026-01-12'), endDate: new Date('2026-04-10') },
-      { id: 3, schoolYearId: 1, period: '3er Lapso', startDate: new Date('2026-04-13'), endDate: new Date('2026-06-30') },
+      { id: 1, schoolYearId: 1, period: 'Lapso I', startDate: new Date('2026-09-15'), endDate: new Date('2026-12-18') },
+      { id: 2, schoolYearId: 1, period: 'Lapso II', startDate: new Date('2027-01-12'), endDate: new Date('2027-04-09') },
+      { id: 3, schoolYearId: 1, period: 'Lapso III', startDate: new Date('2027-04-12'), endDate: new Date('2027-06-30') },
     ],
   });
   console.log('Períodos creados.');
@@ -709,80 +838,255 @@ async function main() {
       studentId: studentsWithEnrollment[i].id,
       schoolYearId: 1,
       sectionId: section.id,
-      enrollmentDate: new Date('2025-09-15'),
+      enrollmentDate: new Date('2026-09-15'),
       status: isEnrolled,
     });
   }
 
   await prisma.studentEnrollment.createMany({ data: enrollmentsData });
+
+  // Yarelys Orozco — enrollment in 5to Año A (sectionId 9)
+  if (yarelysStudent) {
+    await prisma.studentEnrollment.create({
+      data: {
+        studentId: yarelysStudent.id,
+        schoolYearId: 1,
+        sectionId: 9,
+        enrollmentDate: new Date('2026-09-15'),
+        status: true,
+      },
+    });
+  }
   console.log('Matrículas oficiales creadas.');
 
   // ── 16. TEACHING GROUPS ──
-  const allLevelSubjects = await prisma.levelSubject.findMany();
   const allSections = await prisma.section.findMany();
+  const allLevelSubjects = await prisma.levelSubject.findMany();
+  const allEmployees = await prisma.employee.findMany();
   const allSchoolYears = await prisma.schoolYear.findMany();
-  
-  // Get all docente employees (users 6, 8-19)
-  const docenteUserIds = [6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
-  const docenteEmployees = await prisma.employee.findMany({
-    where: { userId: { in: docenteUserIds } },
-  });
 
-  if (docenteEmployees.length > 0) {
-    const assignmentData = allSections.flatMap((section) =>
-      allLevelSubjects
-        .filter((ls) => ls.highSchoolLevelId === section.highSchoolLevelId)
-        .map((ls, index) => ({
-          teacherId: docenteEmployees[index % docenteEmployees.length].id,
-          levelSubjectId: ls.id,
-          schoolYearId: section.schoolYearId,
-          sectionId: section.id,
-          assignedAt: new Date('2025-09-01'),
-          status: true,
-        })),
-    );
-    await prisma.teachingGroup.createMany({ data: assignmentData });
-    console.log(`Grupos docentes creados (${assignmentData.length}).`);
-  } else {
-    console.log('⚠️ No se encontraron empleados docentes para asignar materias.');
+  // Build employeeId → userId lookup
+  const employeeUserIdMap = new Map<number, number>();
+  const employeeByUserId = new Map<number, number>();
+  for (const emp of allEmployees) {
+    employeeUserIdMap.set(emp.id, emp.userId);
+    employeeByUserId.set(emp.userId, emp.id);
   }
 
+  // LevelSubject map: (highSchoolLevelId, subjectId) → LevelSubject
+  const lsMap = new Map<string, (typeof allLevelSubjects)[0]>();
+  for (const ls of allLevelSubjects) {
+    lsMap.set(`${ls.highSchoolLevelId}-${ls.subjectId}`, ls);
+  }
+
+  // Section map: (highSchoolLevelId, section) → Section
+  const sectionMap = new Map<string, (typeof allSections)[0]>();
+  for (const s of allSections) {
+    sectionMap.set(`${s.highSchoolLevelId}-${s.section}`, s);
+  }
+
+  // ── Teacher mapping: (subjectId, levelId) → userId ──
+  const teacherMap = new Map<string, number>();
+  // LYL (1)
+  teacherMap.set('1-1', 150); teacherMap.set('2-1', 150); teacherMap.set('3-1', 150);
+  teacherMap.set('4-1', 151); teacherMap.set('5-1', 151);
+  // IDI (2)
+  [1, 2, 3, 4, 5].forEach(l => teacherMap.set(`${l}-2`, 152));
+  // MAT (3)
+  teacherMap.set('1-3', 153); teacherMap.set('2-3', 153);
+  teacherMap.set('3-3', 154); teacherMap.set('4-3', 154); teacherMap.set('5-3', 154);
+  // EF (4)
+  teacherMap.set('1-4', 155); teacherMap.set('2-4', 155); teacherMap.set('3-4', 155);
+  teacherMap.set('4-4', 156); teacherMap.set('5-4', 156);
+  // AP (5)
+  teacherMap.set('1-5', 157); teacherMap.set('2-5', 157);
+  // BAT (6)
+  teacherMap.set('1-6', 158); teacherMap.set('2-6', 158); teacherMap.set('5-6', 158);
+  teacherMap.set('3-6', 159); teacherMap.set('4-6', 159);
+  // GHC (7)
+  teacherMap.set('1-7', 157); teacherMap.set('2-7', 160);
+  teacherMap.set('3-7', 161); teacherMap.set('4-7', 161); teacherMap.set('5-7', 161);
+  // FIS (8)
+  teacherMap.set('3-8', 153); teacherMap.set('4-8', 154); teacherMap.set('5-8', 5);
+  // QUI (9)
+  [3, 4, 5].forEach(l => teacherMap.set(`${l}-9`, 162));
+  // FSN (10)
+  teacherMap.set('4-10', 161); teacherMap.set('5-10', 161);
+  // CT (11)
+  teacherMap.set('5-11', 160);
+
+  const teachingGroupData: any[] = [];
+
+  // Regular subjects (isSpecialGroup=false)
+  for (const [key, userId] of teacherMap) {
+    const [levelId, subjectId] = key.split('-').map(Number);
+    const ls = lsMap.get(`${levelId}-${subjectId}`);
+    if (!ls) continue;
+    const empId = employeeByUserId.get(userId);
+    if (!empId) continue;
+    const levelSections = allSections.filter(s => s.highSchoolLevelId === levelId);
+    for (const section of levelSections) {
+      teachingGroupData.push({
+        teacherId: empId,
+        levelSubjectId: ls.id,
+        schoolYearId: 1,
+        sectionId: section.id,
+        isSpecialGroup: false,
+        assignedAt: new Date('2026-09-01'),
+        status: true,
+      });
+    }
+  }
+
+  // ROB (12) — isSpecialGroup
+  for (const levelId of [1, 2, 3, 4]) {
+    const ls = lsMap.get(`${levelId}-12`);
+    if (!ls) continue;
+    const empId = employeeByUserId.get(164);
+    if (!empId) continue;
+    const levelSections = allSections.filter(s => s.highSchoolLevelId === levelId);
+    for (const section of levelSections) {
+      teachingGroupData.push({
+        teacherId: empId,
+        levelSubjectId: ls.id,
+        schoolYearId: 1,
+        sectionId: section.id,
+        isSpecialGroup: true,
+        assignedAt: new Date('2026-09-01'),
+        status: true,
+      });
+    }
+  }
+
+  // MUS (13) — isSpecialGroup
+  for (const levelId of [1, 2, 3]) {
+    const ls = lsMap.get(`${levelId}-13`);
+    if (!ls) continue;
+    const empId = employeeByUserId.get(163);
+    if (!empId) continue;
+    const levelSections = allSections.filter(s => s.highSchoolLevelId === levelId);
+    for (const section of levelSections) {
+      teachingGroupData.push({
+        teacherId: empId,
+        levelSubjectId: ls.id,
+        schoolYearId: 1,
+        sectionId: section.id,
+        isSpecialGroup: true,
+        assignedAt: new Date('2026-09-01'),
+        status: true,
+      });
+    }
+  }
+
+  // OV (15) — isSpecialGroup, per-section teacher assignment
+  const ovTeacherMap: Record<string, number> = {
+    '1-A': 150, '1-B': 157, '2-A': 160, '2-B': 163,
+    '3-A': 153, '3-B': 154, '4-A': 162, '4-B': 159,
+    '5-A': 161, '5-B': 158,
+  };
+  for (const [sectionKey, userId] of Object.entries(ovTeacherMap)) {
+    const levelId = Number(sectionKey[0]);
+    const sectionLetter = sectionKey[2];
+    const ls = lsMap.get(`${levelId}-15`);
+    if (!ls) continue;
+    const section = sectionMap.get(`${levelId}-${sectionLetter}`);
+    if (!section) continue;
+    const empId = employeeByUserId.get(userId);
+    if (!empId) continue;
+    teachingGroupData.push({
+      teacherId: empId,
+      levelSubjectId: ls.id,
+      schoolYearId: 1,
+      sectionId: section.id,
+      isSpecialGroup: true,
+      assignedAt: new Date('2026-09-01'),
+      status: true,
+    });
+  }
+
+  // MET (16) — isSpecialGroup
+  for (const levelId of [4, 5]) {
+    const ls = lsMap.get(`${levelId}-16`);
+    if (!ls) continue;
+    const empId = employeeByUserId.get(150);
+    if (!empId) continue;
+    const levelSections = allSections.filter(s => s.highSchoolLevelId === levelId);
+    for (const section of levelSections) {
+      teachingGroupData.push({
+        teacherId: empId,
+        levelSubjectId: ls.id,
+        schoolYearId: 1,
+        sectionId: section.id,
+        isSpecialGroup: true,
+        assignedAt: new Date('2026-09-01'),
+        status: true,
+      });
+    }
+  }
+
+  await prisma.teachingGroup.createMany({ data: teachingGroupData });
+  console.log(`Grupos docentes creados (${teachingGroupData.length}).`);
+
   // ── 16b. CRP TEACHING GROUPS ──
-  const crpNames = ['Karate', 'Pintura', 'Bordado', 'Ajedrez', 'Música', 'Danza'];
+  const crpNames = [
+    'Accesorios y Textiles', 'Ajedrez', 'Bordado Punto de Cruz', 'Danza', 'Futbol I',
+    'Gastronomia', 'Guardaparques', 'Guia Turistico', 'Ingles Est y Div', 'Karatedo',
+    'Musica', 'Periodismo', 'Piñateria', 'Piñateria II', 'Pintura', 'Productos Quimicos',
+    'Salsa Casino', 'Tecnologias Emergentes',
+  ];
+  const crpUserIdMap: Record<string, { userId: number; active: boolean }> = {
+    'Accesorios y Textiles': { userId: 158, active: true },
+    'Ajedrez': { userId: 153, active: true },
+    'Bordado Punto de Cruz': { userId: 165, active: true },
+    'Danza': { userId: 166, active: true },
+    'Futbol I': { userId: 155, active: true },
+    'Gastronomia': { userId: 3, active: true },
+    'Guardaparques': { userId: 159, active: true },
+    'Guia Turistico': { userId: 161, active: true },
+    'Ingles Est y Div': { userId: 152, active: true },
+    'Karatedo': { userId: 169, active: true },
+    'Musica': { userId: 163, active: true },
+    'Periodismo': { userId: 150, active: true },
+    'Piñateria': { userId: 5, active: true },
+    'Piñateria II': { userId: 5, active: false },
+    'Pintura': { userId: 167, active: true },
+    'Productos Quimicos': { userId: 162, active: true },
+    'Salsa Casino': { userId: 168, active: true },
+    'Tecnologias Emergentes': { userId: 164, active: true },
+  };
+
   const crpLevelSubjects = await prisma.levelSubject.findMany({
     where: { subject: { code: 'CRP' } },
   });
-  
-  // Get CRP docente employees (users 8-13, one per CRP)
-  const crpDocenteUserIds = [8, 9, 10, 11, 12, 13];
-  const crpDocenteEmployees = await prisma.employee.findMany({
-    where: { userId: { in: crpDocenteUserIds } },
-  });
 
-  if (crpLevelSubjects.length > 0 && crpDocenteEmployees.length >= 6) {
-    // Create CRP TeachingGroups for each CRP × each level
-    const crpData = crpNames.flatMap((name, crpIndex) =>
-      crpLevelSubjects.map((ls) => ({
-        teacherId: crpDocenteEmployees[crpIndex].id,
-        levelSubjectId: ls.id,
-        schoolYearId: 1,
-        sectionId: null as number | null,
-        groupName: name,
-        isSpecialGroup: true,
-        assignedAt: new Date('2025-09-01'),
-        status: true,
-      })),
-    );
+  if (crpLevelSubjects.length > 0) {
+    const crpData: any[] = [];
+    for (const [name, config] of Object.entries(crpUserIdMap)) {
+      const empId = employeeByUserId.get(config.userId);
+      if (!empId) continue;
+      for (const ls of crpLevelSubjects) {
+        crpData.push({
+          teacherId: empId,
+          levelSubjectId: ls.id,
+          schoolYearId: 1,
+          sectionId: null,
+          groupName: name,
+          isSpecialGroup: true,
+          assignedAt: new Date('2026-09-01'),
+          status: config.active,
+        });
+      }
+    }
     await prisma.teachingGroup.createMany({ data: crpData });
     console.log(`Grupos CRP creados (${crpData.length}).`);
   } else {
-    console.log('⚠️ No se encontraron suficientes empleados para asignar CRPs.');
+    console.log('⚠️ No se encontraron materias CRP.');
   }
 
   // ── 16c. STUDENT TEACHING GROUPS (CRPs) ──
   // Add students from different levels to CRPs
   const crpTeachingGroups = await prisma.teachingGroup.findMany({
-    where: { isSpecialGroup: true },
+    where: { isSpecialGroup: true, sectionId: null },
     include: { levelSubject: { include: { highSchoolLevel: true } } },
   });
   const allEnrollments = await prisma.studentEnrollment.findMany({
@@ -819,22 +1123,22 @@ async function main() {
   }
 
   // ── 17. FEES ──
-  // Fee 1: Inscripción $60 (01/07/2025 - 30/06/2026)
-  // Fees 2-13: Monthly $90 each (Sep 2025 - Aug 2026)
+  // Fee 1: Inscripción $60 (01/07/2026 - 30/06/2027)
+  // Fees 2-13: Monthly $90 each (Sep 2026 - Aug 2027)
   const feeDefinitions = [
-    { name: 'Inscripción', value: 60, startAt: new Date('2025-07-01'), endAt: new Date('2026-06-30') },
-    { name: 'Septiembre', value: 90, startAt: new Date('2025-09-01'), endAt: new Date('2025-09-30') },
-    { name: 'Octubre', value: 90, startAt: new Date('2025-10-01'), endAt: new Date('2025-10-31') },
-    { name: 'Noviembre', value: 90, startAt: new Date('2025-11-01'), endAt: new Date('2025-11-30') },
-    { name: 'Diciembre', value: 90, startAt: new Date('2025-12-01'), endAt: new Date('2025-12-31') },
-    { name: 'Enero', value: 90, startAt: new Date('2026-01-01'), endAt: new Date('2026-01-31') },
-    { name: 'Febrero', value: 90, startAt: new Date('2026-02-01'), endAt: new Date('2026-02-28') },
-    { name: 'Marzo', value: 90, startAt: new Date('2026-03-01'), endAt: new Date('2026-03-31') },
-    { name: 'Abril', value: 90, startAt: new Date('2026-04-01'), endAt: new Date('2026-04-30') },
-    { name: 'Mayo', value: 90, startAt: new Date('2026-05-01'), endAt: new Date('2026-05-31') },
-    { name: 'Junio', value: 90, startAt: new Date('2026-06-01'), endAt: new Date('2026-06-30') },
-    { name: 'Julio', value: 90, startAt: new Date('2026-07-01'), endAt: new Date('2026-07-31') },
-    { name: 'Agosto', value: 90, startAt: new Date('2026-08-01'), endAt: new Date('2026-08-31') },
+    { name: 'Inscripción', value: 60, startAt: new Date('2026-07-01'), endAt: new Date('2027-06-30') },
+    { name: 'Septiembre', value: 90, startAt: new Date('2026-09-01'), endAt: new Date('2026-09-30') },
+    { name: 'Octubre', value: 90, startAt: new Date('2026-10-01'), endAt: new Date('2026-10-31') },
+    { name: 'Noviembre', value: 90, startAt: new Date('2026-11-01'), endAt: new Date('2026-11-30') },
+    { name: 'Diciembre', value: 90, startAt: new Date('2026-12-01'), endAt: new Date('2026-12-31') },
+    { name: 'Enero', value: 90, startAt: new Date('2027-01-01'), endAt: new Date('2027-01-31') },
+    { name: 'Febrero', value: 90, startAt: new Date('2027-02-01'), endAt: new Date('2027-02-28') },
+    { name: 'Marzo', value: 90, startAt: new Date('2027-03-01'), endAt: new Date('2027-03-31') },
+    { name: 'Abril', value: 90, startAt: new Date('2027-04-01'), endAt: new Date('2027-04-30') },
+    { name: 'Mayo', value: 90, startAt: new Date('2027-05-01'), endAt: new Date('2027-05-31') },
+    { name: 'Junio', value: 90, startAt: new Date('2027-06-01'), endAt: new Date('2027-06-30') },
+    { name: 'Julio', value: 90, startAt: new Date('2027-07-01'), endAt: new Date('2027-07-31') },
+    { name: 'Agosto', value: 90, startAt: new Date('2027-08-01'), endAt: new Date('2027-08-31') },
   ];
 
   const feesData = feeDefinitions.map((f, i) => ({
@@ -842,7 +1146,7 @@ async function main() {
     name: f.name,
     schoolYearId: 1,
     value: f.value,
-    createdAt: new Date('2025-07-01'),
+    createdAt: new Date('2026-07-01'),
     startAt: f.startAt,
     endAt: f.endAt,
   }));
@@ -892,6 +1196,10 @@ async function main() {
     } else {
       studentGroup.set(sortedEnrolled[i].id, 'inscripcion_only');
     }
+  }
+  // Yarelys Orozco — fully paid
+  if (yarelysStudent) {
+    studentGroup.set(yarelysStudent.id, 'fully_paid');
   }
 
   // Determine which fees each student needs
@@ -955,13 +1263,13 @@ async function main() {
   // Generate payment dates based on fee
   function getPaymentDate(feeId: number): Date {
     if (feeId === FEE_INSCRIPCION) {
-      // Inscripcion paid between Jul and Oct 2025
-      return new Date(2025, randInt(6, 9), randInt(1, 28));
+      // Inscripcion paid between Jul and Oct 2026
+      return new Date(2026, randInt(6, 9), randInt(1, 28));
     }
     // Monthly fees: paid in the month or slightly after
     const monthIdx = feeId - 2; // 0 = Sep, 1 = Oct, ...
     const payMonth = Math.min(monthIdx + randInt(0, 2), 11); // pay within 0-2 months after start
-    const baseYear = 2025 + Math.floor((monthIdx + payMonth) / 12);
+    const baseYear = 2026 + Math.floor((monthIdx + payMonth) / 12);
     const baseMonth = (monthIdx + payMonth) % 12;
     return new Date(baseYear, baseMonth, randInt(1, 28));
   }
@@ -1063,7 +1371,7 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentEnrollment_id_seq',
-    'LevelSubject_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];
   for (const seq of sequences) {

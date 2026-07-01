@@ -289,7 +289,7 @@ export class TeacherAssignmentService {
   async findSpecialGroups() {
     try {
       const groups = await this.prisma.teachingGroup.findMany({
-        where: { isSpecialGroup: true },
+        where: { isSpecialGroup: true, sectionId: null },
         include: {
           employee: {
             include: { user: { include: { person: true } } },
@@ -583,7 +583,7 @@ export class TeacherAssignmentService {
 
       // Get enrollments that already have a CRP
       const enrollmentsWithCRP = await this.prisma.studentTeachingGroup.findMany({
-        where: { teachingGroup: { isSpecialGroup: true } },
+        where: { teachingGroup: { isSpecialGroup: true, sectionId: null } },
         select: { studentEnrollmentId: true },
       });
 
