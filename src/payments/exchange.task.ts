@@ -37,9 +37,10 @@ export class ExchangeTask {
         this.logger.debug(`Tasa del dólar actualizada: ${lastRate} → ${newRate}`);
         baseResponse.message = `Tasa del dólar actualizada: ${lastRate} → ${newRate}`;
       }
-    } catch (error: any) {
-      this.logger.error('Error al sincronizar tasa del dólar', error.message);
-      badResponse.message = `Error al sincronizar tasa del dólar: ${error.message}`;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error('Error al sincronizar tasa del dólar', message);
+      badResponse.message = `Error al sincronizar tasa del dólar: ${message}`;
     }
   }
 }

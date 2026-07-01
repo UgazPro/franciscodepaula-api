@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import {
   CreateTeacherAssignmentDTO,
   UpdateTeacherAssignmentDTO,
@@ -7,6 +8,19 @@ import {
   UpdateSpecialGroupDTO,
 } from './teacher-assignment.dto';
 import { badResponse } from '@/utilities/base.dto';
+
+interface SpecialGroupWithMeta
+  extends Prisma.TeachingGroupGetPayload<{
+    include: {
+      employee: { include: { user: { include: { person: true } } } };
+      levelSubject: { include: { subject: true; highSchoolLevel: true } };
+      schoolYear: true;
+      _count: { select: { studentGroups: true } };
+    };
+  }> {
+  totalLevels: number;
+  totalStudents: number;
+}
 
 @Injectable()
 export class TeacherAssignmentService {
@@ -304,7 +318,7 @@ export class TeacherAssignmentService {
       });
 
       // Group by groupName and take the first record for each unique CRP
-      const seen = new Map<string, any>();
+      const seen = new Map<string, SpecialGroupWithMeta>();
       for (const group of groups) {
         const name = group.groupName ?? 'unknown';
         if (!seen.has(name)) {

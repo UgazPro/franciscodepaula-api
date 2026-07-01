@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import { badResponse } from '@/utilities/base.dto';
 import { EnrollmentDTO, StudentSectionDTO, StudentRepresentativeDTO, FullEnrollmentDTO } from './enrollment.dto';
 import * as bcrypt from 'bcryptjs';
@@ -14,7 +15,7 @@ export class EnrollmentService {
 
   async getEnrollments(schoolYearId?: number, sectionId?: number, studentId?: number) {
     try {
-      const where: any = {};
+      const where: Prisma.StudentEnrollmentWhereInput = {};
 
       if (schoolYearId) where.schoolYearId = schoolYearId;
       if (sectionId) where.sectionId = sectionId;

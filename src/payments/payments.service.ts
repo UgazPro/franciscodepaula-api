@@ -1,4 +1,5 @@
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import { badResponse } from '@/utilities/base.dto';
 import { Injectable } from '@nestjs/common';
 import { PaymentDTO, PaymentTypeDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
@@ -23,9 +24,7 @@ export class PaymentsService {
     schoolYearId?: number;
   }) {
     try {
-      const where: any = {};
-
-      // Date filter
+      const where: Prisma.PaymentWhereInput = {};
       if (filters?.exactDate) {
         const date = new Date(filters.exactDate);
         const nextDay = new Date(date);
@@ -47,7 +46,7 @@ export class PaymentsService {
       }
 
       // Conditions on studentFees.some
-      const studentFeeConditions: any[] = [];
+      const studentFeeConditions: Prisma.StudentFeeWhereInput[] = [];
 
       if (filters?.feeId) {
         studentFeeConditions.push({ feeId: filters.feeId });
@@ -113,9 +112,9 @@ export class PaymentsService {
                 },
               },
             },
-            { payerName: { contains: s, mode: 'insensitive' as const } },
-            { payerIdentification: { contains: s } },
-            { reference: { contains: s } },
+            { payment: { payerName: { contains: s, mode: 'insensitive' as const } } },
+            { payment: { payerIdentification: { contains: s } } },
+            { payment: { reference: { contains: s } } },
             {
               fee: {
                 name: { contains: s, mode: 'insensitive' as const },
@@ -323,7 +322,7 @@ export class PaymentsService {
   }
 
   private async processStudentFees(
-    tx: any,
+    tx: Prisma.TransactionClient,
     paymentId: number,
     items: { studentId: number; feeId: number }[],
   ) {
@@ -552,7 +551,7 @@ export class PaymentsService {
 
   async getFees(schoolYearId?: number) {
     try {
-      const where: any = {};
+      const where: Prisma.FeeWhereInput = {};
       if (schoolYearId) where.schoolYearId = schoolYearId;
 
       const fees = await this.prismaService.fee.findMany({

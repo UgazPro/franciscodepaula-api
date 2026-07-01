@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { PaymentDTO, PaymentTypeDTO, PaymentMethodDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
+import { PaymentDTO, PaymentTypeDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -63,7 +63,7 @@ export class PaymentsController {
   }
 
   @Post('/exchange')
-  createExchange(@Body() dto: any) {
+  createExchange(@Body() dto: ExchangeDTO) {
     return this.service.createExchange(dto);
   }
 
@@ -153,7 +153,7 @@ export class PaymentsController {
   }
 
   @Put(':id')
-  updatePayment(@Param('id') id: string, @Body() dto: any) {
+  updatePayment(@Param('id') id: string, @Body() dto: PaymentDTO) {
     return this.service.updatePayment(+id, dto);
   }
 

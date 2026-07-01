@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '../../generated/prisma/client';
 import { badResponse, baseResponse } from '../utilities/base.dto';
 import {
   UserDTO,
@@ -10,6 +11,48 @@ import {
   UserPassword,
 } from './users.dto';
 import * as bcrypt from 'bcryptjs';
+
+interface RepStudentEnrollment {
+  section: {
+    section: string;
+    highSchoolLevel?: { level: string };
+  } | null;
+}
+
+interface RepStudentItem {
+  relationship: string | null;
+  student: {
+    id: number;
+    status: boolean | null;
+    person: {
+      firstNames: string;
+      lastNames: string;
+      identificationNumber: string;
+      birthDate: Date | null;
+    };
+    enrollments: RepStudentEnrollment[];
+    _count: { studentFees: number };
+  };
+}
+
+interface RepWithStudents {
+  id: number;
+  occupation: string | null;
+  user: {
+    email: string;
+    phone: string | null;
+    status: boolean | null;
+    person: {
+      id: number;
+      firstNames: string;
+      lastNames: string;
+      identificationNumber: string;
+      birthDate: Date;
+    };
+  };
+  _count: { students: number };
+  students: RepStudentItem[];
+}
 
 @Injectable()
 export class UsersService {
@@ -53,7 +96,7 @@ export class UsersService {
     ageExact?: number,
   ) {
     try {
-      let where: any = {};
+      let where: Prisma.StudentWhereInput = {};
 
       switch (view) {
         case 'all':
@@ -79,31 +122,23 @@ export class UsersService {
           break;
       }
 
-      // Gender filter
+      // Person-level filters (gender, search, age) — build as one object
+      const personFilter: Prisma.PersonWhereInput = {};
+
       if (gender) {
-        if (!where.person) where.person = {};
-        where.person.gender = gender;
+        personFilter.gender = gender;
       }
 
-      // Search filter
       if (search) {
-        const personSearch = {
-          OR: [
-            { firstNames: { contains: search, mode: 'insensitive' as const } },
-            { lastNames: { contains: search, mode: 'insensitive' as const } },
-            { identificationNumber: { contains: search } },
-          ],
-        };
-        if (where.person) {
-          where.person = { ...where.person, ...personSearch };
-        } else {
-          where.person = personSearch;
-        }
+        personFilter.OR = [
+          { firstNames: { contains: search, mode: 'insensitive' as const } },
+          { lastNames: { contains: search, mode: 'insensitive' as const } },
+          { identificationNumber: { contains: search } },
+        ];
       }
 
-      // Age filter → birthDate range
       const today = new Date();
-      const birthFilter: any = {};
+      const birthFilter: { gt?: Date; lte?: Date } = {};
       if (ageExact !== undefined) {
         const start = new Date(
           today.getFullYear() - ageExact - 1,
@@ -134,25 +169,28 @@ export class UsersService {
         }
       }
       if (Object.keys(birthFilter).length) {
-        if (!where.person) where.person = {};
-        where.person.birthDate = birthFilter;
+        personFilter.birthDate = birthFilter;
+      }
+
+      if (Object.keys(personFilter).length) {
+        where.person = personFilter;
       }
 
       // Level / Section filters
-      const enrollmentFilters: any = {};
-      if (levelId !== undefined) {
-        enrollmentFilters.section = { highSchoolLevelId: levelId };
-      }
-      if (section !== undefined) {
-        enrollmentFilters.section = { ...enrollmentFilters.section, section };
-      }
-      if (Object.keys(enrollmentFilters).length) {
+      const sectionFilter: Prisma.SectionWhereInput = {};
+      if (levelId !== undefined) sectionFilter.highSchoolLevelId = levelId;
+      if (section !== undefined) sectionFilter.section = section;
+
+      if (Object.keys(sectionFilter).length) {
+        const enrollmentFilter: Prisma.StudentEnrollmentWhereInput = {};
+        enrollmentFilter.section = sectionFilter;
+
         if (!where.enrollments) {
-          where.enrollments = { some: enrollmentFilters };
+          where.enrollments = { some: enrollmentFilter };
         } else if (where.enrollments.some) {
-          Object.assign(where.enrollments.some, enrollmentFilters);
+          Object.assign(where.enrollments.some, enrollmentFilter);
         } else {
-          where.enrollments.some = enrollmentFilters;
+          where.enrollments.some = enrollmentFilter;
         }
       }
 
@@ -229,7 +267,7 @@ export class UsersService {
   //////////////////////////////////////////////////
   async checkIdentification(value: string, excludePersonId?: number) {
     try {
-      const where: any = { identificationNumber: value };
+      const where: Prisma.PersonWhereInput = { identificationNumber: value };
       if (excludePersonId !== undefined) {
         where.id = { not: excludePersonId };
       }
@@ -250,18 +288,16 @@ export class UsersService {
     minStudents?: number,
   ) {
     try {
-      const baseWhere: any = {
-        user: {
-          userRoles: { some: { role: { role: 'Representante' } } },
-        },
+      const userFilter: Prisma.UserWhereInput = {
+        userRoles: { some: { role: { role: 'Representante' } } },
       };
 
       if (view === 'active') {
-        baseWhere.user.status = true;
+        userFilter.status = true;
       }
 
       if (search) {
-        baseWhere.user.person = {
+        userFilter.person = {
           OR: [
             { firstNames: { contains: search, mode: 'insensitive' as const } },
             { lastNames: { contains: search, mode: 'insensitive' as const } },
@@ -269,6 +305,10 @@ export class UsersService {
           ],
         };
       }
+
+      const baseWhere: Prisma.RepresentativeWhereInput = {
+        user: userFilter,
+      };
 
       // minStudents filter: get qualifying rep IDs first
       let repIdFilter: number[] | undefined;
@@ -437,7 +477,7 @@ export class UsersService {
     }
   }
 
-  private formatRep(r: any) {
+  private formatRep(r: RepWithStudents) {
     return {
       id: r.id,
       occupation: r.occupation,
@@ -451,7 +491,7 @@ export class UsersService {
       },
       studentCount: r._count.students,
       status: r.user.status,
-      students: (r.students ?? []).map((sr: any) => ({
+      students: (r.students ?? []).map((sr: RepStudentItem) => ({
         id: sr.student.id,
         firstNames: sr.student.person.firstNames,
         lastNames: sr.student.person.lastNames,
@@ -1000,7 +1040,7 @@ export class UsersService {
           },
         });
 
-        const userData: any = {
+        const userData: Prisma.UserUpdateInput = {
           email: data.email,
           phone: data.phone,
         };
