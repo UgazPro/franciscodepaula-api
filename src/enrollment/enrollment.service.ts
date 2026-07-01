@@ -526,11 +526,17 @@ export class EnrollmentService {
         const repUser = await tx.user.create({
           data: {
             personId: repPerson.id,
-            roleId: role.id,
             email: data.representativeEmail!,
             password: hashedPassword,
             phone: data.representativePhone,
             status: true,
+          },
+        });
+
+        await tx.userRole.create({
+          data: {
+            userId: repUser.id,
+            roleId: role.id,
           },
         });
 

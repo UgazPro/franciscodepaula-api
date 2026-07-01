@@ -9,11 +9,25 @@ import {
   Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { PaymentDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
+import { PaymentDTO, PaymentTypeDTO, PaymentMethodDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private service: PaymentsService) {}
+
+  /////////////////////////////////////////////////
+  // PAYMENT TYPES
+  /////////////////////////////////////////////////
+
+  @Get('/payment-types')
+  getPaymentTypes() {
+    return this.service.getPaymentTypes();
+  }
+
+  @Post('/payment-types')
+  createPaymentType(@Body() dto: PaymentTypeDTO) {
+    return this.service.createPaymentType(dto);
+  }
 
   /////////////////////////////////////////////////
   // PAYMENT METHODS
@@ -30,12 +44,12 @@ export class PaymentsController {
   }
 
   @Post('/payment-methods')
-  createMethod(@Body() dto: any) {
+  createMethod(@Body() dto: PaymentMethodDTO) {
     return this.service.createPaymentMethod(dto);
   }
 
   @Put('/payment-methods/:id')
-  updateMethod(@Param('id') id: string, @Body() dto: any) {
+  updateMethod(@Param('id') id: string, @Body() dto: PaymentMethodDTO) {
     return this.service.updatePaymentMethod(+id, dto);
   }
 

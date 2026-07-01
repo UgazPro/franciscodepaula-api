@@ -30,7 +30,22 @@ model Role {
   id   Int    @id @default(autoincrement())
   role String @unique
 
-  users User[]
+  userRoles UserRole[]
+}
+
+//////////////////////////////////////////////////
+// USER ROLE
+//////////////////////////////////////////////////
+
+model UserRole {
+  id     Int @id @default(autoincrement())
+  userId Int
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
 }
 
 //////////////////////////////////////////////////
@@ -59,7 +74,6 @@ model User {
   id Int @id @default(autoincrement())
 
   personId Int @unique
-  roleId   Int
 
   email    String  @unique
   password String
@@ -71,10 +85,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   person Person @relation(fields: [personId], references: [id])
-  role   Role   @relation(fields: [roleId], references: [id])
 
   representative Representative?
   employee       Employee?
+
+  userRoles UserRole[]
 
   approvedWorkHours EmployeeWorkHour[]
 }
@@ -266,7 +281,7 @@ model StudentEnrollment {
 
   enrollmentDate DateTime?
 
-  paymentReferenceId Int?
+  paymentReferenceId Int? @unique
 
   status Boolean?
 
@@ -275,6 +290,8 @@ model StudentEnrollment {
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
   section Section @relation(fields: [sectionId], references: [id])
+
+  studentFee StudentFee? @relation(fields: [paymentReferenceId], references: [id])
 
   studentTeachingGroups StudentTeachingGroup[]
 }
@@ -491,10 +508,18 @@ model Parish {
 // PAYMENT METHODS
 //////////////////////////////////////////////////
 
+model PaymentType {
+  id      Int      @id @default(autoincrement())
+  type    String
+  currency Currency
+
+  methods PaymentMethod[]
+}
+
 model PaymentMethod {
   id Int @id @default(autoincrement())
 
-  type String
+  paymentTypeId Int
 
   bank String?
 
@@ -509,6 +534,8 @@ model PaymentMethod {
   owner String?
 
   active Boolean @default(true)
+
+  paymentType PaymentType @relation(fields: [paymentTypeId], references: [id])
 
   payments Payment[]
 }
@@ -557,6 +584,8 @@ model StudentFee {
   fee Fee @relation(fields: [feeId], references: [id])
 
   payment Payment @relation(fields: [paymentId], references: [id])
+
+  studentEnrollment StudentEnrollment?
 }
 
 //////////////////////////////////////////////////

@@ -22,7 +22,7 @@ export class UsersService {
     try {
       const users = await this.prismaService.user.findMany({
         include: {
-          role: true,
+          userRoles: { include: { role: true } },
           person: true,
           employee: true,
           representative: true,
@@ -252,7 +252,7 @@ export class UsersService {
     try {
       const baseWhere: any = {
         user: {
-          role: { role: 'Representante' },
+          userRoles: { some: { role: { role: 'Representante' } } },
         },
       };
 
@@ -281,7 +281,7 @@ export class UsersService {
           .filter((r) => r._count.students >= minStudents)
           .map((r) => r.id);
 
-        const whereForCount = { id: { in: repIdFilter }, user: { role: { role: 'Representante' } } };
+        const whereForCount = { id: { in: repIdFilter }, user: { userRoles: { some: { role: { role: 'Representante' } } } } };
 
         if (page !== undefined && take !== undefined) {
           const totalCount = repIdFilter.length;
@@ -485,7 +485,7 @@ export class UsersService {
           student: true,
           user: {
             include: {
-              role: true,
+              userRoles: { include: { role: true } },
               employee: true,
               representative: true,
             },
@@ -551,7 +551,7 @@ export class UsersService {
                 birthDate: person.birthDate,
                 gender: person.gender,
               },
-              role: person.user.role.role,
+              role: person.user.userRoles[0]?.role.role,
             };
           }
 
@@ -574,7 +574,7 @@ export class UsersService {
         },
         include: {
           person: true,
-          role: true,
+          userRoles: { include: { role: true } },
           employee: true,
         },
         orderBy: { id: 'asc' },
@@ -595,11 +595,11 @@ export class UsersService {
       const teachers = await this.prismaService.user.findMany({
         where: {
           employee: { isNot: null },
-          role: { role: 'Docente' },
+          userRoles: { some: { role: { role: 'Docente' } } },
         },
         include: {
           person: true,
-          role: true,
+          userRoles: { include: { role: true } },
           employee: true,
         },
         orderBy: { id: 'asc' },
@@ -635,7 +635,7 @@ export class UsersService {
       const user = await this.prismaService.user.findUnique({
         where: { id },
         include: {
-          role: true,
+          userRoles: { include: { role: true } },
           person: true,
           employee: true,
           representative: true,
@@ -715,7 +715,7 @@ export class UsersService {
         where: { id: userId },
         include: {
           person: true,
-          role: true,
+          userRoles: { include: { role: true } },
           representative: {
             include: {
               students: {
@@ -776,12 +776,18 @@ export class UsersService {
         const user = await tx.user.create({
           data: {
             personId: person.id,
-            roleId: data.roleId,
             email: data.email,
             password: hashedPassword,
             phone: data.phone,
             status: data.status ?? true,
           },
+        });
+
+        await tx.userRole.createMany({
+          data: data.roleIds.map((roleId) => ({
+            userId: user.id,
+            roleId,
+          })),
         });
 
         return user;
@@ -938,12 +944,18 @@ export class UsersService {
         const user = await tx.user.create({
           data: {
             personId: person.id,
-            roleId: data.roleId,
             email: data.email,
             password: hashedPassword,
             phone: data.phone,
             status: data.status ?? true,
           },
+        });
+
+        await tx.userRole.createMany({
+          data: data.roleIds.map((roleId) => ({
+            userId: user.id,
+            roleId,
+          })),
         });
 
         const employee = await tx.employee.create({
@@ -990,13 +1002,20 @@ export class UsersService {
 
         const userData: any = {
           email: data.email,
-          roleId: data.roleId,
           phone: data.phone,
         };
         if (data.password) {
           userData.password = await bcrypt.hash(data.password, 10);
         }
         await tx.user.update({ where: { id }, data: userData });
+
+        await tx.userRole.deleteMany({ where: { userId: id } });
+        await tx.userRole.createMany({
+          data: data.roleIds.map((roleId) => ({
+            userId: id,
+            roleId,
+          })),
+        });
 
         if (user.employee) {
           await tx.employee.update({
@@ -1056,11 +1075,17 @@ export class UsersService {
         const user = await tx.user.create({
           data: {
             personId: person.id,
-            roleId: role.id,
             email: data.email,
             password: hashedPassword,
             phone: data.phone,
             status: true,
+          },
+        });
+
+        await tx.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: role.id,
           },
         });
 

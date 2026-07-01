@@ -45,8 +45,8 @@ export class UserDTO extends PersonDTO {
   @MinLength(6)
   password!: string;
 
-  @IsNumber()
-  roleId!: number;
+  @IsNumber({}, { each: true })
+  roleIds!: number[];
 
   @IsOptional()
   @IsString()
@@ -164,13 +164,12 @@ export class UserPassword {
 export interface UserTokenDecode {
   id: number;
   personId: number;
-  roleId: number;
   email: string;
   phone: string;
   status: boolean;
   createdAt: Date;
   updatedAt: Date;
-  role: Role;
+  userRoles: { id: number; roleId: number; role: Role }[];
   person: Person;
   iat: number;
   exp: number;

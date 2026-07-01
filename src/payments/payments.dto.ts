@@ -11,10 +11,19 @@ import {
 } from 'class-validator';
 import { Currency } from '../../generated/prisma/client';
 
-// PAYMENT METHOD
-export class PaymentMethodDTO {
+// PAYMENT TYPE
+export class PaymentTypeDTO {
   @IsString()
   type!: string;
+
+  @IsEnum(Currency)
+  currency!: Currency;
+}
+
+// PAYMENT METHOD
+export class PaymentMethodDTO {
+  @IsNumber()
+  paymentTypeId!: number;
 
   @IsOptional()
   @IsString()

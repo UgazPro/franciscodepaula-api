@@ -22,7 +22,7 @@ export class AuthService {
       const findUser = await this.prismaService.user.findUnique({
         where: { email: credentials.email },
         include: {
-          role: true,
+          userRoles: { include: { role: true } },
           person: true,
         },
       });

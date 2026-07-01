@@ -1,7 +1,7 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
 import { Injectable } from '@nestjs/common';
-import { PaymentDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
+import { PaymentDTO, PaymentTypeDTO, PaymentMethodDTO, ExchangeDTO, FeeDTO, UpdateFeeDTO } from './payments.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -166,7 +166,7 @@ export class PaymentsService {
       }
 
       const include = {
-        paymentMethod: true,
+        paymentMethod: { include: { paymentType: true } },
         exchange: true,
         studentFees: {
           include: {
@@ -419,12 +419,37 @@ export class PaymentsService {
   }
 
   /////////////////////////////////////////////////
+  // PAYMENT TYPES
+  /////////////////////////////////////////////////
+
+  async getPaymentTypes() {
+    try {
+      return await this.prismaService.paymentType.findMany();
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async createPaymentType(data: PaymentTypeDTO) {
+    try {
+      const type = await this.prismaService.paymentType.create({ data });
+      return { success: true, message: 'Tipo de pago creado exitosamente', data: type };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  /////////////////////////////////////////////////
   // PAYMENT METHODS
   /////////////////////////////////////////////////
 
   async getPaymentMethods() {
     try {
-      const methods = await this.prismaService.paymentMethod.findMany();
+      const methods = await this.prismaService.paymentMethod.findMany({
+        include: { paymentType: true },
+      });
       return methods;
     } catch (error) {
       badResponse.message = String(error);
@@ -436,6 +461,7 @@ export class PaymentsService {
     try {
       const method = await this.prismaService.paymentMethod.findUnique({
         where: { id },
+        include: { paymentType: true },
       });
       return method;
     } catch (error) {
@@ -448,7 +474,7 @@ export class PaymentsService {
     try {
       const method = await this.prismaService.paymentMethod.create({
         data: {
-          type: data.type,
+          paymentTypeId: data.paymentTypeId,
           bank: data.bank,
           accountNumber: data.accountNumber,
           identification: data.identification,
@@ -457,6 +483,7 @@ export class PaymentsService {
           owner: data.owner,
           active: data.active,
         },
+        include: { paymentType: true },
       });
       return { success: true, message: 'Método de pago creado exitosamente', data: method };
     } catch (error) {
@@ -470,7 +497,7 @@ export class PaymentsService {
       const method = await this.prismaService.paymentMethod.update({
         where: { id },
         data: {
-          type: data.type,
+          paymentTypeId: data.paymentTypeId,
           bank: data.bank,
           accountNumber: data.accountNumber,
           identification: data.identification,
@@ -479,6 +506,7 @@ export class PaymentsService {
           owner: data.owner,
           active: data.active,
         },
+        include: { paymentType: true },
       });
       return { success: true, message: 'Método de pago actualizado exitosamente', data: method };
     } catch (error) {
@@ -709,7 +737,7 @@ export class PaymentsService {
         return tx.payment.findUnique({
           where: { id },
           include: {
-            paymentMethod: true,
+            paymentMethod: { include: { paymentType: true } },
             exchange: true,
             studentFees: {
               include: {

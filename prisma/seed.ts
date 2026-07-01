@@ -84,11 +84,11 @@ async function main() {
   console.log('Limpiando datos existentes...');
   const tables = [
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
-    'Payment', 'Exchange', 'PaymentMethod', 'Fee',
+    'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
     'ReportCard', 'GradeRecord', 'Evaluation', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
     'StudentEnrollment', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
-    'Student', 'User', 'Person', 'Role',
+    'UserRole', 'Student', 'User', 'Person', 'Role',
     'Parish', 'Municipality', 'State', 'Country',
   ];
   for (const table of tables) {
@@ -397,61 +397,72 @@ async function main() {
 
   // ── 4. USERS ──
   const staffUserData = [
-    // Existing staff
-    { id: 1, personId: 1, roleId: 1, email: 'admin@admin.com', password: adminPassword, phone: '0412-1111111', status: true },
-    { id: 2, personId: 2, roleId: 2, email: 'directora@colegio.com', password, phone: '0412-2222222', status: true },
-    { id: 3, personId: 3, roleId: 3, email: 'subdirector@colegio.com', password, phone: '0412-3333333', status: true },
-    { id: 4, personId: 4, roleId: 4, email: 'contador@colegio.com', password, phone: '0412-4444444', status: true },
-    { id: 5, personId: 5, roleId: 5, email: 'control@colegio.com', password, phone: '0412-5555555', status: true },
-    { id: 6, personId: 6, roleId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666', status: true },
-    { id: 7, personId: 7, roleId: 1, email: 'diana@pereira.com', password: adminPassword, phone: '0412-7777777', status: true },
-    // New docentes (8-19)
-    { id: 8, personId: 8, roleId: 6, email: 'docente8@colegio.com', password, phone: '0412-8888888', status: true },
-    { id: 9, personId: 9, roleId: 6, email: 'docente9@colegio.com', password, phone: '0412-9999999', status: true },
-    { id: 10, personId: 10, roleId: 6, email: 'docente10@colegio.com', password, phone: '0412-1010101', status: true },
-    { id: 11, personId: 11, roleId: 6, email: 'docente11@colegio.com', password, phone: '0412-1111110', status: true },
-    { id: 12, personId: 12, roleId: 6, email: 'docente12@colegio.com', password, phone: '0412-1212121', status: true },
-    { id: 13, personId: 13, roleId: 6, email: 'docente13@colegio.com', password, phone: '0412-1313131', status: true },
-    { id: 14, personId: 14, roleId: 6, email: 'docente14@colegio.com', password, phone: '0412-1414141', status: true },
-    { id: 15, personId: 15, roleId: 6, email: 'docente15@colegio.com', password, phone: '0412-1515151', status: true },
-    { id: 16, personId: 16, roleId: 6, email: 'docente16@colegio.com', password, phone: '0412-1616161', status: true },
-    { id: 17, personId: 17, roleId: 6, email: 'docente17@colegio.com', password, phone: '0412-1717171', status: true },
-    { id: 18, personId: 18, roleId: 6, email: 'docente18@colegio.com', password, phone: '0412-1818181', status: true },
-    { id: 19, personId: 19, roleId: 6, email: 'docente19@colegio.com', password, phone: '0412-1919191', status: true },
-    // New docentes by name (150-169)
-    { id: 150, personId: 420, roleId: 6, email: 'dionel.silva@colegio.com', password, phone: '0412-1500000', status: true },
-    { id: 151, personId: 421, roleId: 6, email: 'jean.cambar@colegio.com', password, phone: '0412-1510000', status: true },
-    { id: 152, personId: 422, roleId: 6, email: 'domingo.arroyo@colegio.com', password, phone: '0412-1520000', status: true },
-    { id: 153, personId: 423, roleId: 6, email: 'leonel.madueno@colegio.com', password, phone: '0412-1530000', status: true },
-    { id: 154, personId: 424, roleId: 6, email: 'manuel.romero@colegio.com', password, phone: '0412-1540000', status: true },
-    { id: 155, personId: 425, roleId: 6, email: 'engelberth.sanchez@colegio.com', password, phone: '0412-1550000', status: true },
-    { id: 156, personId: 426, roleId: 6, email: 'luis.duran@colegio.com', password, phone: '0412-1560000', status: true },
-    { id: 157, personId: 427, roleId: 6, email: 'maria.maturana@colegio.com', password, phone: '0412-1570000', status: true },
-    { id: 158, personId: 428, roleId: 6, email: 'edyoly.valbuena@colegio.com', password, phone: '0412-1580000', status: true },
-    { id: 159, personId: 429, roleId: 6, email: 'yldelfonso.vasquez@colegio.com', password, phone: '0412-1590000', status: true },
-    { id: 160, personId: 430, roleId: 6, email: 'luis.urdaneta@colegio.com', password, phone: '0412-1600000', status: true },
-    { id: 161, personId: 431, roleId: 6, email: 'pedro.orozco@colegio.com', password, phone: '0412-1610000', status: true },
-    { id: 162, personId: 432, roleId: 6, email: 'nelvis.zambrano@colegio.com', password, phone: '0412-1620000', status: true },
-    { id: 163, personId: 433, roleId: 6, email: 'joseraul.jimenez@colegio.com', password, phone: '0412-1630000', status: true },
-    { id: 164, personId: 434, roleId: 6, email: 'geryk.nunez@colegio.com', password, phone: '0412-1640000', status: true },
-    { id: 165, personId: 435, roleId: 6, email: 'betty.chacin@colegio.com', password, phone: '0412-1650000', status: true },
-    { id: 166, personId: 436, roleId: 6, email: 'dameris.pena@colegio.com', password, phone: '0412-1660000', status: true },
-    { id: 167, personId: 437, roleId: 6, email: 'yralina.quintero@colegio.com', password, phone: '0412-1670000', status: true },
-    { id: 168, personId: 438, roleId: 6, email: 'jesus.erdenes@colegio.com', password, phone: '0412-1680000', status: true },
-    { id: 169, personId: 439, roleId: 6, email: 'luisangel.docente@colegio.com', password, phone: '0412-1690000', status: true },
+    { id: 1, personId: 1, email: 'admin@admin.com', password: adminPassword, phone: '0412-1111111', status: true },
+    { id: 2, personId: 2, email: 'directora@colegio.com', password, phone: '0412-2222222', status: true },
+    { id: 3, personId: 3, email: 'subdirector@colegio.com', password, phone: '0412-3333333', status: true },
+    { id: 4, personId: 4, email: 'contador@colegio.com', password, phone: '0412-4444444', status: true },
+    { id: 5, personId: 5, email: 'control@colegio.com', password, phone: '0412-5555555', status: true },
+    { id: 6, personId: 6, email: 'ana.garcia@colegio.com', password, phone: '0412-6666666', status: true },
+    { id: 7, personId: 7, email: 'diana@pereira.com', password: adminPassword, phone: '0412-7777777', status: true },
+    { id: 8, personId: 8, email: 'docente8@colegio.com', password, phone: '0412-8888888', status: true },
+    { id: 9, personId: 9, email: 'docente9@colegio.com', password, phone: '0412-9999999', status: true },
+    { id: 10, personId: 10, email: 'docente10@colegio.com', password, phone: '0412-1010101', status: true },
+    { id: 11, personId: 11, email: 'docente11@colegio.com', password, phone: '0412-1111110', status: true },
+    { id: 12, personId: 12, email: 'docente12@colegio.com', password, phone: '0412-1212121', status: true },
+    { id: 13, personId: 13, email: 'docente13@colegio.com', password, phone: '0412-1313131', status: true },
+    { id: 14, personId: 14, email: 'docente14@colegio.com', password, phone: '0412-1414141', status: true },
+    { id: 15, personId: 15, email: 'docente15@colegio.com', password, phone: '0412-1515151', status: true },
+    { id: 16, personId: 16, email: 'docente16@colegio.com', password, phone: '0412-1616161', status: true },
+    { id: 17, personId: 17, email: 'docente17@colegio.com', password, phone: '0412-1717171', status: true },
+    { id: 18, personId: 18, email: 'docente18@colegio.com', password, phone: '0412-1818181', status: true },
+    { id: 19, personId: 19, email: 'docente19@colegio.com', password, phone: '0412-1919191', status: true },
+    { id: 150, personId: 420, email: 'dionel.silva@colegio.com', password, phone: '0412-1500000', status: true },
+    { id: 151, personId: 421, email: 'jean.cambar@colegio.com', password, phone: '0412-1510000', status: true },
+    { id: 152, personId: 422, email: 'domingo.arroyo@colegio.com', password, phone: '0412-1520000', status: true },
+    { id: 153, personId: 423, email: 'leonel.madueno@colegio.com', password, phone: '0412-1530000', status: true },
+    { id: 154, personId: 424, email: 'manuel.romero@colegio.com', password, phone: '0412-1540000', status: true },
+    { id: 155, personId: 425, email: 'engelberth.sanchez@colegio.com', password, phone: '0412-1550000', status: true },
+    { id: 156, personId: 426, email: 'luis.duran@colegio.com', password, phone: '0412-1560000', status: true },
+    { id: 157, personId: 427, email: 'maria.maturana@colegio.com', password, phone: '0412-1570000', status: true },
+    { id: 158, personId: 428, email: 'edyoly.valbuena@colegio.com', password, phone: '0412-1580000', status: true },
+    { id: 159, personId: 429, email: 'yldelfonso.vasquez@colegio.com', password, phone: '0412-1590000', status: true },
+    { id: 160, personId: 430, email: 'luis.urdaneta@colegio.com', password, phone: '0412-1600000', status: true },
+    { id: 161, personId: 431, email: 'pedro.orozco@colegio.com', password, phone: '0412-1610000', status: true },
+    { id: 162, personId: 432, email: 'nelvis.zambrano@colegio.com', password, phone: '0412-1620000', status: true },
+    { id: 163, personId: 433, email: 'joseraul.jimenez@colegio.com', password, phone: '0412-1630000', status: true },
+    { id: 164, personId: 434, email: 'geryk.nunez@colegio.com', password, phone: '0412-1640000', status: true },
+    { id: 165, personId: 435, email: 'betty.chacin@colegio.com', password, phone: '0412-1650000', status: true },
+    { id: 166, personId: 436, email: 'dameris.pena@colegio.com', password, phone: '0412-1660000', status: true },
+    { id: 167, personId: 437, email: 'yralina.quintero@colegio.com', password, phone: '0412-1670000', status: true },
+    { id: 168, personId: 438, email: 'jesus.erdenes@colegio.com', password, phone: '0412-1680000', status: true },
+    { id: 169, personId: 439, email: 'luisangel.docente@colegio.com', password, phone: '0412-1690000', status: true },
   ];
   await prisma.user.createMany({ data: staffUserData });
 
   const repUsersData = repPersons.map((p, i) => ({
     id: 20 + i,
     personId: p.id,
-    roleId: 7,
     email: `representante${i + 1}@correo.com`,
     password,
     phone: `0412-${String(1000000 + i).slice(1)}`,
     status: true,
   }));
   await prisma.user.createMany({ data: repUsersData });
+
+  // UserRoles
+  const staffRoleMap: [number, number[]][] = [
+    [1, [1]], [2, [2]], [3, [3]], [4, [4]], [5, [5]], [6, [6]], [7, [1]],
+  ];
+  for (let id = 8; id <= 19; id++) staffRoleMap.push([id, [6]]);
+  for (let id = 150; id <= 169; id++) staffRoleMap.push([id, [6]]);
+
+  const userRoleData = [
+    ...staffRoleMap.flatMap(([userId, roleIds]) =>
+      roleIds.map((roleId) => ({ userId, roleId }))
+    ),
+    ...repUsersData.map((u) => ({ userId: u.id, roleId: 7 })),
+  ];
+  await prisma.userRole.createMany({ data: userRoleData });
   console.log('Usuarios creados.');
 
   // ── 5. STUDENTS ──
@@ -547,7 +558,7 @@ async function main() {
   const activeStudents = allStudents.filter(s => s.status);
 
   // ── 6. REPRESENTATIVES ──
-  const repUsers = await prisma.user.findMany({ where: { roleId: 7 }, orderBy: { id: 'asc' } });
+  const repUsers = await prisma.user.findMany({ where: { userRoles: { some: { role: { role: 'Representante' } } } }, orderBy: { id: 'asc' } });
   const repRecords = repUsers.map((u) => ({
     userId: u.id,
     occupation: pick(occupations),
@@ -1156,16 +1167,24 @@ async function main() {
   const FEE_INSCRIPCION = 1;
   const MONTHLY_FEE_IDS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
-  // ── 18. PAYMENT METHODS ──
-  await prisma.paymentMethod.createMany({
+  // ── 18. PAYMENT TYPES & METHODS ──
+  await prisma.paymentType.createMany({
     data: [
-      { id: 1, type: 'Pago móvil', active: true },
-      { id: 2, type: 'Transferencia', active: true },
-      { id: 3, type: 'Zelle', active: true },
-      { id: 4, type: 'Efectivo', active: true },
+      { id: 1, type: 'Pago móvil', currency: 'VES' as $Enums.Currency },
+      { id: 2, type: 'Transferencia', currency: 'VES' as $Enums.Currency },
+      { id: 3, type: 'Zelle', currency: 'USD' as $Enums.Currency },
+      { id: 4, type: 'Efectivo', currency: 'VES' as $Enums.Currency },
     ],
   });
-  console.log('Métodos de pago creados.');
+  await prisma.paymentMethod.createMany({
+    data: [
+      { id: 1, paymentTypeId: 1, active: true },
+      { id: 2, paymentTypeId: 2, active: true },
+      { id: 3, paymentTypeId: 3, active: true },
+      { id: 4, paymentTypeId: 4, active: true },
+    ],
+  });
+  console.log('Tipos y métodos de pago creados.');
 
   // ── 19. EXCHANGE ──
   const EXCHANGE_RATE = 602.3324;
@@ -1366,12 +1385,12 @@ async function main() {
 
   // ── Sincronizar secuencias auto-increment ──
   const sequences = [
-    'Role_id_seq', 'Person_id_seq', 'User_id_seq',
+    'Role_id_seq', 'Person_id_seq', 'User_id_seq', 'UserRole_id_seq',
     'Student_id_seq', 'Representative_id_seq', 'Employee_id_seq',
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentEnrollment_id_seq',
-    'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];
   for (const seq of sequences) {
