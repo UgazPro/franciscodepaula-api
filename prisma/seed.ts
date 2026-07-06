@@ -85,7 +85,7 @@ async function main() {
   const tables = [
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
     'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
-    'ReportCard', 'GradeRecord', 'Evaluation', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
+    'ReportCard', 'GradeRecord', 'Evaluation', 'EvaluationType', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
     'StudentEnrollment', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
     'UserRole', 'Student', 'User', 'Person', 'Role',
@@ -426,9 +426,15 @@ async function main() {
 
   // UserRoles
   const staffRoleMap: [number, number[]][] = [
-    [1, [1]], [2, [2]], [3, [3]], [4, [4]], [5, [5]], [6, [6]], [7, [1]],
+    [1, [1]], [2, [2]], [3, [3]], [4, [4]], [5, [5, 6]], [6, [6]], [7, [1]],
   ];
-  for (let id = 150; id <= 169; id++) staffRoleMap.push([id, [6]]);
+  for (let id = 150; id <= 169; id++) {
+    if (id === 161) {
+      staffRoleMap.push([id, [6, 7]]);
+    } else {
+      staffRoleMap.push([id, [6]]);
+    }
+  }
 
   const userRoleData = [
     ...staffRoleMap.flatMap(([userId, roleIds]) =>
@@ -649,11 +655,10 @@ async function main() {
   // ── 8b. REPRESENTATIVES FOR YARELYS ──
   await prisma.representative.createMany({
     data: [
-      { userId: 161, occupation: 'Docente' },
       { userId: 3, occupation: 'Subdirectora' },
     ],
   });
-  console.log('Representantes adicionales (Pedro Orozco, Yujenis Gonzalez) creados.');
+  console.log('Representante adicional (Yujenis Gonzalez) creado.');
 
   // ── 9. HIGH SCHOOL LEVELS ──
   await prisma.highSchoolLevel.createMany({
@@ -777,6 +782,23 @@ async function main() {
     ],
   });
   console.log('Períodos creados.');
+
+  // ── 13b. EVALUATION TYPES ──
+  await prisma.evaluationType.createMany({
+    data: [
+      { id: 1, evaluationType: 'Examen' },
+      { id: 2, evaluationType: 'Tarea' },
+      { id: 3, evaluationType: 'Participación' },
+      { id: 4, evaluationType: 'Proyecto' },
+      { id: 5, evaluationType: 'Práctica' },
+      { id: 6, evaluationType: 'Trabajo en Equipo' },
+      { id: 7, evaluationType: 'Quiz' },
+      { id: 8, evaluationType: 'Investigación' },
+      { id: 9, evaluationType: 'Exposición' },
+      { id: 10, evaluationType: 'Laboratorio' },
+    ],
+  });
+  console.log('Tipos de evaluación creados.');
 
   // ── 14. SECTIONS ──
   const sectionData = [
@@ -1351,7 +1373,7 @@ async function main() {
     'StudentRepresentative_id_seq', 'HighSchoolLevel_id_seq',
     'SchoolYear_id_seq', 'Period_id_seq', 'Section_id_seq',
     'StudentEnrollment_id_seq',
-    'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
+    'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'EvaluationType_id_seq', 'Evaluation_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq',
   ];
   for (const seq of sequences) {
