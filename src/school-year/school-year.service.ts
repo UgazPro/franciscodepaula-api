@@ -158,6 +158,7 @@ export class SchoolYearService {
   async getActiveSchoolYear() {
     const sy = await this.prismaService.schoolYear.findFirst({
       where: { isActive: true },
+      include: { periods: true },
     });
     if (!sy) {
       throw new NotFoundException('No hay un año escolar activo');
