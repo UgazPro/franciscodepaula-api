@@ -7,8 +7,8 @@ export class CreateEvaluationDTO {
   @IsInt()
   periodId!: number;
 
-  @IsInt()
-  evaluationTypeId!: number;
+  @IsString()
+  evaluationType!: string;
 
   @IsString()
   topic!: string;
@@ -19,9 +19,6 @@ export class CreateEvaluationDTO {
 
   @IsNumber()
   percentage!: number;
-
-  @IsNumber()
-  maxScore!: number;
 
   @IsOptional()
   @IsDateString()

@@ -234,24 +234,26 @@ export class EvaluationService {
         return badResponse;
       }
 
-      const evaluationType = await this.prisma.evaluationType.findUnique({
-        where: { id: data.evaluationTypeId },
+      const typeName = data.evaluationType.charAt(0).toUpperCase() + data.evaluationType.slice(1).toLowerCase();
+
+      let evaluationType = await this.prisma.evaluationType.findFirst({
+        where: { evaluationType: { equals: typeName, mode: 'insensitive' } },
       });
 
       if (!evaluationType) {
-        badResponse.message = 'El tipo de evaluación no existe.';
-        return badResponse;
+        evaluationType = await this.prisma.evaluationType.create({
+          data: { evaluationType: typeName },
+        });
       }
 
       const evaluation = await this.prisma.evaluation.create({
         data: {
           teachingGroupId: data.teachingGroupId,
           periodId: data.periodId,
-          evaluationTypeId: data.evaluationTypeId,
+          evaluationTypeId: evaluationType.id,
           topic: data.topic,
           objectives: data.objectives,
           percentage: data.percentage,
-          maxScore: data.maxScore,
           dueDate: data.dueDate ? new Date(data.dueDate) : null,
         },
         include: {

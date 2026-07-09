@@ -234,7 +234,7 @@ export class TeacherAssignmentService {
         ).length;
 
         const levelSubjectsForLevel = levelSubjects.filter(
-          (ls) => ls.highSchoolLevelId === level.id,
+          (ls) => ls.highSchoolLevelId === level.id && ls.subject.code !== 'CRP',
         );
 
         const sectionsData = levelSections.map((section) => {

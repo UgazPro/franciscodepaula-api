@@ -190,12 +190,34 @@ export class GradeService {
       let students: { id: number; person: { firstNames: string; lastNames: string; identificationNumber: string } }[] = [];
 
       if (tg.isSpecialGroup && tg.sectionId === null) {
-        const validGroups = tg.studentGroups.filter(sg => sg.studentEnrollment?.status === true);
+        const allCrpGroups = await this.prisma.teachingGroup.findMany({
+          where: {
+            groupName: tg.groupName,
+            teacherId: tg.teacherId,
+            schoolYearId: tg.schoolYearId,
+            isSpecialGroup: true,
+            sectionId: null,
+            status: true,
+          },
+          include: {
+            studentGroups: {
+              include: {
+                studentEnrollment: {
+                  include: { student: { include: { person: true } } },
+                },
+              },
+            },
+          },
+        });
+
         const studentMap = new Map<number, any>();
-        for (const sg of validGroups) {
-          const student = sg.studentEnrollment?.student;
-          if (student && !studentMap.has(student.id)) {
-            studentMap.set(student.id, student);
+        for (const group of allCrpGroups) {
+          const validGroups = group.studentGroups.filter(sg => sg.studentEnrollment?.status === true);
+          for (const sg of validGroups) {
+            const student = sg.studentEnrollment?.student;
+            if (student && !studentMap.has(student.id)) {
+              studentMap.set(student.id, student);
+            }
           }
         }
         students = Array.from(studentMap.values()).map(s => ({
@@ -241,7 +263,7 @@ export class GradeService {
             id: e.id,
             topic: e.topic,
             percentage: Number(e.percentage),
-            maxScore: Number(e.maxScore),
+            maxScore: 20,
             evaluationType: { evaluationType: e.evaluationType.evaluationType },
           })),
           grades: grades.map(g => ({
