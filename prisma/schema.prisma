@@ -124,6 +124,7 @@ model Student {
 
   gradeRecords GradeRecord[]
   studentHistories SchoolStudentHistory[]
+  failedSubjects    StudentFailedSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -324,7 +325,8 @@ model LevelSubject {
   subject         Subject         @relation(fields: [subjectId], references: [id])
 
   @@unique([highSchoolLevelId, subjectId])
-  teachingGroups TeachingGroup[]
+  teachingGroups   TeachingGroup[]
+  failedSubjects   StudentFailedSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -452,6 +454,24 @@ model SchoolStudentHistory {
 
   student         Student         @relation(fields: [studentId], references: [id])
   highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// STUDENT FAILED SUBJECT
+//////////////////////////////////////////////////
+
+model StudentFailedSubject {
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  levelSubjectId Int
+  successDate    DateTime?
+  finalAverage   Decimal? @db.Decimal(5, 2)
+  typeOf         String?  @db.VarChar(1)
+  status         String?  @db.VarChar(20)
+  observations   String?
+
+  student      Student      @relation(fields: [studentId], references: [id])
+  levelSubject LevelSubject @relation(fields: [levelSubjectId], references: [id])
 }
 
 //////////////////////////////////////////////////
