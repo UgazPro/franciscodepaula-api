@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { badResponse } from '@/utilities/base.dto';
-import { CreateEvaluationDTO } from './evaluation.dto';
+import { CreateEvaluationDTO, UpdateEvaluationDTO } from './evaluation.dto';
 
 export interface MappedGroup {
   teachingGroupId: number;
@@ -266,6 +266,79 @@ export class EvaluationService {
         success: true,
         message: 'Evaluación creada exitosamente',
         data: evaluation,
+      };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async updateEvaluation(id: number, data: UpdateEvaluationDTO) {
+    try {
+      const existing = await this.prisma.evaluation.findUnique({ where: { id } });
+      if (!existing) {
+        badResponse.message = 'La evaluación no existe.';
+        return badResponse;
+      }
+
+      const updateData: Record<string, unknown> = {};
+      if (data.topic !== undefined) updateData.topic = data.topic;
+      if (data.objectives !== undefined) updateData.objectives = data.objectives;
+      if (data.percentage !== undefined) updateData.percentage = data.percentage;
+      if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+
+      if (data.evaluationType !== undefined) {
+        const typeName = data.evaluationType.charAt(0).toUpperCase() + data.evaluationType.slice(1).toLowerCase();
+        let evaluationType = await this.prisma.evaluationType.findFirst({
+          where: { evaluationType: { equals: typeName, mode: 'insensitive' } },
+        });
+        if (!evaluationType) {
+          evaluationType = await this.prisma.evaluationType.create({
+            data: { evaluationType: typeName },
+          });
+        }
+        updateData.evaluationTypeId = evaluationType.id;
+      }
+
+      const evaluation = await this.prisma.evaluation.update({
+        where: { id },
+        data: updateData,
+        include: { evaluationType: true, period: true },
+      });
+
+      return {
+        success: true,
+        message: 'Evaluación actualizada exitosamente',
+        data: evaluation,
+      };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async deleteEvaluation(id: number) {
+    try {
+      const existing = await this.prisma.evaluation.findUnique({
+        where: { id },
+        include: { grades: true },
+      });
+
+      if (!existing) {
+        badResponse.message = 'La evaluación no existe.';
+        return badResponse;
+      }
+
+      if (existing.grades.length > 0) {
+        badResponse.message = 'No se puede eliminar: esta evaluación tiene notas asociadas.';
+        return badResponse;
+      }
+
+      await this.prisma.evaluation.delete({ where: { id } });
+
+      return {
+        success: true,
+        message: 'Evaluación eliminada exitosamente',
       };
     } catch (error) {
       badResponse.message = String(error);

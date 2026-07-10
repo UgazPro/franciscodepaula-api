@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -10,7 +12,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
-import { CreateEvaluationDTO } from './evaluation.dto';
+import { CreateEvaluationDTO, UpdateEvaluationDTO } from './evaluation.dto';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -64,5 +66,18 @@ export class EvaluationController {
   @Post()
   async createEvaluation(@Body() data: CreateEvaluationDTO) {
     return await this.service.createEvaluation(data);
+  }
+
+  @Put(':id')
+  async updateEvaluation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateEvaluationDTO,
+  ) {
+    return await this.service.updateEvaluation(id, data);
+  }
+
+  @Delete(':id')
+  async deleteEvaluation(@Param('id', ParseIntPipe) id: number) {
+    return await this.service.deleteEvaluation(id);
   }
 }

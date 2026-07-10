@@ -24,3 +24,25 @@ export class CreateEvaluationDTO {
   @IsDateString()
   dueDate?: string;
 }
+
+export class UpdateEvaluationDTO {
+  @IsOptional()
+  @IsString()
+  evaluationType?: string;
+
+  @IsOptional()
+  @IsString()
+  topic?: string;
+
+  @IsOptional()
+  @IsString()
+  objectives?: string;
+
+  @IsOptional()
+  @IsNumber()
+  percentage?: number;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+}

@@ -123,7 +123,7 @@ model Student {
   representatives StudentRepresentative[]
 
   gradeRecords GradeRecord[]
-  reportCards  ReportCard[]
+  studentHistories SchoolStudentHistory[]
 }
 
 //////////////////////////////////////////////////
@@ -228,8 +228,6 @@ model Period {
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
   evaluations Evaluation[]
-
-  reportCards ReportCard[]
 }
 
 //////////////////////////////////////////////////
@@ -241,8 +239,9 @@ model HighSchoolLevel {
 
   level String
 
-  sections      Section[]
-  levelSubjects LevelSubject[]
+  sections          Section[]
+  levelSubjects     LevelSubject[]
+  studentHistories  SchoolStudentHistory[]
 }
 
 //////////////////////////////////////////////////
@@ -349,7 +348,6 @@ model TeachingGroup {
   section     Section?    @relation(fields: [sectionId], references: [id])
 
   evaluations   Evaluation[]
-  reportCards   ReportCard[]
   studentGroups StudentTeachingGroup[]
 
   @@unique([teacherId, levelSubjectId, schoolYearId, sectionId, groupName])
@@ -430,7 +428,7 @@ model GradeRecord {
 
   student Student @relation(fields: [studentId], references: [id])
 
-  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
 
   employee Employee? @relation(fields: [createdBy], references: [id])
 
@@ -438,31 +436,22 @@ model GradeRecord {
 }
 
 //////////////////////////////////////////////////
-// REPORT CARD
+// SCHOOL STUDENT HISTORY
 //////////////////////////////////////////////////
 
-model ReportCard {
-  id Int @id @default(autoincrement())
+model SchoolStudentHistory {
+  id               Int      @id @default(autoincrement())
+  studentId        Int
+  highSchoolLevelId Int
+  schoolName       String?
+  schoolState      String?
+  schoolCity       String?
+  schoolYear       String?
+  observations     String?
+  createdAt        DateTime @default(now())
 
-  studentId Int
-
-  teachingGroupId Int
-
-  periodId Int
-
-  average Decimal? @db.Decimal(5, 2)
-
-  observations String?
-
-  generatedAt DateTime @default(now())
-
-  student Student @relation(fields: [studentId], references: [id])
-
-  teachingGroup TeachingGroup @relation(fields: [teachingGroupId], references: [id])
-
-  period Period @relation(fields:[periodId], references:[id])
-
-  @@unique([studentId])
+  student         Student         @relation(fields: [studentId], references: [id])
+  highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
 }
 
 //////////////////////////////////////////////////
