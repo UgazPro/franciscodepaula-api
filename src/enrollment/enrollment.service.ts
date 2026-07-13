@@ -476,10 +476,9 @@ export class EnrollmentService {
           municipality: data.municipality,
           parish: data.parish,
           currentParish: data.currentParish,
-          previousSchool: data.previousSchool,
           address: data.address,
           status: true,
-          admissionDate: data.admissionDate,
+          admissionDate: data.admissionDate ?? new Date(),
         },
       });
 

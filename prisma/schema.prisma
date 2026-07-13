@@ -108,12 +108,11 @@ model Student {
   municipality   String?
   parish         String?
   currentParish  String?
-  previousSchool String?
   address        String?
 
   status Boolean?
 
-  admissionDate DateTime?
+  admissionDate DateTime? @default(now())
 
   person Person @relation(fields: [personId], references: [id])
 

@@ -83,6 +83,7 @@ async function main() {
   // ── Limpieza total con reset de secuencias ──
   console.log('Limpiando datos existentes...');
   const tables = [
+    'SchoolStudentHistory', 'StudentFailedSubject',
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
     'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
     'GradeRecord', 'Evaluation', 'EvaluationType', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
@@ -469,8 +470,6 @@ async function main() {
     return { municipality: muni, parish: pick(parishOpts) };
   }
 
-  const schoolsList = ['U.E. Colegio Francisco de Paula', 'U.E. Andrés Bello', 'U.E. San José', 'U.E. Rafael Urdaneta', 'U.E. Cecilio Acosta', 'U.E. Santa María', 'U.E. Don Bosco', 'U.E. Simón Bolívar'];
-
   const studentsData = [
     ...enrolledIds.map(id => {
       const loc = randomLocation();
@@ -481,7 +480,6 @@ async function main() {
         municipality: loc.municipality,
         parish: loc.parish,
         currentParish: loc.parish,
-        previousSchool: pick(schoolsList),
         address: `${pick(addressOptions)} #${randInt(1, 200)}`,
         status: true,
         admissionDate: new Date('2026-07-01'),
@@ -496,7 +494,6 @@ async function main() {
         municipality: loc.municipality,
         parish: loc.parish,
         currentParish: loc.parish,
-        previousSchool: pick(schoolsList),
         address: `${pick(addressOptions)} #${randInt(1, 200)}`,
         status: true,
         admissionDate: new Date('2026-07-01'),
@@ -509,7 +506,6 @@ async function main() {
       municipality: pick(municipalities_names),
       parish: 'Bolívar',
       currentParish: 'Bolívar',
-      previousSchool: 'U.E. Anterior',
       address: 'Dirección de muestra',
       status: false,
       admissionDate: new Date('2025-09-01'),
@@ -526,7 +522,6 @@ async function main() {
       municipality: 'Maracaibo',
       parish: 'Bolívar',
       currentParish: 'Bolívar',
-      previousSchool: 'U.E. Colegio Francisco de Paula',
       address: 'Av. 15 con Calle 10 #100',
       status: true,
       admissionDate: new Date('2026-07-01'),

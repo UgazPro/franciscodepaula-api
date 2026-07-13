@@ -873,10 +873,9 @@ export class UsersService {
             municipality: data.municipality,
             parish: data.parish,
             currentParish: data.currentParish,
-            previousSchool: data.previousSchool,
             address: data.address,
             status: data.status ?? true,
-            admissionDate: data.admissionDate,
+            admissionDate: data.admissionDate ?? new Date(),
           },
         });
 
@@ -939,10 +938,9 @@ export class UsersService {
             municipality: data.municipality,
             parish: data.parish,
             currentParish: data.currentParish,
-            previousSchool: data.previousSchool,
             address: data.address,
             status: data.status,
-            admissionDate: data.admissionDate,
+            admissionDate: data.admissionDate ?? new Date(),
           },
         });
 

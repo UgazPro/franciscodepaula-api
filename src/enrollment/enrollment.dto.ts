@@ -98,16 +98,13 @@ export class FullEnrollmentDTO {
   @IsString()
   currentParish?: string;
 
-  @IsOptional()
-  @IsString()
-  previousSchool?: string;
-
   @IsString()
   address!: string;
 
+  @IsOptional()
   @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
-  admissionDate!: Date;
+  admissionDate?: Date;
 
   // ── Representative mode ──
   @IsString()
