@@ -60,10 +60,9 @@ CREATE TABLE "Student" (
     "municipality" TEXT,
     "parish" TEXT,
     "currentParish" TEXT,
-    "previousSchool" TEXT,
     "address" TEXT,
     "status" BOOLEAN,
-    "admissionDate" TIMESTAMP(3),
+    "admissionDate" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
 );
@@ -234,15 +233,22 @@ CREATE TABLE "GradeRecord" (
 );
 
 -- CreateTable
+CREATE TABLE "School" (
+    "id" SERIAL NOT NULL,
+    "schoolName" TEXT,
+    "schoolState" TEXT,
+    "schoolCity" TEXT,
+    "schoolCountry" TEXT,
+
+    CONSTRAINT "School_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "SchoolStudentHistory" (
     "id" SERIAL NOT NULL,
     "studentId" INTEGER NOT NULL,
     "highSchoolLevelId" INTEGER NOT NULL,
-    "schoolName" TEXT,
-    "schoolState" TEXT,
-    "schoolCity" TEXT,
-    "schoolYear" TEXT,
-    "observations" TEXT,
+    "schoolId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "SchoolStudentHistory_pkey" PRIMARY KEY ("id")
@@ -253,7 +259,7 @@ CREATE TABLE "StudentFailedSubject" (
     "id" SERIAL NOT NULL,
     "studentId" INTEGER NOT NULL,
     "levelSubjectId" INTEGER NOT NULL,
-    "successDate" TIMESTAMP(3),
+    "date" TIMESTAMP(3),
     "finalAverage" DECIMAL(5,2),
     "typeOf" VARCHAR(1),
     "status" VARCHAR(20),
@@ -576,6 +582,9 @@ ALTER TABLE "SchoolStudentHistory" ADD CONSTRAINT "SchoolStudentHistory_studentI
 
 -- AddForeignKey
 ALTER TABLE "SchoolStudentHistory" ADD CONSTRAINT "SchoolStudentHistory_highSchoolLevelId_fkey" FOREIGN KEY ("highSchoolLevelId") REFERENCES "HighSchoolLevel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SchoolStudentHistory" ADD CONSTRAINT "SchoolStudentHistory_schoolId_fkey" FOREIGN KEY ("schoolId") REFERENCES "School"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "StudentFailedSubject" ADD CONSTRAINT "StudentFailedSubject_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

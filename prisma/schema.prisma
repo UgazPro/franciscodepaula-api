@@ -437,6 +437,20 @@ model GradeRecord {
 }
 
 //////////////////////////////////////////////////
+// SCHOOL
+//////////////////////////////////////////////////
+
+model School {
+  id            Int    @id @default(autoincrement())
+  schoolName    String?
+  schoolState   String?
+  schoolCity    String?
+  schoolCountry String?
+
+  studentHistories SchoolStudentHistory[]
+}
+
+//////////////////////////////////////////////////
 // SCHOOL STUDENT HISTORY
 //////////////////////////////////////////////////
 
@@ -444,15 +458,12 @@ model SchoolStudentHistory {
   id               Int      @id @default(autoincrement())
   studentId        Int
   highSchoolLevelId Int
-  schoolName       String?
-  schoolState      String?
-  schoolCity       String?
-  schoolYear       String?
-  observations     String?
+  schoolId         Int
   createdAt        DateTime @default(now())
 
   student         Student         @relation(fields: [studentId], references: [id])
   highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
+  school          School          @relation(fields: [schoolId], references: [id])
 }
 
 //////////////////////////////////////////////////
@@ -463,7 +474,7 @@ model StudentFailedSubject {
   id             Int      @id @default(autoincrement())
   studentId      Int
   levelSubjectId Int
-  successDate    DateTime?
+  date           DateTime?
   finalAverage   Decimal? @db.Decimal(5, 2)
   typeOf         String?  @db.VarChar(1)
   status         String?  @db.VarChar(20)
