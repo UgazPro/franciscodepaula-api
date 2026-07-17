@@ -72,6 +72,19 @@ export class GradeService {
         },
       });
 
+      const evaluationIds = teachingGroups.flatMap(tg => (tg.evaluations ?? []).map(e => e.id));
+      const gradeCountsByEval: Record<number, number> = {};
+      if (evaluationIds.length > 0) {
+        const gradeRows = await this.prisma.gradeRecord.groupBy({
+          by: ['evaluationId'],
+          where: { evaluationId: { in: evaluationIds } },
+          _count: { id: true },
+        });
+        for (const row of gradeRows) {
+          gradeCountsByEval[row.evaluationId] = row._count.id;
+        }
+      }
+
       const regularAndSpecial: GradePlanningRow[] = [];
       const crpRows: GradePlanningRow[] = [];
 
@@ -79,7 +92,7 @@ export class GradeService {
         const isCRP = tg.isSpecialGroup && tg.sectionId === null && tg.groupName;
         const evals = tg.evaluations ?? [];
         const evaluationCount = evals.length;
-        const loadedPercentage = evals.reduce((sum, e) => sum + Number(e.percentage), 0);
+        const loadedGrades = evals.reduce((sum, e) => sum + (gradeCountsByEval[e.id] ?? 0), 0);
 
         let totalStudents = 0;
         let maleStudents = 0;
@@ -103,6 +116,9 @@ export class GradeService {
           }
           sections = Array.from(sectionSet).sort().join(', ');
 
+          const totalSlots = totalStudents * evaluationCount;
+          const loadedPercentage = totalSlots > 0 ? (loadedGrades / totalSlots) * 100 : 0;
+
           crpRows.push({
             teachingGroupId: tg.id, sectionId: null, section: '', level: '',
             subject: 'CRP', subjectId: tg.levelSubject.subject.id,
@@ -116,6 +132,9 @@ export class GradeService {
           totalStudents = enrollments.length;
           maleStudents = enrollments.filter(e => e.student?.person?.gender === 'Masculino').length;
           femaleStudents = totalStudents - maleStudents;
+
+          const totalSlots = totalStudents * evaluationCount;
+          const loadedPercentage = totalSlots > 0 ? (loadedGrades / totalSlots) * 100 : 0;
 
           regularAndSpecial.push({
             teachingGroupId: tg.id, sectionId: tg.sectionId,
@@ -131,21 +150,26 @@ export class GradeService {
         }
       }
 
-      const aggregatedCRPs = new Map<string, GradePlanningRow>();
+      const aggregatedCRPs = new Map<string, GradePlanningRow & { _loadedGrades: number; _totalSlots: number }>();
       for (const row of crpRows) {
         const key = row.groupName!;
+        const rowSlots = row.totalStudents * row.evaluationCount;
+        const rowLoadedGrades = Math.round((row.loadedPercentage / 100) * rowSlots);
+
         if (aggregatedCRPs.has(key)) {
           const existing = aggregatedCRPs.get(key)!;
           existing.totalStudents += row.totalStudents;
           existing.maleStudents += row.maleStudents;
           existing.femaleStudents += row.femaleStudents;
           existing.evaluationCount = Math.max(existing.evaluationCount, row.evaluationCount);
-          existing.loadedPercentage = Math.max(existing.loadedPercentage, row.loadedPercentage);
+          existing._loadedGrades += rowLoadedGrades;
+          existing._totalSlots += rowSlots;
+          existing.loadedPercentage = existing._totalSlots > 0 ? (existing._loadedGrades / existing._totalSlots) * 100 : 0;
           const existingSections = existing.sections ? existing.sections.split(', ') : [];
           const newSections = row.sections ? row.sections.split(', ') : [];
           existing.sections = Array.from(new Set([...existingSections, ...newSections])).sort().join(', ');
         } else {
-          aggregatedCRPs.set(key, { ...row });
+          aggregatedCRPs.set(key, { ...row, _loadedGrades: rowLoadedGrades, _totalSlots: rowSlots });
         }
       }
 
@@ -241,7 +265,7 @@ export class GradeService {
       const evaluations = await this.prisma.evaluation.findMany({
         where,
         include: { evaluationType: true },
-        orderBy: { dueDate: 'asc' },
+        orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
       });
 
       const evaluationIds = evaluations.map(e => e.id);

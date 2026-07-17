@@ -192,7 +192,7 @@ export class EvaluationService {
           evaluationType: true,
           period: true,
         },
-        orderBy: { dueDate: 'asc' },
+        orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
       });
 
       return { success: true, data: evaluations };
