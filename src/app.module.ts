@@ -14,6 +14,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { TeacherAssignmentModule } from './teacher-assignment/teacher-assignment.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
 import { GradeModule } from './grade/grade.module';
+import { AcademicHistoryModule } from './academic-history/academic-history.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -33,6 +34,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     TeacherAssignmentModule,
     EvaluationModule,
     GradeModule,
+    AcademicHistoryModule,
   ],
   controllers: [AppController],
   providers: [

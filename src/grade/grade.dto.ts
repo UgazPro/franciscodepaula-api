@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsOptional, IsString, ValidateNested, IsArray } from 'class-validator';
+import { IsInt, IsOptional, IsString, ValidateNested, IsArray, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GradeItemDTO {
@@ -8,7 +8,9 @@ export class GradeItemDTO {
   @IsInt()
   evaluationId!: number;
 
-  @IsNumber()
+  @IsInt()
+  @Min(0)
+  @Max(20)
   score!: number;
 
   @IsOptional()

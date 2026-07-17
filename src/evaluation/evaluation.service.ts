@@ -234,6 +234,19 @@ export class EvaluationService {
         return badResponse;
       }
 
+      // Validate total percentage for this teaching group + period does not exceed 100%
+      const existingEvals = await this.prisma.evaluation.findMany({
+        where: { teachingGroupId: data.teachingGroupId, periodId: data.periodId },
+      });
+      const totalPercentage = existingEvals.reduce(
+        (sum, ev) => sum + Number(ev.percentage), 0
+      ) + data.percentage;
+
+      if (totalPercentage > 100) {
+        badResponse.message = `El total de porcentajes sería ${totalPercentage}%. El máximo permitido es 100%.`;
+        return badResponse;
+      }
+
       const typeName = data.evaluationType.charAt(0).toUpperCase() + data.evaluationType.slice(1).toLowerCase();
 
       let evaluationType = await this.prisma.evaluationType.findFirst({
@@ -279,6 +292,25 @@ export class EvaluationService {
       if (!existing) {
         badResponse.message = 'La evaluación no existe.';
         return badResponse;
+      }
+
+      // Validate total percentage if percentage is being changed
+      if (data.percentage !== undefined && data.percentage !== Number(existing.percentage)) {
+        const otherEvals = await this.prisma.evaluation.findMany({
+          where: {
+            teachingGroupId: existing.teachingGroupId,
+            periodId: existing.periodId,
+            id: { not: id },
+          },
+        });
+        const totalPercentage = otherEvals.reduce(
+          (sum, ev) => sum + Number(ev.percentage), 0
+        ) + data.percentage;
+
+        if (totalPercentage > 100) {
+          badResponse.message = `El total de porcentajes sería ${totalPercentage}%. El máximo permitido es 100%.`;
+          return badResponse;
+        }
       }
 
       const updateData: Record<string, unknown> = {};
@@ -339,6 +371,62 @@ export class EvaluationService {
       return {
         success: true,
         message: 'Evaluación eliminada exitosamente',
+      };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async autoAdjust(teachingGroupId: number, periodId: number) {
+    try {
+      const evaluations = await this.prisma.evaluation.findMany({
+        where: { teachingGroupId, periodId },
+        include: { grades: true },
+      });
+
+      if (evaluations.length === 0) {
+        badResponse.message = 'No hay evaluaciones para ajustar en esta materia/lapso.';
+        return badResponse;
+      }
+
+      const withGrades = evaluations.filter(e => e.grades.length > 0);
+      const withoutGrades = evaluations.filter(e => e.grades.length === 0);
+
+      // Delete evaluations without grades (no-op if array is empty)
+      if (withoutGrades.length > 0) {
+        await this.prisma.evaluation.deleteMany({
+          where: { id: { in: withoutGrades.map(e => e.id) } },
+        });
+      }
+
+      if (withGrades.length === 0) {
+        return {
+          success: true,
+          message: 'Se eliminaron todas las evaluaciones (ninguna tenía notas).',
+          deleted: withoutGrades.length,
+          updated: 0,
+        };
+      }
+
+      // Redistribute 100% among remaining evaluations
+      const remaining = withGrades.length;
+      const base = Math.floor(100 / remaining);
+      const remainder = 100 % remaining;
+
+      for (let i = 0; i < remaining; i++) {
+        const newPct = i < remainder ? base + 1 : base;
+        await this.prisma.evaluation.update({
+          where: { id: withGrades[i].id },
+          data: { percentage: newPct },
+        });
+      }
+
+      return {
+        success: true,
+        message: `Se eliminaron ${withoutGrades.length} evaluación(es) sin notas y se redistribuyó el 100% entre ${remaining} evaluación(es).`,
+        deleted: withoutGrades.length,
+        updated: remaining,
       };
     } catch (error) {
       badResponse.message = String(error);

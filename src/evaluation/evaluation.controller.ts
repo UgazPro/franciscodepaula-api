@@ -12,7 +12,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
-import { CreateEvaluationDTO, UpdateEvaluationDTO } from './evaluation.dto';
+import { CreateEvaluationDTO, UpdateEvaluationDTO, AutoAdjustDTO } from './evaluation.dto';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -66,6 +66,11 @@ export class EvaluationController {
   @Post()
   async createEvaluation(@Body() data: CreateEvaluationDTO) {
     return await this.service.createEvaluation(data);
+  }
+
+  @Post('auto-adjust')
+  async autoAdjust(@Body() data: AutoAdjustDTO) {
+    return await this.service.autoAdjust(data.teachingGroupId, data.periodId);
   }
 
   @Put(':id')
