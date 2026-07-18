@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { CreateSchoolHistoryDTO, CreateFailedSubjectDTO } from './academic-history.dto';
+import { CreateSchoolHistoryDTO, CreateFailedSubjectDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO } from './academic-history.dto';
 
 @Injectable()
 export class AcademicHistoryService {
@@ -13,7 +13,12 @@ export class AcademicHistoryService {
         include: {
           person: { select: { firstNames: true, lastNames: true } },
           studentHistories: {
-            include: {
+            select: {
+              id: true,
+              schoolYear: true,
+              levelSubjectId: true,
+              schoolId: true,
+              finalScore: true,
               levelSubject: {
                 include: {
                   highSchoolLevel: { select: { id: true, level: true } },
@@ -246,10 +251,12 @@ export class AcademicHistoryService {
 
         const levelName = records[0]?.levelSubject?.highSchoolLevel?.level ?? null;
         const school = records[0]?.school;
+        const schoolYear = records[0]?.schoolYear ?? null;
 
         return {
           schoolYearId: null,
           schoolYearName: null,
+          schoolYear,
           level: levelName,
           section: null,
           schoolName: school?.schoolName ?? 'Escuela Anterior',
@@ -259,6 +266,14 @@ export class AcademicHistoryService {
           totalGrades: 0,
           subjects,
           failedSubjects: [],
+          records: records.map((r) => ({
+            id: r.id,
+            levelSubjectId: r.levelSubjectId,
+            schoolId: r.schoolId,
+            schoolYear: r.schoolYear,
+            finalScore: r.finalScore != null ? Number(r.finalScore) : null,
+            subjectName: r.levelSubject?.subject?.subject ?? 'Desconocida',
+          })),
           _levelOrder: getLevelOrder(levelName),
         };
       });
@@ -268,14 +283,11 @@ export class AcademicHistoryService {
         (a, b) => a._levelOrder - b._levelOrder,
       );
 
-      // Remove internal _levelOrder field
-      const cleanHistory = allHistory.map(({ _levelOrder, ...rest }) => rest);
-
       return {
         studentId,
         studentName: `${student.person.firstNames} ${student.person.lastNames}`,
         currentSchool,
-        history: cleanHistory,
+        history: allHistory,
       };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -290,9 +302,28 @@ export class AcademicHistoryService {
           studentId: data.studentId,
           levelSubjectId: data.levelSubjectId,
           schoolId: data.schoolId,
+          schoolYear: data.schoolYear ?? null,
+          finalScore: data.finalScore ?? null,
         },
       });
       return { success: true, message: 'Historial escolar agregado', data: record };
+    } catch (error) {
+      throw new BadRequestException(String(error));
+    }
+  }
+
+  async addSchoolHistoryBatch(data: CreateSchoolHistoryBatchDTO) {
+    try {
+      const records = await this.prisma.schoolStudentHistory.createMany({
+        data: data.records.map((r) => ({
+          studentId: r.studentId,
+          levelSubjectId: r.levelSubjectId ?? null,
+          schoolId: r.schoolId,
+          schoolYear: r.schoolYear ?? null,
+          finalScore: r.finalScore ?? null,
+        })),
+      });
+      return { success: true, message: `${records.count} registros creados`, data: { count: records.count } };
     } catch (error) {
       throw new BadRequestException(String(error));
     }
@@ -302,6 +333,42 @@ export class AcademicHistoryService {
     try {
       await this.prisma.schoolStudentHistory.delete({ where: { id } });
       return { success: true, message: 'Registro eliminado' };
+    } catch (error) {
+      throw new BadRequestException(String(error));
+    }
+  }
+
+  async updateSchoolHistory(id: number, data: UpdateSchoolHistoryDTO) {
+    try {
+      const record = await this.prisma.schoolStudentHistory.update({
+        where: { id },
+        data: {
+          ...(data.schoolId !== undefined && { schoolId: data.schoolId }),
+          ...(data.schoolYear !== undefined && { schoolYear: data.schoolYear }),
+          ...(data.finalScore !== undefined && { finalScore: data.finalScore }),
+        },
+      });
+      return { success: true, message: 'Registro actualizado', data: record };
+    } catch (error) {
+      throw new BadRequestException(String(error));
+    }
+  }
+
+  async updateSchoolHistoryBatch(data: UpdateSchoolHistoryBatchDTO) {
+    try {
+      const result = await this.prisma.$transaction(
+        data.updates.map(u =>
+          this.prisma.schoolStudentHistory.update({
+            where: { id: u.id },
+            data: {
+              ...(u.schoolId !== undefined && { schoolId: u.schoolId }),
+              ...(u.schoolYear !== undefined && { schoolYear: u.schoolYear }),
+              ...(u.finalScore !== undefined && { finalScore: u.finalScore }),
+            },
+          })
+        )
+      );
+      return { success: true, message: `${result.length} registros actualizados` };
     } catch (error) {
       throw new BadRequestException(String(error));
     }
