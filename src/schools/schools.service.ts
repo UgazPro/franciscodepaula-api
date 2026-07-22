@@ -9,7 +9,7 @@ export class SchoolsService {
     try {
       const schools = await this.prisma.school.findMany({
         orderBy: { schoolName: 'asc' },
-        select: { id: true, schoolName: true, schoolState: true, schoolCity: true, schoolCountry: true },
+        select: { id: true, schoolName: true, schoolState: true, schoolCity: true },
       });
       return schools;
     } catch (error) {

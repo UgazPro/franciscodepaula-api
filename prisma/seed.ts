@@ -1256,7 +1256,6 @@ async function main() {
       schoolName: 'Francisco de Paula Salazar Acosta',
       schoolState: 'Zulia',
       schoolCity: 'Maracaibo',
-      schoolCountry: 'Venezuela',
     },
   });
   console.log('Escuela creada.');
@@ -1268,7 +1267,7 @@ async function main() {
     where: { status: true },
     include: { section: { include: { highSchoolLevel: true } } },
   });
-  const historyData: { studentId: number; levelSubjectId: number; schoolId: number; schoolYear: number; finalScore: number }[] = [];
+  const historyData: { studentId: number; levelSubjectId: number; schoolId: number; finalScore: number }[] = [];
 
   for (const enrollment of historyEnrollments) {
     const currentLevelId = enrollment.section.highSchoolLevelId;
@@ -1284,7 +1283,6 @@ async function main() {
           studentId: enrollment.studentId,
           levelSubjectId: ls.id,
           schoolId: 1,
-          schoolYear: year,
           finalScore: randInt(14, 19),
         });
       }

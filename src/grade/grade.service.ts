@@ -328,4 +328,169 @@ export class GradeService {
       return badResponse;
     }
   }
+
+  async getTeachersOverview(periodId?: number) {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({ where: { isActive: true } });
+      if (!activeSchoolYear) {
+        return { success: false, message: 'No hay un año escolar activo.' };
+      }
+
+      let targetPeriodId = periodId;
+      if (!targetPeriodId) {
+        const activePeriod = await this.prisma.period.findFirst({
+          where: { schoolYearId: activeSchoolYear.id },
+          orderBy: { id: 'asc' },
+        });
+        targetPeriodId = activePeriod?.id;
+      }
+
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: {
+          schoolYearId: activeSchoolYear.id,
+          status: true,
+        },
+        include: {
+          employee: { include: { user: { include: { person: true } } } },
+          levelSubject: { include: { subject: true, highSchoolLevel: true } },
+          section: { include: { highSchoolLevel: true } },
+          evaluations: targetPeriodId ? { where: { periodId: targetPeriodId } } : true,
+        },
+      });
+
+      const evaluationIds = teachingGroups.flatMap(tg => (tg.evaluations ?? []).map(e => e.id));
+      const gradeCountsByEval: Record<number, number> = {};
+      if (evaluationIds.length > 0) {
+        const gradeRows = await this.prisma.gradeRecord.groupBy({
+          by: ['evaluationId'],
+          where: { evaluationId: { in: evaluationIds } },
+          _count: { id: true },
+        });
+        for (const row of gradeRows) {
+          gradeCountsByEval[row.evaluationId] = row._count.id;
+        }
+      }
+
+      const teacherMap = new Map<number, {
+        teacherId: number;
+        teacherName: string;
+        teacherPhoto: string | null;
+        identificationNumber: string;
+        loadedCount: number;
+        totalCount: number;
+        groups: {
+          teachingGroupId: number;
+          level: string;
+          section: string;
+          subject: string;
+          evaluationCount: number;
+          totalPercentage: number;
+          loadedPercentage: number;
+          isLoaded: boolean;
+        }[];
+        _crpGroups: {
+          teachingGroupId: number;
+          evaluationCount: number;
+          totalPercentage: number;
+          studentCount: number;
+          loadedGrades: number;
+        }[];
+      }>();
+
+      for (const tg of teachingGroups) {
+        const emp = tg.employee;
+        if (!emp?.user?.person) continue;
+
+        const teacherId = emp.id;
+        if (!teacherMap.has(teacherId)) {
+          teacherMap.set(teacherId, {
+            teacherId,
+            teacherName: `${emp.user.person.firstNames} ${emp.user.person.lastNames}`,
+            teacherPhoto: emp.user.person.profilePhoto ?? null,
+            identificationNumber: emp.user.person.identificationNumber,
+            loadedCount: 0,
+            totalCount: 0,
+            groups: [],
+            _crpGroups: [],
+          });
+        }
+
+        const evals = tg.evaluations ?? [];
+        const evaluationCount = evals.length;
+        const totalPercentage = evals.reduce((sum, e) => sum + Number(e.percentage), 0);
+        const loadedGrades = evals.reduce((sum, e) => sum + (gradeCountsByEval[e.id] ?? 0), 0);
+
+        let studentCount = 0;
+        if (tg.isSpecialGroup && tg.sectionId === null) {
+          const studentGroups = await this.prisma.studentTeachingGroup.findMany({
+            where: { teachingGroupId: tg.id, studentEnrollment: { status: true } },
+          });
+          studentCount = studentGroups.length;
+        } else {
+          studentCount = tg.section
+            ? await this.prisma.studentEnrollment.count({
+                where: { sectionId: tg.sectionId!, status: true },
+              })
+            : 0;
+        }
+
+        const teacher = teacherMap.get(teacherId)!;
+
+        if (tg.isSpecialGroup && tg.sectionId === null) {
+          teacher._crpGroups.push({
+            teachingGroupId: tg.id,
+            evaluationCount,
+            totalPercentage,
+            studentCount,
+            loadedGrades,
+          });
+        } else {
+          const totalGradeSlots = studentCount * evaluationCount;
+          const loadedPercentage = totalGradeSlots > 0 ? (loadedGrades / totalGradeSlots) * 100 : 0;
+          const isLoaded = loadedPercentage >= 70;
+
+          teacher.groups.push({
+            teachingGroupId: tg.id,
+            level: tg.levelSubject?.highSchoolLevel?.level ?? '',
+            section: tg.section?.section ?? '',
+            subject: tg.levelSubject?.subject?.subject ?? '',
+            evaluationCount,
+            totalPercentage,
+            loadedPercentage,
+            isLoaded,
+          });
+        }
+      }
+
+      for (const teacher of teacherMap.values()) {
+        if (teacher._crpGroups.length > 0) {
+          const totalEvalCount = Math.max(...teacher._crpGroups.map(c => c.evaluationCount));
+          const totalPct = Math.max(...teacher._crpGroups.map(c => c.totalPercentage));
+          const totalStudentSlots = teacher._crpGroups.reduce((sum, c) => sum + c.studentCount * c.evaluationCount, 0);
+          const totalLoaded = teacher._crpGroups.reduce((sum, c) => sum + c.loadedGrades, 0);
+          const loadedPct = totalStudentSlots > 0 ? (totalLoaded / totalStudentSlots) * 100 : 0;
+          const isLoaded = loadedPct >= 70;
+
+          teacher.groups.unshift({
+            teachingGroupId: teacher._crpGroups[0].teachingGroupId,
+            level: '',
+            section: '',
+            subject: 'CRP',
+            evaluationCount: totalEvalCount,
+            totalPercentage: totalPct,
+            loadedPercentage: loadedPct,
+            isLoaded,
+          });
+        }
+        teacher.totalCount = teacher.groups.length;
+        teacher.loadedCount = teacher.groups.filter(g => g.isLoaded).length;
+      }
+
+      const result = Array.from(teacherMap.values()).map(({ _crpGroups, ...rest }) => rest);
+      return { success: true, data: result };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 }

@@ -15,10 +15,13 @@ export class AcademicHistoryService {
           studentHistories: {
             select: {
               id: true,
-              schoolYear: true,
+              schoolYearId: true,
               levelSubjectId: true,
               schoolId: true,
               finalScore: true,
+              typeOf: true,
+              approvalDate: true,
+              status: true,
               levelSubject: {
                 include: {
                   highSchoolLevel: { select: { id: true, level: true } },
@@ -26,8 +29,9 @@ export class AcademicHistoryService {
                 },
               },
               school: { select: { id: true, schoolName: true } },
+              section: { select: { id: true, section: true } },
             },
-            orderBy: { schoolYear: 'asc' },
+            orderBy: { schoolYearId: 'asc' },
           },
           enrollments: {
             where: { status: true },
@@ -72,6 +76,7 @@ export class AcademicHistoryService {
                   highSchoolLevel: { select: { level: true } },
                 },
               },
+              section: { select: { id: true, section: true } },
             },
           },
         },
@@ -160,6 +165,7 @@ export class AcademicHistoryService {
             gradedEvaluations: grades.filter((g) => g.score != null).length,
             grades,
             periodAverages,
+            typeOf: 'F',
           };
         });
 
@@ -177,16 +183,6 @@ export class AcademicHistoryService {
 
         // Failed subjects for this level
         const levelId = enrollment.section.highSchoolLevel.id;
-        const failed = student.failedSubjects
-          .filter((fs) => fs.levelSubject.highSchoolLevelId === levelId)
-          .map((fs) => ({
-            subjectName: fs.levelSubject.subject.subject,
-            finalAverage: fs.finalAverage != null ? Number(fs.finalAverage) : null,
-            typeOf: fs.typeOf,
-            status: fs.status,
-            observations: fs.observations,
-            date: fs.date,
-          }));
 
         return {
           schoolYearId: enrollment.schoolYear.id,
@@ -199,7 +195,14 @@ export class AcademicHistoryService {
           totalSubjects: regularSubjects.length,
           totalGrades: regularSubjects.reduce((sum, t) => sum + t.totalEvaluations, 0),
           subjects: teachingGroups,
-          failedSubjects: failed,
+          failedSubjects: student.failedSubjects
+            .filter((fs) => fs.levelSubject.highSchoolLevelId === levelId)
+            .map((fs) => ({
+              subjectName: fs.levelSubject.subject.subject,
+              finalScore: fs.finalScore,
+              section: fs.section?.section ?? null,
+              date: fs.date,
+            })),
           _levelOrder: getLevelOrder(enrollment.section.highSchoolLevel.level),
         };
       });
@@ -236,6 +239,7 @@ export class AcademicHistoryService {
               score: number | null;
             }[],
             periodAverages: [] as { period: string; average: number | null }[],
+            typeOf: sh.typeOf,
           }));
 
         const regularSubjects = subjects.filter((s) => !s.isSpecialGroup);
@@ -251,12 +255,11 @@ export class AcademicHistoryService {
 
         const levelName = records[0]?.levelSubject?.highSchoolLevel?.level ?? null;
         const school = records[0]?.school;
-        const schoolYear = records[0]?.schoolYear ?? null;
+        const schoolYearId = records[0]?.schoolYearId ?? null;
 
         return {
-          schoolYearId: null,
+          schoolYearId,
           schoolYearName: null,
-          schoolYear,
           level: levelName,
           section: null,
           schoolName: school?.schoolName ?? 'Escuela Anterior',
@@ -265,13 +268,15 @@ export class AcademicHistoryService {
           totalSubjects: regularSubjects.length,
           totalGrades: 0,
           subjects,
-          failedSubjects: [],
           records: records.map((r) => ({
             id: r.id,
             levelSubjectId: r.levelSubjectId,
             schoolId: r.schoolId,
-            schoolYear: r.schoolYear,
+            schoolYearId: r.schoolYearId,
             finalScore: r.finalScore != null ? Number(r.finalScore) : null,
+            typeOf: r.typeOf,
+            approvalDate: r.approvalDate,
+            status: r.status,
             subjectName: r.levelSubject?.subject?.subject ?? 'Desconocida',
           })),
           _levelOrder: getLevelOrder(levelName),
@@ -302,7 +307,7 @@ export class AcademicHistoryService {
           studentId: data.studentId,
           levelSubjectId: data.levelSubjectId,
           schoolId: data.schoolId,
-          schoolYear: data.schoolYear ?? null,
+          schoolYearId: data.schoolYearId ?? null,
           finalScore: data.finalScore ?? null,
         },
       });
@@ -319,7 +324,7 @@ export class AcademicHistoryService {
           studentId: r.studentId,
           levelSubjectId: r.levelSubjectId ?? null,
           schoolId: r.schoolId,
-          schoolYear: r.schoolYear ?? null,
+          schoolYearId: r.schoolYearId ?? null,
           finalScore: r.finalScore ?? null,
         })),
       });
@@ -344,7 +349,7 @@ export class AcademicHistoryService {
         where: { id },
         data: {
           ...(data.schoolId !== undefined && { schoolId: data.schoolId }),
-          ...(data.schoolYear !== undefined && { schoolYear: data.schoolYear }),
+          ...(data.schoolYearId !== undefined && { schoolYearId: data.schoolYearId }),
           ...(data.finalScore !== undefined && { finalScore: data.finalScore }),
         },
       });
@@ -362,7 +367,7 @@ export class AcademicHistoryService {
             where: { id: u.id },
             data: {
               ...(u.schoolId !== undefined && { schoolId: u.schoolId }),
-              ...(u.schoolYear !== undefined && { schoolYear: u.schoolYear }),
+              ...(u.schoolYearId !== undefined && { schoolYearId: u.schoolYearId }),
               ...(u.finalScore !== undefined && { finalScore: u.finalScore }),
             },
           })
@@ -379,12 +384,10 @@ export class AcademicHistoryService {
       const record = await this.prisma.studentFailedSubject.create({
         data: {
           studentId: data.studentId,
+          sectionId: data.sectionId ?? null,
           levelSubjectId: data.levelSubjectId,
+          finalScore: data.finalScore ?? null,
           date: data.date ?? new Date(),
-          finalAverage: data.finalAverage,
-          typeOf: data.typeOf,
-          status: data.status,
-          observations: data.observations,
         },
       });
       return { success: true, message: 'Materia reprobada registrada', data: record };

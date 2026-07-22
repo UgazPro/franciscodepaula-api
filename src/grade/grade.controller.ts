@@ -44,6 +44,12 @@ export class GradeController {
     return await this.service.getTeacherPlanning(userId);
   }
 
+  @Get('teachers-overview')
+  async getTeachersOverview(@Query('periodId') periodId?: string) {
+    const parsedPeriodId = periodId ? Number(periodId) : undefined;
+    return await this.service.getTeachersOverview(parsedPeriodId);
+  }
+
   @Get('teaching-group/:teachingGroupId')
   async getGradeDetail(
     @Param('teachingGroupId', ParseIntPipe) teachingGroupId: number,

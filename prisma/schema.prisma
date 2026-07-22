@@ -123,7 +123,7 @@ model Student {
 
   gradeRecords GradeRecord[]
   studentHistories SchoolStudentHistory[]
-  failedSubjects    StudentFailedSubject[]
+  failedSubjects StudentFailedSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -209,6 +209,8 @@ model SchoolYear {
   teachingGroups TeachingGroup[]
 
   fees Fee[]
+
+  studentHistories SchoolStudentHistory[]
 }
 
 //////////////////////////////////////////////////
@@ -262,6 +264,9 @@ model Section {
   enrollments StudentEnrollment[]
 
   teachingGroups TeachingGroup[]
+
+  studentHistories SchoolStudentHistory[]
+  failedSubjects StudentFailedSubject[]
 
   @@unique([schoolYearId, highSchoolLevelId, section])
 }
@@ -324,8 +329,8 @@ model LevelSubject {
 
   @@unique([highSchoolLevelId, subjectId])
   teachingGroups   TeachingGroup[]
-  failedSubjects   StudentFailedSubject[]
   studentHistories SchoolStudentHistory[]
+  failedSubjects StudentFailedSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -445,7 +450,6 @@ model School {
   schoolName    String?
   schoolState   String?
   schoolCity    String?
-  schoolCountry String?
   countryId     Int?
 
   country          Country?             @relation(fields: [countryId], references: [id])
@@ -460,14 +464,25 @@ model SchoolStudentHistory {
   id             Int      @id @default(autoincrement())
   studentId      Int
   levelSubjectId Int?
+  sectionId      Int?
   schoolId       Int
-  schoolYear     Int?
+  schoolYearId   Int?
   finalScore     Decimal? @db.Decimal(10, 2)
+  typeOf         String?  @db.VarChar(1)
+  approvalDate   DateTime?
+  status         Boolean?
   createdAt      DateTime @default(now())
 
-  student      Student      @relation(fields: [studentId], references: [id])
-  levelSubject LevelSubject? @relation(fields: [levelSubjectId], references: [id])
-  school       School       @relation(fields: [schoolId], references: [id])
+  student      Student        @relation(fields: [studentId], references: [id])
+  levelSubject LevelSubject?  @relation(fields: [levelSubjectId], references: [id])
+  section      Section?       @relation(fields: [sectionId], references: [id])
+  school       School         @relation(fields: [schoolId], references: [id])
+  schoolYear   SchoolYear?    @relation(fields: [schoolYearId], references: [id])
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([sectionId])
+  @@index([schoolYearId])
 }
 
 //////////////////////////////////////////////////
@@ -477,15 +492,18 @@ model SchoolStudentHistory {
 model StudentFailedSubject {
   id             Int      @id @default(autoincrement())
   studentId      Int
+  sectionId      Int?
   levelSubjectId Int
+  finalScore     Int?
   date           DateTime?
-  finalAverage   Decimal? @db.Decimal(5, 2)
-  typeOf         String?  @db.VarChar(2)
-  status         String?  @db.VarChar(20)
-  observations   String?
 
   student      Student      @relation(fields: [studentId], references: [id])
+  section      Section?     @relation(fields: [sectionId], references: [id])
   levelSubject LevelSubject @relation(fields: [levelSubjectId], references: [id])
+
+  @@index([studentId])
+  @@index([sectionId])
+  @@index([levelSubjectId])
 }
 
 //////////////////////////////////////////////////

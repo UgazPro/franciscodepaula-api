@@ -14,7 +14,7 @@ export class CreateSchoolHistoryDTO {
 
   @IsOptional()
   @IsInt()
-  schoolYear?: number | null;
+  schoolYearId?: number | null;
 
   @IsOptional()
   finalScore?: number | null;
@@ -33,7 +33,7 @@ export class CreateSchoolHistoryItemDTO {
 
   @IsOptional()
   @IsInt()
-  schoolYear?: number | null;
+  schoolYearId?: number | null;
 
   @IsOptional()
   finalScore?: number | null;
@@ -50,26 +50,18 @@ export class CreateFailedSubjectDTO {
   @IsInt()
   studentId!: number;
 
+  @IsOptional()
+  @IsInt()
+  sectionId?: number | null;
+
   @IsInt()
   levelSubjectId!: number;
 
   @IsOptional()
+  finalScore?: number;
+
+  @IsOptional()
   date?: Date;
-
-  @IsOptional()
-  finalAverage?: number;
-
-  @IsOptional()
-  @IsString()
-  typeOf?: string;
-
-  @IsOptional()
-  @IsString()
-  status?: string;
-
-  @IsOptional()
-  @IsString()
-  observations?: string;
 }
 
 export class UpdateSchoolHistoryDTO {
@@ -79,7 +71,7 @@ export class UpdateSchoolHistoryDTO {
 
   @IsOptional()
   @IsInt()
-  schoolYear?: number | null;
+  schoolYearId?: number | null;
 
   @IsOptional()
   finalScore?: number | null;
@@ -95,7 +87,7 @@ export class UpdateSchoolHistoryItemDTO {
 
   @IsOptional()
   @IsInt()
-  schoolYear?: number | null;
+  schoolYearId?: number | null;
 
   @IsOptional()
   finalScore?: number | null;
