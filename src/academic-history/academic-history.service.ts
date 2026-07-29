@@ -34,7 +34,6 @@ export class AcademicHistoryService {
             orderBy: { schoolYearId: 'asc' },
           },
           enrollments: {
-            where: { status: true },
             include: {
               schoolYear: { select: { id: true, name: true } },
               section: {
@@ -181,12 +180,12 @@ export class AcademicHistoryService {
               ) / 10
             : null;
 
-        // Failed subjects for this level
         const levelId = enrollment.section.highSchoolLevel.id;
 
         return {
           schoolYearId: enrollment.schoolYear.id,
           schoolYearName: enrollment.schoolYear.name,
+          enrollmentTypeOf: enrollment.typeOf,
           level: enrollment.section.highSchoolLevel.level,
           section: enrollment.section.section,
           schoolName: currentSchool?.schoolName ?? 'Escuela Actual',
@@ -196,8 +195,9 @@ export class AcademicHistoryService {
           totalGrades: regularSubjects.reduce((sum, t) => sum + t.totalEvaluations, 0),
           subjects: teachingGroups,
           failedSubjects: student.failedSubjects
-            .filter((fs) => fs.levelSubject.highSchoolLevelId === levelId)
             .map((fs) => ({
+              levelSubjectId: fs.levelSubjectId,
+              highSchoolLevelId: fs.levelSubject.highSchoolLevelId,
               subjectName: fs.levelSubject.subject.subject,
               finalScore: fs.finalScore,
               section: fs.section?.section ?? null,
@@ -207,10 +207,77 @@ export class AcademicHistoryService {
         };
       });
 
+      // Merge schoolStudentHistory records into enrollment entries (repitiente: approved + repeating subjects)
+      const specialSubjectCodes = ['CRP', 'ROB', 'MUS', 'OV', 'MET'];
+      const consumedHistoryIds = new Set<number>();
+
+      for (const entry of enrollmentHistory) {
+        const levelId = entry.subjects[0]
+          ? student.studentHistories.find(
+              (sh) => sh.levelSubject?.subject?.subject === entry.subjects[0]?.subjectName,
+            )?.levelSubject?.highSchoolLevelId
+          : null;
+
+        if (levelId == null) {
+          // Fallback: try to find levelId from the enrollment's section
+          const enrollment = student.enrollments.find(
+            (e) => e.schoolYear.id === entry.schoolYearId,
+          );
+          const fallbackLevelId = enrollment?.section?.highSchoolLevelId;
+          if (fallbackLevelId == null) continue;
+
+          const relevantRecords = student.studentHistories.filter(
+            (sh) =>
+              sh.schoolYearId === entry.schoolYearId &&
+              sh.levelSubject?.highSchoolLevelId === fallbackLevelId &&
+              sh.levelSubject != null &&
+              !entry.subjects.some((s) => s.subjectName === sh.levelSubject!.subject?.subject),
+          );
+
+          for (const sh of relevantRecords) {
+            consumedHistoryIds.add(sh.id);
+            entry.subjects.push({
+              subjectName: sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
+              isSpecialGroup: specialSubjectCodes.includes(sh.levelSubject!.subject?.code ?? ''),
+              definitiva: sh.typeOf === 'F' && sh.finalScore != null ? Number(sh.finalScore) : null,
+              totalEvaluations: 0,
+              gradedEvaluations: 0,
+              grades: [],
+              periodAverages: [],
+              typeOf: sh.typeOf ?? 'F',
+            });
+          }
+          continue;
+        }
+
+        const relevantRecords = student.studentHistories.filter(
+          (sh) =>
+            sh.schoolYearId === entry.schoolYearId &&
+            sh.levelSubject?.highSchoolLevelId === levelId &&
+            sh.levelSubject != null &&
+            !entry.subjects.some((s) => s.subjectName === sh.levelSubject!.subject?.subject),
+        );
+
+        for (const sh of relevantRecords) {
+          consumedHistoryIds.add(sh.id);
+          entry.subjects.push({
+            subjectName: sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
+            isSpecialGroup: specialSubjectCodes.includes(sh.levelSubject!.subject?.code ?? ''),
+            definitiva: sh.typeOf === 'F' && sh.finalScore != null ? Number(sh.finalScore) : null,
+            totalEvaluations: 0,
+            gradedEvaluations: 0,
+            grades: [],
+            periodAverages: [],
+            typeOf: sh.typeOf ?? 'F',
+          });
+        }
+      }
+
       // Build history entries from SchoolStudentHistory (previous schools)
-      // Group by level (highSchoolLevelId)
+      // Group by level (highSchoolLevelId), excluding records already merged into enrollment entries
       const historyByLevel = new Map<number, typeof student.studentHistories>();
       for (const sh of student.studentHistories) {
+        if (consumedHistoryIds.has(sh.id)) continue;
         const levelId = sh.levelSubject?.highSchoolLevelId;
         if (levelId == null) continue; // Skip records without levelSubject
         if (!historyByLevel.has(levelId)) {
@@ -218,8 +285,6 @@ export class AcademicHistoryService {
         }
         historyByLevel.get(levelId)!.push(sh);
       }
-
-      const specialSubjectCodes = ['CRP', 'ROB', 'MUS', 'OV', 'MET'];
 
       const previousHistory = Array.from(historyByLevel.entries()).map(([levelId, records]) => {
         const subjects = records
@@ -239,7 +304,7 @@ export class AcademicHistoryService {
               score: number | null;
             }[],
             periodAverages: [] as { period: string; average: number | null }[],
-            typeOf: sh.typeOf,
+            typeOf: sh.typeOf ?? 'F',
           }));
 
         const regularSubjects = subjects.filter((s) => !s.isSpecialGroup);
@@ -288,11 +353,26 @@ export class AcademicHistoryService {
         (a, b) => a._levelOrder - b._levelOrder,
       );
 
+      // Top-level failed subjects (independent of enrollment status)
+      const allFailedSubjects = student.failedSubjects.map((fs) => ({
+        levelSubjectId: fs.levelSubjectId,
+        highSchoolLevelId: fs.levelSubject.highSchoolLevelId,
+        subjectName: fs.levelSubject.subject.subject,
+        finalScore: fs.finalScore,
+        section: fs.section?.section ?? null,
+        date: fs.date,
+      }));
+
+      // studentFailedSubject records only exist for Materia Pendiente enrollments
+      const activeEnrollmentTypeOf = allFailedSubjects.length > 0 ? 'Materia Pendiente' : null;
+
       return {
         studentId,
         studentName: `${student.person.firstNames} ${student.person.lastNames}`,
         currentSchool,
         history: allHistory,
+        failedSubjects: allFailedSubjects,
+        enrollmentTypeOf: activeEnrollmentTypeOf,
       };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;

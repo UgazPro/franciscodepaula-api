@@ -34,6 +34,11 @@ export class EnrollmentController {
     return this.service.getPendingEnrollments();
   }
 
+  @Get('/subjects-by-level/:levelId')
+  getSubjectsByLevel(@Param('levelId') levelId: string) {
+    return this.service.getSubjectsByLevel(+levelId);
+  }
+
   @Get()
   getEnrollments(
     @Query('schoolYearId') schoolYearId?: string,

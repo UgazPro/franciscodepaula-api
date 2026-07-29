@@ -85,6 +85,41 @@ export class GradeService {
         }
       }
 
+      // Collect all student IDs and levelSubjectIds to batch-query approved subjects
+      const allStudentIds = new Set<number>();
+      const allLevelSubjectIds = new Set<number>();
+      for (const tg of teachingGroups) {
+        if (tg.sectionId !== null) {
+          const enrollments = tg.section?.enrollments ?? [];
+          for (const e of enrollments) allStudentIds.add(e.student.id);
+        } else {
+          const validGroups = tg.studentGroups.filter(sg => sg.studentEnrollment?.status === true);
+          for (const sg of validGroups) {
+            const enrollment = sg.studentEnrollment;
+            if (enrollment?.studentId) allStudentIds.add(enrollment.studentId);
+          }
+        }
+        allLevelSubjectIds.add(tg.levelSubjectId);
+      }
+
+      const approvedHistoryRecords = allStudentIds.size > 0
+        ? await this.prisma.schoolStudentHistory.findMany({
+            where: {
+              studentId: { in: Array.from(allStudentIds) },
+              levelSubjectId: { in: Array.from(allLevelSubjectIds) },
+              typeOf: 'F',
+            },
+            select: { studentId: true, levelSubjectId: true },
+          })
+        : [];
+
+      const approvedMap = new Map<number, Set<number>>();
+      for (const r of approvedHistoryRecords) {
+        if (r.levelSubjectId == null) continue;
+        if (!approvedMap.has(r.studentId)) approvedMap.set(r.studentId, new Set());
+        approvedMap.get(r.studentId)!.add(r.levelSubjectId);
+      }
+
       const regularAndSpecial: GradePlanningRow[] = [];
       const crpRows: GradePlanningRow[] = [];
 
@@ -116,8 +151,12 @@ export class GradeService {
           }
           sections = Array.from(sectionSet).sort().join(', ');
 
-          const totalSlots = totalStudents * evaluationCount;
-          const loadedPercentage = totalSlots > 0 ? (loadedGrades / totalSlots) * 100 : 0;
+          const approvedStudents = validGroups.filter(sg => {
+            const enrollment = sg.studentEnrollment;
+            return enrollment?.studentId && approvedMap.get(enrollment.studentId)?.has(tg.levelSubjectId);
+          }).length;
+          const effectiveSlots = (totalStudents - approvedStudents) * evaluationCount;
+          const loadedPercentage = effectiveSlots > 0 ? (loadedGrades / effectiveSlots) * 100 : (totalStudents > 0 ? 100 : 0);
 
           crpRows.push({
             teachingGroupId: tg.id, sectionId: null, section: '', level: '',
@@ -126,15 +165,19 @@ export class GradeService {
             totalStudents, maleStudents, femaleStudents,
             isSpecialGroup: true, sections, groupName: tg.groupName,
             evaluationCount, loadedPercentage,
-          });
+            _effectiveSlots: effectiveSlots,
+          } as GradePlanningRow & { _effectiveSlots: number });
         } else {
           const enrollments = tg.section?.enrollments ?? [];
           totalStudents = enrollments.length;
           maleStudents = enrollments.filter(e => e.student?.person?.gender === 'Masculino').length;
           femaleStudents = totalStudents - maleStudents;
 
-          const totalSlots = totalStudents * evaluationCount;
-          const loadedPercentage = totalSlots > 0 ? (loadedGrades / totalSlots) * 100 : 0;
+          const approvedStudents = enrollments.filter(e =>
+            approvedMap.get(e.student?.id)?.has(tg.levelSubjectId)
+          ).length;
+          const effectiveSlots = (totalStudents - approvedStudents) * evaluationCount;
+          const loadedPercentage = effectiveSlots > 0 ? (loadedGrades / effectiveSlots) * 100 : (totalStudents > 0 ? 100 : 0);
 
           regularAndSpecial.push({
             teachingGroupId: tg.id, sectionId: tg.sectionId,
@@ -153,8 +196,8 @@ export class GradeService {
       const aggregatedCRPs = new Map<string, GradePlanningRow & { _loadedGrades: number; _totalSlots: number }>();
       for (const row of crpRows) {
         const key = row.groupName!;
-        const rowSlots = row.totalStudents * row.evaluationCount;
-        const rowLoadedGrades = Math.round((row.loadedPercentage / 100) * rowSlots);
+        const effectiveSlots = (row as any)._effectiveSlots ?? row.totalStudents * row.evaluationCount;
+        const rowLoadedGrades = Math.round((row.loadedPercentage / 100) * effectiveSlots);
 
         if (aggregatedCRPs.has(key)) {
           const existing = aggregatedCRPs.get(key)!;
@@ -163,13 +206,13 @@ export class GradeService {
           existing.femaleStudents += row.femaleStudents;
           existing.evaluationCount = Math.max(existing.evaluationCount, row.evaluationCount);
           existing._loadedGrades += rowLoadedGrades;
-          existing._totalSlots += rowSlots;
+          existing._totalSlots += effectiveSlots;
           existing.loadedPercentage = existing._totalSlots > 0 ? (existing._loadedGrades / existing._totalSlots) * 100 : 0;
           const existingSections = existing.sections ? existing.sections.split(', ') : [];
           const newSections = row.sections ? row.sections.split(', ') : [];
           existing.sections = Array.from(new Set([...existingSections, ...newSections])).sort().join(', ');
         } else {
-          aggregatedCRPs.set(key, { ...row, _loadedGrades: rowLoadedGrades, _totalSlots: rowSlots });
+          aggregatedCRPs.set(key, { ...row, _loadedGrades: rowLoadedGrades, _totalSlots: effectiveSlots });
         }
       }
 
@@ -279,10 +322,35 @@ export class GradeService {
           })
         : [];
 
+      // Check for approved subjects in schoolStudentHistory for each student
+      const studentIds = students.map(s => s.id);
+      const levelSubjectId = tg.levelSubjectId;
+
+      const approvedHistoryRecords = studentIds.length > 0
+        ? await this.prisma.schoolStudentHistory.findMany({
+            where: {
+              studentId: { in: studentIds },
+              levelSubjectId,
+              typeOf: 'F',
+            },
+            select: { studentId: true, finalScore: true },
+          })
+        : [];
+
+      const approvedScoreMap = new Map(
+        approvedHistoryRecords.map(r => [r.studentId, r.finalScore != null ? Number(r.finalScore) : null])
+      );
+
+      const enrichedStudents = students.map(s => ({
+        ...s,
+        hasApprovedSubject: approvedScoreMap.has(s.id),
+        approvedSubjectScore: approvedScoreMap.get(s.id) ?? null,
+      }));
+
       return {
         success: true,
         data: {
-          students,
+          students: enrichedStudents,
           evaluations: evaluations.map(e => ({
             id: e.id,
             topic: e.topic,

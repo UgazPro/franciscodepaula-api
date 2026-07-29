@@ -694,7 +694,7 @@ async function main() {
   const sections = await prisma.section.findMany({ orderBy: { id: 'asc' } });
 
   // ── 15. ENROLLMENTS ──
-  const enrollmentsData: { studentId: number; schoolYearId: number; sectionId: number; enrollmentDate: Date; status: boolean }[] = [];
+  const enrollmentsData: { studentId: number; schoolYearId: number; sectionId: number; enrollmentDate: Date; status: boolean; typeOf: string }[] = [];
 
   for (let i = 0; i < allStudents.length; i++) {
     // sectionId 1-10 maps to sections 1A-5B
@@ -704,6 +704,7 @@ async function main() {
       sectionId: i + 1,
       enrollmentDate: new Date('2026-09-15'),
       status: true,
+      typeOf: 'Regular',
     });
   }
 

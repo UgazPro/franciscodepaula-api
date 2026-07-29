@@ -10,6 +10,28 @@ export class EnrollmentService {
   constructor(private prismaService: PrismaService) {}
 
   /////////////////////////////////////////////////
+  // SUBJECTS BY LEVEL
+  /////////////////////////////////////////////////
+
+  async getSubjectsByLevel(levelId: number) {
+    try {
+      const levelSubjects = await this.prismaService.levelSubject.findMany({
+        where: { highSchoolLevelId: levelId },
+        include: {
+          subject: { select: { id: true, subject: true, code: true } },
+          highSchoolLevel: { select: { id: true, level: true } },
+        },
+        orderBy: { subject: { subject: 'asc' } },
+      });
+
+      return { success: true, data: levelSubjects };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  /////////////////////////////////////////////////
   // ENROLLMENTS
   /////////////////////////////////////////////////
 
@@ -569,8 +591,73 @@ export class EnrollmentService {
           sectionId: data.sectionId,
           enrollmentDate: data.enrollmentDate,
           status: false,
+          typeOf: data.enrollmentType === 'repitiente'
+            ? 'Repitiente'
+            : data.enrollmentType === 'pending'
+              ? 'Materia Pendiente'
+              : 'Regular',
         },
       });
+
+      // 7. Handle repitiente: save approved + repeating subjects to schoolStudentHistory
+      if (data.enrollmentType === 'repitiente' && data.approvedSubjects?.length) {
+        for (const subj of data.approvedSubjects) {
+          await tx.schoolStudentHistory.create({
+            data: {
+              studentId: student.id,
+              levelSubjectId: subj.levelSubjectId,
+              schoolId: subj.schoolId ?? 1,
+              schoolYearId: data.schoolYearId,
+              finalScore: subj.isRepeating ? null : subj.finalScore ?? null,
+              typeOf: subj.isRepeating ? null : (subj.typeOf ?? 'F'),
+              approvalDate: subj.approvalDate ? new Date(subj.approvalDate) : null,
+            },
+          });
+        }
+      }
+
+      // 8. Handle materia pendiente: auto-create UR section and save to studentFailedSubject
+      if (data.enrollmentType === 'pending' && data.pendingSubjects?.length) {
+        // Get the previous level from the first pending subject's levelSubject
+        const firstPendingSubject = await tx.levelSubject.findUnique({
+          where: { id: data.pendingSubjects[0].levelSubjectId },
+          select: { highSchoolLevelId: true },
+        });
+        const previousLevelId = firstPendingSubject?.highSchoolLevelId;
+        if (!previousLevelId) {
+          throw new BadRequestException('No se pudo determinar el nivel anterior para materia pendiente');
+        }
+
+        // Auto-create UR section if it doesn't exist
+        let urSection = await tx.section.findFirst({
+          where: {
+            schoolYearId: data.schoolYearId,
+            highSchoolLevelId: previousLevelId,
+            section: 'UR',
+          },
+        });
+
+        if (!urSection) {
+          urSection = await tx.section.create({
+            data: {
+              schoolYearId: data.schoolYearId,
+              highSchoolLevelId: previousLevelId,
+              section: 'UR',
+            },
+          });
+        }
+
+        // Create studentFailedSubject records
+        for (const subj of data.pendingSubjects) {
+          await tx.studentFailedSubject.create({
+            data: {
+              studentId: student.id,
+              sectionId: urSection.id,
+              levelSubjectId: subj.levelSubjectId,
+            },
+          });
+        }
+      }
 
       return { student, enrollment };
     });

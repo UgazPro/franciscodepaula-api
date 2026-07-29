@@ -288,6 +288,8 @@ model StudentEnrollment {
 
   status Boolean?
 
+  typeOf String? @db.VarChar(20)
+
   student Student @relation(fields: [studentId], references: [id])
 
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])

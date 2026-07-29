@@ -5,6 +5,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 
 export class EnrollmentDTO {
@@ -54,6 +56,36 @@ export class StudentRepresentativeDTO {
 
   @IsNumber()
   representativeId!: number;
+}
+
+export class ApprovedSubjectDTO {
+  @IsNumber()
+  levelSubjectId!: number;
+
+  @IsOptional()
+  @IsNumber()
+  schoolId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  finalScore?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isRepeating?: boolean;
+
+  @IsOptional()
+  @IsString()
+  typeOf?: string;
+
+  @IsOptional()
+  @IsString()
+  approvalDate?: string;
+}
+
+export class PendingSubjectDTO {
+  @IsNumber()
+  levelSubjectId!: number;
 }
 
 export class FullEnrollmentDTO {
@@ -163,4 +195,23 @@ export class FullEnrollmentDTO {
   @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   enrollmentDate!: Date;
+
+  // ── Enrollment type ──
+  @IsOptional()
+  @IsString()
+  enrollmentType?: 'regular' | 'repitiente' | 'pending';
+
+  // ── Repitiente: approved subjects ──
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ApprovedSubjectDTO)
+  approvedSubjects?: ApprovedSubjectDTO[];
+
+  // ── Materia pendiente: pending subjects ──
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PendingSubjectDTO)
+  pendingSubjects?: PendingSubjectDTO[];
 }
