@@ -83,7 +83,7 @@ async function main() {
   // ── Limpieza total con reset de secuencias ──
   console.log('Limpiando datos existentes...');
   const tables = [
-    'SchoolStudentHistory', 'StudentFailedSubject', 'School',
+    'SchoolStudentHistory', 'StudentFailedSubjectAttempt', 'StudentFailedSubject', 'School',
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
     'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
     'GradeRecord', 'Evaluation', 'EvaluationType', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',

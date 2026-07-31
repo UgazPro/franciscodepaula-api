@@ -266,7 +266,6 @@ model Section {
   teachingGroups TeachingGroup[]
 
   studentHistories SchoolStudentHistory[]
-  failedSubjects StudentFailedSubject[]
 
   @@unique([schoolYearId, highSchoolLevelId, section])
 }
@@ -332,7 +331,6 @@ model LevelSubject {
   @@unique([highSchoolLevelId, subjectId])
   teachingGroups   TeachingGroup[]
   studentHistories SchoolStudentHistory[]
-  failedSubjects StudentFailedSubject[]
 }
 
 //////////////////////////////////////////////////
@@ -357,6 +355,7 @@ model TeachingGroup {
 
   evaluations   Evaluation[]
   studentGroups StudentTeachingGroup[]
+  failedSubjects StudentFailedSubject[]
 
   @@unique([teacherId, levelSubjectId, schoolYearId, sectionId, groupName])
 }
@@ -492,20 +491,36 @@ model SchoolStudentHistory {
 //////////////////////////////////////////////////
 
 model StudentFailedSubject {
-  id             Int      @id @default(autoincrement())
-  studentId      Int
-  sectionId      Int?
-  levelSubjectId Int
-  finalScore     Int?
-  date           DateTime?
+  id              Int      @id @default(autoincrement())
+  studentId       Int
+  teachingGroupId Int
+  status          Boolean  @default(true)
+  createdAt       DateTime @default(now())
 
-  student      Student      @relation(fields: [studentId], references: [id])
-  section      Section?     @relation(fields: [sectionId], references: [id])
-  levelSubject LevelSubject @relation(fields: [levelSubjectId], references: [id])
+  student       Student                  @relation(fields: [studentId], references: [id])
+  teachingGroup TeachingGroup            @relation(fields: [teachingGroupId], references: [id])
+  attempts      StudentFailedSubjectAttempt[]
 
   @@index([studentId])
-  @@index([sectionId])
-  @@index([levelSubjectId])
+  @@index([teachingGroupId])
+}
+
+//////////////////////////////////////////////////
+// STUDENT FAILED SUBJECT ATTEMPT
+//////////////////////////////////////////////////
+
+model StudentFailedSubjectAttempt {
+  id                       Int      @id @default(autoincrement())
+  studentFailedSubjectsId  Int
+  score                    Int?
+  evaluationDate           DateTime?
+  observations             String?
+  createdAt                DateTime @default(now())
+  createdBy                Int?
+
+  failedSubject StudentFailedSubject @relation(fields: [studentFailedSubjectsId], references: [id])
+
+  @@index([studentFailedSubjectsId])
 }
 
 //////////////////////////////////////////////////

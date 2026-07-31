@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { CreateSchoolHistoryDTO, CreateFailedSubjectDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO } from './academic-history.dto';
+import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO } from './academic-history.dto';
 
 @Injectable()
 export class AcademicHistoryService {
@@ -69,13 +69,20 @@ export class AcademicHistoryService {
           },
           failedSubjects: {
             include: {
-              levelSubject: {
+              teachingGroup: {
                 include: {
-                  subject: { select: { subject: true } },
-                  highSchoolLevel: { select: { level: true } },
+                  levelSubject: {
+                    include: {
+                      subject: { select: { subject: true } },
+                      highSchoolLevel: { select: { id: true, level: true } },
+                    },
+                  },
+                  section: { select: { id: true, section: true } },
                 },
               },
-              section: { select: { id: true, section: true } },
+              attempts: {
+                orderBy: { createdAt: 'asc' },
+              },
             },
           },
         },
@@ -195,13 +202,23 @@ export class AcademicHistoryService {
           totalGrades: regularSubjects.reduce((sum, t) => sum + t.totalEvaluations, 0),
           subjects: teachingGroups,
           failedSubjects: student.failedSubjects
+            .filter((fs) => {
+              const fsLevelId = fs.teachingGroup.levelSubject.highSchoolLevel.id;
+              return fsLevelId === levelId;
+            })
             .map((fs) => ({
-              levelSubjectId: fs.levelSubjectId,
-              highSchoolLevelId: fs.levelSubject.highSchoolLevelId,
-              subjectName: fs.levelSubject.subject.subject,
-              finalScore: fs.finalScore,
-              section: fs.section?.section ?? null,
-              date: fs.date,
+              levelSubjectId: fs.teachingGroup.levelSubjectId,
+              highSchoolLevelId: fs.teachingGroup.levelSubject.highSchoolLevel.id,
+              subjectName: fs.teachingGroup.levelSubject.subject.subject,
+              section: fs.teachingGroup.section?.section ?? null,
+              attempts: fs.attempts.map((a) => ({
+                id: a.id,
+                score: a.score,
+                evaluationDate: a.evaluationDate,
+                observations: a.observations,
+                createdAt: a.createdAt,
+                createdBy: a.createdBy,
+              })),
             })),
           _levelOrder: getLevelOrder(enrollment.section.highSchoolLevel.level),
         };
@@ -355,12 +372,19 @@ export class AcademicHistoryService {
 
       // Top-level failed subjects (independent of enrollment status)
       const allFailedSubjects = student.failedSubjects.map((fs) => ({
-        levelSubjectId: fs.levelSubjectId,
-        highSchoolLevelId: fs.levelSubject.highSchoolLevelId,
-        subjectName: fs.levelSubject.subject.subject,
-        finalScore: fs.finalScore,
-        section: fs.section?.section ?? null,
-        date: fs.date,
+        id: fs.id,
+        levelSubjectId: fs.teachingGroup.levelSubjectId,
+        highSchoolLevelId: fs.teachingGroup.levelSubject.highSchoolLevel.id,
+        subjectName: fs.teachingGroup.levelSubject.subject.subject,
+        section: fs.teachingGroup.section?.section ?? null,
+        attempts: fs.attempts.map((a) => ({
+          id: a.id,
+          score: a.score,
+          evaluationDate: a.evaluationDate,
+          observations: a.observations,
+          createdAt: a.createdAt,
+          createdBy: a.createdBy,
+        })),
       }));
 
       // studentFailedSubject records only exist for Materia Pendiente enrollments
@@ -459,28 +483,173 @@ export class AcademicHistoryService {
     }
   }
 
-  async addFailedSubject(data: CreateFailedSubjectDTO) {
+  async addFailedSubjectAttempt(failedSubjectId: number, data: CreateFailedSubjectAttemptDTO) {
     try {
-      const record = await this.prisma.studentFailedSubject.create({
+      // Verify the failed subject exists
+      const failedSubject = await this.prisma.studentFailedSubject.findUnique({
+        where: { id: failedSubjectId },
+      });
+      if (!failedSubject) {
+        throw new BadRequestException('Materia pendiente no encontrada');
+      }
+
+      // Check max 4 attempts
+      const attemptCount = await this.prisma.studentFailedSubjectAttempt.count({
+        where: { studentFailedSubjectsId: failedSubjectId },
+      });
+      if (attemptCount >= 4) {
+        throw new BadRequestException('Se ha alcanzado el máximo de 4 intentos para esta materia');
+      }
+
+      // Parse evaluationDate from "YYYY-MM" format to Date (day = 1)
+      let evaluationDate: Date | null = null;
+      if (data.evaluationDate) {
+        evaluationDate = new Date(`${data.evaluationDate}-01`);
+      }
+
+      const record = await this.prisma.studentFailedSubjectAttempt.create({
         data: {
-          studentId: data.studentId,
-          sectionId: data.sectionId ?? null,
-          levelSubjectId: data.levelSubjectId,
-          finalScore: data.finalScore ?? null,
-          date: data.date ?? new Date(),
+          studentFailedSubjectsId: failedSubjectId,
+          score: data.score ?? null,
+          evaluationDate,
+          observations: data.observations ?? null,
+          createdBy: data.createdBy ?? null,
         },
       });
-      return { success: true, message: 'Materia reprobada registrada', data: record };
+      return { success: true, message: 'Intento registrado', data: record };
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(String(error));
     }
   }
 
-  async deleteFailedSubject(id: number) {
+  async getAllFailedSubjects() {
     try {
-      await this.prisma.studentFailedSubject.delete({ where: { id } });
-      return { success: true, message: 'Registro eliminado' };
+      const specialSubjectCodes = ['CRP', 'ROB', 'MUS', 'OV', 'MET'];
+
+      const failedSubjects = await this.prisma.studentFailedSubject.findMany({
+        where: { status: true },
+        include: {
+          student: {
+            include: {
+              person: { select: { firstNames: true, lastNames: true, identificationNumber: true } },
+              enrollments: {
+                where: { status: true },
+                include: {
+                  section: {
+                    include: {
+                      highSchoolLevel: { select: { id: true, level: true } },
+                    },
+                  },
+                },
+                orderBy: { schoolYearId: 'desc' },
+                take: 1,
+              },
+            },
+          },
+          teachingGroup: {
+            include: {
+              levelSubject: {
+                include: {
+                  subject: { select: { subject: true, code: true } },
+                  highSchoolLevel: { select: { id: true, level: true } },
+                },
+              },
+              section: { select: { id: true, section: true } },
+            },
+          },
+          attempts: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+
+      // Filter out special subjects (CRP, ROB, MUS, MET, OV)
+      const filtered = failedSubjects.filter(
+        (fs) => !specialSubjectCodes.includes(fs.teachingGroup.levelSubject.subject.code ?? '')
+      );
+
+      // Group by highSchoolLevelId
+      const levelMap = new Map<number, {
+        highSchoolLevelId: number;
+        level: string;
+        students: Map<number, {
+          studentId: number;
+          studentName: string;
+          identification: string;
+          enrollmentTypeOf: string;
+          currentLevel: string;
+          currentSection: string;
+          failedSubjects: Array<{
+            id: number;
+            levelSubjectId: number;
+            subjectName: string;
+            attempts: Array<{
+              id: number;
+              score: number | null;
+              evaluationDate: Date | null;
+              observations: string | null;
+              createdAt: Date;
+            }>;
+          }>;
+        }>;
+      }>();
+
+      for (const fs of filtered) {
+        const levelId = fs.teachingGroup.levelSubject.highSchoolLevel.id;
+        const levelName = fs.teachingGroup.levelSubject.highSchoolLevel.level;
+        const studentId = fs.studentId;
+
+        if (!levelMap.has(levelId)) {
+          levelMap.set(levelId, {
+            highSchoolLevelId: levelId,
+            level: levelName,
+            students: new Map(),
+          });
+        }
+
+        const level = levelMap.get(levelId)!;
+
+        if (!level.students.has(studentId)) {
+          const activeEnrollment = fs.student.enrollments[0];
+          level.students.set(studentId, {
+            studentId,
+            studentName: `${fs.student.person.firstNames} ${fs.student.person.lastNames}`,
+            identification: fs.student.person.identificationNumber,
+            enrollmentTypeOf: activeEnrollment?.typeOf ?? 'Materia Pendiente',
+            currentLevel: activeEnrollment?.section?.highSchoolLevel?.level ?? levelName,
+            currentSection: activeEnrollment?.section?.section ?? 'UR',
+            failedSubjects: [],
+          });
+        }
+
+        const student = level.students.get(studentId)!;
+        student.failedSubjects.push({
+          id: fs.id,
+          levelSubjectId: fs.teachingGroup.levelSubjectId,
+          subjectName: fs.teachingGroup.levelSubject.subject.subject,
+          attempts: fs.attempts.map((a) => ({
+            id: a.id,
+            score: a.score,
+            evaluationDate: a.evaluationDate,
+            observations: a.observations,
+            createdAt: a.createdAt,
+          })),
+        });
+      }
+
+      // Convert maps to arrays and sort
+      const levels = Array.from(levelMap.values())
+        .map((level) => ({
+          ...level,
+          students: Array.from(level.students.values()),
+          studentCount: level.students.size,
+        }))
+        .sort((a, b) => a.highSchoolLevelId - b.highSchoolLevelId);
+
+      return { success: true, data: levels };
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(String(error));
     }
   }

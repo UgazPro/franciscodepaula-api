@@ -46,22 +46,20 @@ export class CreateSchoolHistoryBatchDTO {
   records!: CreateSchoolHistoryItemDTO[];
 }
 
-export class CreateFailedSubjectDTO {
-  @IsInt()
-  studentId!: number;
+export class CreateFailedSubjectAttemptDTO {
+  @IsOptional()
+  score?: number;
+
+  @IsOptional()
+  evaluationDate?: string;
+
+  @IsOptional()
+  @IsString()
+  observations?: string;
 
   @IsOptional()
   @IsInt()
-  sectionId?: number | null;
-
-  @IsInt()
-  levelSubjectId!: number;
-
-  @IsOptional()
-  finalScore?: number;
-
-  @IsOptional()
-  date?: Date;
+  createdBy?: number;
 }
 
 export class UpdateSchoolHistoryDTO {

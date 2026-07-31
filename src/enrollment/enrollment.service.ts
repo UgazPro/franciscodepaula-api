@@ -647,13 +647,51 @@ export class EnrollmentService {
           });
         }
 
-        // Create studentFailedSubject records
+        // Create studentFailedSubject records linked to TeachingGroup
         for (const subj of data.pendingSubjects) {
+          // Find an existing TeachingGroup for this subject in the same school year (any section)
+          // to get the teacherId
+          const existingGroup = await tx.teachingGroup.findFirst({
+            where: {
+              levelSubjectId: subj.levelSubjectId,
+              schoolYearId: data.schoolYearId,
+            },
+          });
+
+          if (!existingGroup) {
+            throw new BadRequestException(
+              `No se encontró un grupo de enseñanza para la materia con levelSubjectId ${subj.levelSubjectId} en el año escolar seleccionado. Asegúrese de que la materia esté asignada a un docente.`
+            );
+          }
+
+          // Check if a TeachingGroup already exists in the UR section for this subject
+          let urTeachingGroup = await tx.teachingGroup.findFirst({
+            where: {
+              levelSubjectId: subj.levelSubjectId,
+              schoolYearId: data.schoolYearId,
+              sectionId: urSection.id,
+            },
+          });
+
+          // Auto-create the TeachingGroup in UR section if it doesn't exist
+          if (!urTeachingGroup) {
+            urTeachingGroup = await tx.teachingGroup.create({
+              data: {
+                teacherId: existingGroup.teacherId,
+                levelSubjectId: subj.levelSubjectId,
+                schoolYearId: data.schoolYearId,
+                sectionId: urSection.id,
+                groupName: `UR - ${(await tx.levelSubject.findUnique({ where: { id: subj.levelSubjectId }, include: { subject: { select: { subject: true } } } }))?.subject?.subject ?? 'Materia'}`,
+                isSpecialGroup: false,
+                status: true,
+              },
+            });
+          }
+
           await tx.studentFailedSubject.create({
             data: {
               studentId: student.id,
-              sectionId: urSection.id,
-              levelSubjectId: subj.levelSubjectId,
+              teachingGroupId: urTeachingGroup.id,
             },
           });
         }
