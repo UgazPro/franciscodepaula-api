@@ -1024,16 +1024,29 @@ async function main() {
     evalsByTG.get(ev.teachingGroupId)!.push(ev);
   }
 
+  // Students that should have at least 1 failing grade (studentId = 1-4, 5)
+  // These are Carlos, María, José, Ana, Luis
+  const studentsWithFailingGrades = new Set([1, 2, 3, 5]);
+
   // For each student, find their TGs and create grades
   for (const enrollment of allEnrollments) {
     const studentTGs = stgData.filter(s => s.studentEnrollmentId === enrollment.id);
+    const shouldFail = studentsWithFailingGrades.has(enrollment.studentId);
+
     for (const stg of studentTGs) {
       const tgEvals = evalsByTG.get(stg.teachingGroupId) || [];
       for (const ev of tgEvals) {
+        let score: number;
+        if (shouldFail && Math.random() < 0.25) {
+          // 25% chance to fail in this evaluation
+          score = randInt(4, 9);
+        } else {
+          score = randInt(12, 18);
+        }
         gradeData.push({
           studentId: enrollment.studentId,
           evaluationId: ev.id,
-          score: randInt(12, 18),
+          score,
         });
       }
     }

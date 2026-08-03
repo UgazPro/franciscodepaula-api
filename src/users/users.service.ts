@@ -203,6 +203,17 @@ export class UsersService {
                 highSchoolLevel: true,
               },
             },
+            studentTeachingGroups: {
+              include: {
+                teachingGroup: {
+                  select: {
+                    id: true,
+                    groupName: true,
+                    isSpecialGroup: true,
+                  },
+                },
+              },
+            },
           },
         },
         representatives: {

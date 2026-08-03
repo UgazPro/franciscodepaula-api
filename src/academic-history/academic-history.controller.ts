@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { AcademicHistoryService } from './academic-history.service';
-import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO } from './academic-history.dto';
+import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO, CreateReviewDTO } from './academic-history.dto';
 
 @Controller('academic-history')
 export class AcademicHistoryController {
@@ -59,5 +59,15 @@ export class AcademicHistoryController {
   @Delete('school-history/:id')
   async deleteSchoolHistory(@Param('id', ParseIntPipe) id: number) {
     return await this.service.deleteSchoolHistory(id);
+  }
+
+  @Get('review-students')
+  async getAllReviewStudents() {
+    return await this.service.getAllReviewStudents();
+  }
+
+  @Post('review')
+  async createReview(@Body() data: CreateReviewDTO) {
+    return await this.service.createReview(data);
   }
 }

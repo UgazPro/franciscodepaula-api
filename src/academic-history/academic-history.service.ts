@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO } from './academic-history.dto';
+import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO, CreateReviewDTO } from './academic-history.dto';
 
 @Injectable()
 export class AcademicHistoryService {
@@ -650,6 +650,286 @@ export class AcademicHistoryService {
       return { success: true, data: levels };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(String(error));
+    }
+  }
+
+  async getAllReviewStudents() {
+    try {
+      const specialSubjectCodes = ['CRP', 'ROB', 'MUS', 'OV', 'MET'];
+
+      // 1. Get active school year
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      if (!activeSchoolYear) {
+        throw new BadRequestException('No hay año escolar activo');
+      }
+      const schoolYearId = activeSchoolYear.id;
+
+      // 2. Get all active enrollments for the active year
+      const enrollments = await this.prisma.studentEnrollment.findMany({
+        where: { status: true, schoolYearId },
+        include: {
+          student: {
+            include: {
+              person: { select: { firstNames: true, lastNames: true, identificationNumber: true } },
+            },
+          },
+          section: {
+            include: {
+              highSchoolLevel: { select: { id: true, level: true } },
+            },
+          },
+        },
+      });
+
+      // 3. Get all teaching groups for the active year (to know which subjects exist per level)
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: { schoolYearId, status: true },
+        include: {
+          levelSubject: {
+            include: {
+              subject: { select: { id: true, subject: true, code: true } },
+              highSchoolLevel: { select: { id: true, level: true } },
+            },
+          },
+          section: { select: { id: true, section: true } },
+        },
+      });
+
+      // 4. Get all grade records for the active year
+      const gradeRecords = await this.prisma.gradeRecord.findMany({
+        where: {
+          evaluation: {
+            teachingGroup: { schoolYearId },
+          },
+        },
+        include: {
+          evaluation: {
+            include: {
+              period: { select: { id: true, period: true } },
+              teachingGroup: {
+                select: { id: true, levelSubjectId: true, sectionId: true },
+              },
+            },
+          },
+        },
+      });
+
+      // 5. Build subjects map per level (excluding special groups)
+      const subjectsByLevel = new Map<number, Map<number, { levelSubjectId: number; subjectCode: string; subjectName: string }>>();
+      for (const tg of teachingGroups) {
+        if (tg.isSpecialGroup) continue;
+        const code = tg.levelSubject.subject.code;
+        if (specialSubjectCodes.includes(code ?? '')) continue;
+
+        const levelId = tg.levelSubject.highSchoolLevel.id;
+        const lsId = tg.levelSubjectId;
+
+        if (!subjectsByLevel.has(levelId)) {
+          subjectsByLevel.set(levelId, new Map());
+        }
+        const levelSubjects = subjectsByLevel.get(levelId)!;
+        if (!levelSubjects.has(lsId)) {
+          levelSubjects.set(lsId, {
+            levelSubjectId: lsId,
+            subjectCode: tg.levelSubject.subject.code ?? tg.levelSubject.subject.subject.substring(0, 4).toUpperCase(),
+            subjectName: tg.levelSubject.subject.subject,
+          });
+        }
+      }
+
+      // 6. Compute average of 3 moments per student per subject
+      // key = `${studentId}-${levelSubjectId}` → { periodGrades: Map<periodName, weightedAvg> }
+      const studentSubjectGrades = new Map<string, Map<string, { totalWeighted: number; totalPct: number }>>();
+
+      for (const gr of gradeRecords) {
+        const studentId = gr.studentId;
+        const lsId = gr.evaluation.teachingGroup.levelSubjectId;
+        const periodName = gr.evaluation.period.period;
+        const score = gr.score != null ? Number(gr.score) : null;
+        const percentage = Number(gr.evaluation.percentage);
+
+        if (score == null) continue;
+
+        const key = `${studentId}-${lsId}`;
+        if (!studentSubjectGrades.has(key)) {
+          studentSubjectGrades.set(key, new Map());
+        }
+        const periodMap = studentSubjectGrades.get(key)!;
+        if (!periodMap.has(periodName)) {
+          periodMap.set(periodName, { totalWeighted: 0, totalPct: 0 });
+        }
+        const p = periodMap.get(periodName)!;
+        p.totalWeighted += (score / 20) * percentage;
+        p.totalPct += percentage;
+      }
+
+      // Compute average of 3 moments
+      const subjectAverages = new Map<string, { studentId: number; levelSubjectId: number; average3Moments: number | null; passed: boolean }>();
+      for (const [key, periodMap] of studentSubjectGrades) {
+        const [studentIdStr, lsIdStr] = key.split('-');
+        const studentId = parseInt(studentIdStr);
+        const levelSubjectId = parseInt(lsIdStr);
+
+        const periodAverages: number[] = [];
+        for (const [, data] of periodMap) {
+          if (data.totalPct > 0) {
+            periodAverages.push((data.totalWeighted / data.totalPct) * 20);
+          }
+        }
+
+        let average3Moments: number | null = null;
+        if (periodAverages.length > 0) {
+          average3Moments = Math.round((periodAverages.reduce((a, b) => a + b, 0) / periodAverages.length) * 10) / 10;
+        }
+
+        subjectAverages.set(key, {
+          studentId,
+          levelSubjectId,
+          average3Moments,
+          passed: average3Moments != null && average3Moments >= 10,
+        });
+      }
+
+      // 7. Get existing review grades (typeOf = 'R') to show them in the UI
+      const existingReviews = await this.prisma.schoolStudentHistory.findMany({
+        where: {
+          schoolYearId,
+          typeOf: 'R',
+          status: true,
+        },
+        select: {
+          studentId: true,
+          levelSubjectId: true,
+          finalScore: true,
+        },
+      });
+
+      const reviewMap = new Map<string, number>();
+      for (const r of existingReviews) {
+        if (r.levelSubjectId != null) {
+          reviewMap.set(`${r.studentId}-${r.levelSubjectId}`, Number(r.finalScore));
+        }
+      }
+
+      // 8. Group enrollments by level
+      const levelMap = new Map<number, {
+        highSchoolLevelId: number;
+        level: string;
+        students: Map<number, {
+          studentId: number;
+          studentName: string;
+          identification: string;
+          section: string;
+          sectionId: number;
+          subjectGrades: Array<{
+            levelSubjectId: number;
+            subjectCode: string;
+            subjectName: string;
+            average3Moments: number | null;
+            passed: boolean;
+            reviewScore: number | null;
+          }>;
+        }>;
+      }>();
+
+      for (const enrollment of enrollments) {
+        const levelId = enrollment.section.highSchoolLevel.id;
+        const studentId = enrollment.studentId;
+
+        if (!levelMap.has(levelId)) {
+          levelMap.set(levelId, {
+            highSchoolLevelId: levelId,
+            level: enrollment.section.highSchoolLevel.level,
+            students: new Map(),
+          });
+        }
+        const level = levelMap.get(levelId)!;
+
+        if (!level.students.has(studentId)) {
+          const firstName = enrollment.student.person.firstNames.split(' ')[0];
+          const firstLast = enrollment.student.person.lastNames.split(' ')[0];
+
+          level.students.set(studentId, {
+            studentId,
+            studentName: `${firstName} ${firstLast}`,
+            identification: enrollment.student.person.identificationNumber,
+            section: enrollment.section.section,
+            sectionId: enrollment.section.id,
+            subjectGrades: [],
+          });
+        }
+
+        const student = level.students.get(studentId)!;
+
+        // Add subject grades for this student (only subjects that exist for this level)
+        const levelSubjects = subjectsByLevel.get(levelId);
+        if (!levelSubjects) continue;
+
+        for (const [, subjInfo] of levelSubjects) {
+          // Skip if already added
+          if (student.subjectGrades.some(sg => sg.levelSubjectId === subjInfo.levelSubjectId)) continue;
+
+          const avgKey = `${studentId}-${subjInfo.levelSubjectId}`;
+          const avg = subjectAverages.get(avgKey);
+          const reviewKey = `${studentId}-${subjInfo.levelSubjectId}`;
+          const reviewScore = reviewMap.get(reviewKey) ?? null;
+
+          student.subjectGrades.push({
+            levelSubjectId: subjInfo.levelSubjectId,
+            subjectCode: subjInfo.subjectCode,
+            subjectName: subjInfo.subjectName,
+            average3Moments: avg?.average3Moments ?? null,
+            passed: avg?.passed ?? false,
+            reviewScore,
+          });
+        }
+      }
+
+      // 9. Filter out students who passed all subjects (only keep those with at least 1 failing subject)
+      for (const [, level] of levelMap) {
+        const studentsWithFailing = Array.from(level.students.values())
+          .filter(student => student.subjectGrades.some(sg => !sg.passed));
+        level.students = new Map(studentsWithFailing.map(s => [s.studentId, s]));
+      }
+
+      // 10. Convert maps to arrays and sort (always show all levels)
+      const levels = Array.from(levelMap.values())
+        .map((level) => ({
+          highSchoolLevelId: level.highSchoolLevelId,
+          level: level.level,
+          studentCount: level.students.size,
+          subjects: Array.from(subjectsByLevel.get(level.highSchoolLevelId)?.values() ?? []),
+          students: Array.from(level.students.values()),
+        }))
+        .sort((a, b) => a.highSchoolLevelId - b.highSchoolLevelId);
+
+      return { success: true, data: levels };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(String(error));
+    }
+  }
+
+  async createReview(data: CreateReviewDTO) {
+    try {
+      const record = await this.prisma.schoolStudentHistory.create({
+        data: {
+          studentId: data.studentId,
+          levelSubjectId: data.levelSubjectId,
+          sectionId: data.sectionId,
+          schoolId: data.schoolId,
+          schoolYearId: data.schoolYearId,
+          finalScore: data.finalScore,
+          typeOf: 'R',
+          status: true,
+        },
+      });
+      return { success: true, message: 'Nota de revisión guardada', data: record };
+    } catch (error) {
       throw new BadRequestException(String(error));
     }
   }

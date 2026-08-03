@@ -97,3 +97,24 @@ export class UpdateSchoolHistoryBatchDTO {
   @Type(() => UpdateSchoolHistoryItemDTO)
   updates!: UpdateSchoolHistoryItemDTO[];
 }
+
+export class CreateReviewDTO {
+  @IsInt()
+  studentId!: number;
+
+  @IsInt()
+  levelSubjectId!: number;
+
+  @IsInt()
+  sectionId!: number;
+
+  @IsInt()
+  schoolId!: number;
+
+  @IsInt()
+  schoolYearId!: number;
+
+  @IsInt()
+  @Min(0)
+  finalScore!: number;
+}
