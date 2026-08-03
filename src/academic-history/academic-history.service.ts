@@ -1,6 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { CreateSchoolHistoryDTO, CreateFailedSubjectAttemptDTO, CreateSchoolHistoryBatchDTO, UpdateSchoolHistoryDTO, UpdateSchoolHistoryBatchDTO, CreateReviewDTO } from './academic-history.dto';
+import {
+  CreateSchoolHistoryDTO,
+  CreateFailedSubjectAttemptDTO,
+  CreateSchoolHistoryBatchDTO,
+  UpdateSchoolHistoryDTO,
+  UpdateSchoolHistoryBatchDTO,
+  CreateReviewDTO,
+} from './academic-history.dto';
 
 @Injectable()
 export class AcademicHistoryService {
@@ -97,6 +104,14 @@ export class AcademicHistoryService {
         select: { id: true, schoolName: true },
       });
 
+      // Fetch grade adjustments for this student across all periods
+      const gradeAdjustments = await this.prisma.gradeAdjustment.findMany({
+        where: { studentId },
+        include: {
+          period: { select: { id: true, schoolYearId: true, period: true } },
+        },
+      });
+
       // Helper to extract level order from level name (e.g., "1er Año" → 1)
       function getLevelOrder(level: string | null): number {
         if (!level) return 99;
@@ -124,7 +139,10 @@ export class AcademicHistoryService {
           }[] = [];
 
           // Compute per-period averages
-          const periodMap = new Map<string, { totalWeighted: number; totalPct: number }>();
+          const periodMap = new Map<
+            string,
+            { totalWeighted: number; totalPct: number }
+          >();
           for (const ev of evaluations) {
             const grade = ev.grades[0];
             const score = grade?.score != null ? Number(grade.score) : null;
@@ -155,33 +173,71 @@ export class AcademicHistoryService {
 
           const definitiva =
             totalPercentage > 0
-              ? Math.round((totalWeightedScore / totalPercentage) * 20 * 10) / 10
+              ? Math.round((totalWeightedScore / totalPercentage) * 20 * 10) /
+                10
               : null;
 
-          const periodAverages = Array.from(periodMap.entries()).map(([period, data]) => ({
-            period,
-            average: data.totalPct > 0 ? Math.round((data.totalWeighted / data.totalPct) * 20 * 10) / 10 : null,
-          }));
+          const periodAverages = Array.from(periodMap.entries()).map(
+            ([period, data]) => ({
+              period,
+              average:
+                data.totalPct > 0
+                  ? Math.round((data.totalWeighted / data.totalPct) * 20 * 10) /
+                    10
+                  : null,
+            }),
+          );
+
+          // Apply grade adjustments for this teaching group
+          const subjectAdjustments = gradeAdjustments.filter(
+            (a) =>
+              a.teachingGroupId === tg.id &&
+              a.period.schoolYearId === enrollment.schoolYear.id,
+          );
+
+          let adjustedDefinitiva = definitiva;
+          if (adjustedDefinitiva != null) {
+            const totalAdj = subjectAdjustments.reduce(
+              (sum, a) => sum + a.adjustment,
+              0,
+            );
+            adjustedDefinitiva = Math.min(20, adjustedDefinitiva + totalAdj);
+          }
+
+          // Apply adjustments to period averages (only adjustments for the specific period)
+          const adjustedPeriodAverages = periodAverages.map((pa) => {
+            if (pa.average == null) return pa;
+            const periodAdj = subjectAdjustments
+              .filter((a) => a.period.period === pa.period)
+              .reduce((sum, a) => sum + a.adjustment, 0);
+            return { ...pa, average: Math.min(20, pa.average + periodAdj) };
+          });
 
           return {
             subjectName,
+            teachingGroupId: tg.id as number | null,
             isSpecialGroup: tg.isSpecialGroup,
-            definitiva,
+            definitiva: adjustedDefinitiva,
             totalEvaluations: evaluations.length,
             gradedEvaluations: grades.filter((g) => g.score != null).length,
             grades,
-            periodAverages,
+            periodAverages: adjustedPeriodAverages,
             typeOf: 'F',
           };
         });
 
         // Overall average across regular subjects (exclude isSpecialGroup like CRP)
         const regularSubjects = teachingGroups.filter((t) => !t.isSpecialGroup);
-        const subjectsWithAvg = regularSubjects.filter((t) => t.definitiva != null);
+        const subjectsWithAvg = regularSubjects.filter(
+          (t) => t.definitiva != null,
+        );
         const overallAverage =
           subjectsWithAvg.length > 0
             ? Math.round(
-                (subjectsWithAvg.reduce((sum, t) => sum + (t.definitiva ?? 0), 0) /
+                (subjectsWithAvg.reduce(
+                  (sum, t) => sum + (t.definitiva ?? 0),
+                  0,
+                ) /
                   subjectsWithAvg.length) *
                   10,
               ) / 10
@@ -199,16 +255,21 @@ export class AcademicHistoryService {
           schoolId: currentSchool?.id ?? 1,
           averageGrade: overallAverage,
           totalSubjects: regularSubjects.length,
-          totalGrades: regularSubjects.reduce((sum, t) => sum + t.totalEvaluations, 0),
+          totalGrades: regularSubjects.reduce(
+            (sum, t) => sum + t.totalEvaluations,
+            0,
+          ),
           subjects: teachingGroups,
           failedSubjects: student.failedSubjects
             .filter((fs) => {
-              const fsLevelId = fs.teachingGroup.levelSubject.highSchoolLevel.id;
+              const fsLevelId =
+                fs.teachingGroup.levelSubject.highSchoolLevel.id;
               return fsLevelId === levelId;
             })
             .map((fs) => ({
               levelSubjectId: fs.teachingGroup.levelSubjectId,
-              highSchoolLevelId: fs.teachingGroup.levelSubject.highSchoolLevel.id,
+              highSchoolLevelId:
+                fs.teachingGroup.levelSubject.highSchoolLevel.id,
               subjectName: fs.teachingGroup.levelSubject.subject.subject,
               section: fs.teachingGroup.section?.section ?? null,
               attempts: fs.attempts.map((a) => ({
@@ -231,7 +292,9 @@ export class AcademicHistoryService {
       for (const entry of enrollmentHistory) {
         const levelId = entry.subjects[0]
           ? student.studentHistories.find(
-              (sh) => sh.levelSubject?.subject?.subject === entry.subjects[0]?.subjectName,
+              (sh) =>
+                sh.levelSubject?.subject?.subject ===
+                entry.subjects[0]?.subjectName,
             )?.levelSubject?.highSchoolLevelId
           : null;
 
@@ -248,15 +311,24 @@ export class AcademicHistoryService {
               sh.schoolYearId === entry.schoolYearId &&
               sh.levelSubject?.highSchoolLevelId === fallbackLevelId &&
               sh.levelSubject != null &&
-              !entry.subjects.some((s) => s.subjectName === sh.levelSubject!.subject?.subject),
+              !entry.subjects.some(
+                (s) => s.subjectName === sh.levelSubject!.subject?.subject,
+              ),
           );
 
           for (const sh of relevantRecords) {
             consumedHistoryIds.add(sh.id);
             entry.subjects.push({
-              subjectName: sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
-              isSpecialGroup: specialSubjectCodes.includes(sh.levelSubject!.subject?.code ?? ''),
-              definitiva: sh.typeOf === 'F' && sh.finalScore != null ? Number(sh.finalScore) : null,
+              subjectName:
+                sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
+              teachingGroupId: null,
+              isSpecialGroup: specialSubjectCodes.includes(
+                sh.levelSubject!.subject?.code ?? '',
+              ),
+              definitiva:
+                sh.typeOf === 'F' && sh.finalScore != null
+                  ? Number(sh.finalScore)
+                  : null,
               totalEvaluations: 0,
               gradedEvaluations: 0,
               grades: [],
@@ -272,15 +344,24 @@ export class AcademicHistoryService {
             sh.schoolYearId === entry.schoolYearId &&
             sh.levelSubject?.highSchoolLevelId === levelId &&
             sh.levelSubject != null &&
-            !entry.subjects.some((s) => s.subjectName === sh.levelSubject!.subject?.subject),
+            !entry.subjects.some(
+              (s) => s.subjectName === sh.levelSubject!.subject?.subject,
+            ),
         );
 
         for (const sh of relevantRecords) {
           consumedHistoryIds.add(sh.id);
           entry.subjects.push({
-            subjectName: sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
-            isSpecialGroup: specialSubjectCodes.includes(sh.levelSubject!.subject?.code ?? ''),
-            definitiva: sh.typeOf === 'F' && sh.finalScore != null ? Number(sh.finalScore) : null,
+            subjectName:
+              sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
+            teachingGroupId: null,
+            isSpecialGroup: specialSubjectCodes.includes(
+              sh.levelSubject!.subject?.code ?? '',
+            ),
+            definitiva:
+              sh.typeOf === 'F' && sh.finalScore != null
+                ? Number(sh.finalScore)
+                : null,
             totalEvaluations: 0,
             gradedEvaluations: 0,
             grades: [],
@@ -303,67 +384,82 @@ export class AcademicHistoryService {
         historyByLevel.get(levelId)!.push(sh);
       }
 
-      const previousHistory = Array.from(historyByLevel.entries()).map(([levelId, records]) => {
-        const subjects = records
-          .filter((sh) => sh.levelSubject != null && sh.finalScore != null)
-          .map((sh) => ({
-            subjectName: sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
-            isSpecialGroup: specialSubjectCodes.includes(sh.levelSubject!.subject?.code ?? ''),
-            definitiva: sh.finalScore != null ? Number(sh.finalScore) : null,
-            totalEvaluations: 0,
-            gradedEvaluations: 0,
-            grades: [] as {
-              evaluationId: number;
-              topic: string;
-              percentage: number;
-              evaluationType: string;
-              period: string;
-              score: number | null;
-            }[],
-            periodAverages: [] as { period: string; average: number | null }[],
-            typeOf: sh.typeOf ?? 'F',
-          }));
+      const previousHistory = Array.from(historyByLevel.entries()).map(
+        ([, records]) => {
+          const subjects = records
+            .filter((sh) => sh.levelSubject != null && sh.finalScore != null)
+            .map((sh) => ({
+              subjectName:
+                sh.levelSubject!.subject?.subject ?? 'Materia Desconocida',
+              teachingGroupId: null,
+              isSpecialGroup: specialSubjectCodes.includes(
+                sh.levelSubject!.subject?.code ?? '',
+              ),
+              definitiva: sh.finalScore != null ? Number(sh.finalScore) : null,
+              totalEvaluations: 0,
+              gradedEvaluations: 0,
+              grades: [] as {
+                evaluationId: number;
+                topic: string;
+                percentage: number;
+                evaluationType: string;
+                period: string;
+                score: number | null;
+              }[],
+              periodAverages: [] as {
+                period: string;
+                average: number | null;
+              }[],
+              typeOf: sh.typeOf ?? 'F',
+            }));
 
-        const regularSubjects = subjects.filter((s) => !s.isSpecialGroup);
-        const subjectsWithAvg = regularSubjects.filter((s) => s.definitiva != null);
-        const overallAverage =
-          subjectsWithAvg.length > 0
-            ? Math.round(
-                (subjectsWithAvg.reduce((sum, s) => sum + (s.definitiva ?? 0), 0) /
-                  subjectsWithAvg.length) *
-                  10,
-              ) / 10
-            : null;
+          const regularSubjects = subjects.filter((s) => !s.isSpecialGroup);
+          const subjectsWithAvg = regularSubjects.filter(
+            (s) => s.definitiva != null,
+          );
+          const overallAverage =
+            subjectsWithAvg.length > 0
+              ? Math.round(
+                  (subjectsWithAvg.reduce(
+                    (sum, s) => sum + (s.definitiva ?? 0),
+                    0,
+                  ) /
+                    subjectsWithAvg.length) *
+                    10,
+                ) / 10
+              : null;
 
-        const levelName = records[0]?.levelSubject?.highSchoolLevel?.level ?? null;
-        const school = records[0]?.school;
-        const schoolYearId = records[0]?.schoolYearId ?? null;
+          const levelName =
+            records[0]?.levelSubject?.highSchoolLevel?.level ?? null;
+          const school = records[0]?.school;
+          const schoolYearId = records[0]?.schoolYearId ?? null;
 
-        return {
-          schoolYearId,
-          schoolYearName: null,
-          level: levelName,
-          section: null,
-          schoolName: school?.schoolName ?? 'Escuela Anterior',
-          schoolId: school?.id ?? null,
-          averageGrade: overallAverage,
-          totalSubjects: regularSubjects.length,
-          totalGrades: 0,
-          subjects,
-          records: records.map((r) => ({
-            id: r.id,
-            levelSubjectId: r.levelSubjectId,
-            schoolId: r.schoolId,
-            schoolYearId: r.schoolYearId,
-            finalScore: r.finalScore != null ? Number(r.finalScore) : null,
-            typeOf: r.typeOf,
-            approvalDate: r.approvalDate,
-            status: r.status,
-            subjectName: r.levelSubject?.subject?.subject ?? 'Desconocida',
-          })),
-          _levelOrder: getLevelOrder(levelName),
-        };
-      });
+          return {
+            schoolYearId,
+            schoolYearName: null,
+            level: levelName,
+            section: null,
+            schoolName: school?.schoolName ?? 'Escuela Anterior',
+            schoolId: school?.id ?? null,
+            averageGrade: overallAverage,
+            totalSubjects: regularSubjects.length,
+            totalGrades: 0,
+            subjects,
+            records: records.map((r) => ({
+              id: r.id,
+              levelSubjectId: r.levelSubjectId,
+              schoolId: r.schoolId,
+              schoolYearId: r.schoolYearId,
+              finalScore: r.finalScore != null ? Number(r.finalScore) : null,
+              typeOf: r.typeOf,
+              approvalDate: r.approvalDate,
+              status: r.status,
+              subjectName: r.levelSubject?.subject?.subject ?? 'Desconocida',
+            })),
+            _levelOrder: getLevelOrder(levelName),
+          };
+        },
+      );
 
       // Combine and sort by level order
       const allHistory = [...enrollmentHistory, ...previousHistory].sort(
@@ -388,7 +484,8 @@ export class AcademicHistoryService {
       }));
 
       // studentFailedSubject records only exist for Materia Pendiente enrollments
-      const activeEnrollmentTypeOf = allFailedSubjects.length > 0 ? 'Materia Pendiente' : null;
+      const activeEnrollmentTypeOf =
+        allFailedSubjects.length > 0 ? 'Materia Pendiente' : null;
 
       return {
         studentId,
@@ -415,7 +512,11 @@ export class AcademicHistoryService {
           finalScore: data.finalScore ?? null,
         },
       });
-      return { success: true, message: 'Historial escolar agregado', data: record };
+      return {
+        success: true,
+        message: 'Historial escolar agregado',
+        data: record,
+      };
     } catch (error) {
       throw new BadRequestException(String(error));
     }
@@ -432,7 +533,11 @@ export class AcademicHistoryService {
           finalScore: r.finalScore ?? null,
         })),
       });
-      return { success: true, message: `${records.count} registros creados`, data: { count: records.count } };
+      return {
+        success: true,
+        message: `${records.count} registros creados`,
+        data: { count: records.count },
+      };
     } catch (error) {
       throw new BadRequestException(String(error));
     }
@@ -453,7 +558,9 @@ export class AcademicHistoryService {
         where: { id },
         data: {
           ...(data.schoolId !== undefined && { schoolId: data.schoolId }),
-          ...(data.schoolYearId !== undefined && { schoolYearId: data.schoolYearId }),
+          ...(data.schoolYearId !== undefined && {
+            schoolYearId: data.schoolYearId,
+          }),
           ...(data.finalScore !== undefined && { finalScore: data.finalScore }),
         },
       });
@@ -466,24 +573,32 @@ export class AcademicHistoryService {
   async updateSchoolHistoryBatch(data: UpdateSchoolHistoryBatchDTO) {
     try {
       const result = await this.prisma.$transaction(
-        data.updates.map(u =>
+        data.updates.map((u) =>
           this.prisma.schoolStudentHistory.update({
             where: { id: u.id },
             data: {
               ...(u.schoolId !== undefined && { schoolId: u.schoolId }),
-              ...(u.schoolYearId !== undefined && { schoolYearId: u.schoolYearId }),
+              ...(u.schoolYearId !== undefined && {
+                schoolYearId: u.schoolYearId,
+              }),
               ...(u.finalScore !== undefined && { finalScore: u.finalScore }),
             },
-          })
-        )
+          }),
+        ),
       );
-      return { success: true, message: `${result.length} registros actualizados` };
+      return {
+        success: true,
+        message: `${result.length} registros actualizados`,
+      };
     } catch (error) {
       throw new BadRequestException(String(error));
     }
   }
 
-  async addFailedSubjectAttempt(failedSubjectId: number, data: CreateFailedSubjectAttemptDTO) {
+  async addFailedSubjectAttempt(
+    failedSubjectId: number,
+    data: CreateFailedSubjectAttemptDTO,
+  ) {
     try {
       // Verify the failed subject exists
       const failedSubject = await this.prisma.studentFailedSubject.findUnique({
@@ -498,7 +613,9 @@ export class AcademicHistoryService {
         where: { studentFailedSubjectsId: failedSubjectId },
       });
       if (attemptCount >= 4) {
-        throw new BadRequestException('Se ha alcanzado el máximo de 4 intentos para esta materia');
+        throw new BadRequestException(
+          'Se ha alcanzado el máximo de 4 intentos para esta materia',
+        );
       }
 
       // Parse evaluationDate from "YYYY-MM" format to Date (day = 1)
@@ -532,7 +649,13 @@ export class AcademicHistoryService {
         include: {
           student: {
             include: {
-              person: { select: { firstNames: true, lastNames: true, identificationNumber: true } },
+              person: {
+                select: {
+                  firstNames: true,
+                  lastNames: true,
+                  identificationNumber: true,
+                },
+              },
               enrollments: {
                 where: { status: true },
                 include: {
@@ -566,34 +689,43 @@ export class AcademicHistoryService {
 
       // Filter out special subjects (CRP, ROB, MUS, MET, OV)
       const filtered = failedSubjects.filter(
-        (fs) => !specialSubjectCodes.includes(fs.teachingGroup.levelSubject.subject.code ?? '')
+        (fs) =>
+          !specialSubjectCodes.includes(
+            fs.teachingGroup.levelSubject.subject.code ?? '',
+          ),
       );
 
       // Group by highSchoolLevelId
-      const levelMap = new Map<number, {
-        highSchoolLevelId: number;
-        level: string;
-        students: Map<number, {
-          studentId: number;
-          studentName: string;
-          identification: string;
-          enrollmentTypeOf: string;
-          currentLevel: string;
-          currentSection: string;
-          failedSubjects: Array<{
-            id: number;
-            levelSubjectId: number;
-            subjectName: string;
-            attempts: Array<{
-              id: number;
-              score: number | null;
-              evaluationDate: Date | null;
-              observations: string | null;
-              createdAt: Date;
-            }>;
-          }>;
-        }>;
-      }>();
+      const levelMap = new Map<
+        number,
+        {
+          highSchoolLevelId: number;
+          level: string;
+          students: Map<
+            number,
+            {
+              studentId: number;
+              studentName: string;
+              identification: string;
+              enrollmentTypeOf: string;
+              currentLevel: string;
+              currentSection: string;
+              failedSubjects: Array<{
+                id: number;
+                levelSubjectId: number;
+                subjectName: string;
+                attempts: Array<{
+                  id: number;
+                  score: number | null;
+                  evaluationDate: Date | null;
+                  observations: string | null;
+                  createdAt: Date;
+                }>;
+              }>;
+            }
+          >;
+        }
+      >();
 
       for (const fs of filtered) {
         const levelId = fs.teachingGroup.levelSubject.highSchoolLevel.id;
@@ -617,7 +749,8 @@ export class AcademicHistoryService {
             studentName: `${fs.student.person.firstNames} ${fs.student.person.lastNames}`,
             identification: fs.student.person.identificationNumber,
             enrollmentTypeOf: activeEnrollment?.typeOf ?? 'Materia Pendiente',
-            currentLevel: activeEnrollment?.section?.highSchoolLevel?.level ?? levelName,
+            currentLevel:
+              activeEnrollment?.section?.highSchoolLevel?.level ?? levelName,
             currentSection: activeEnrollment?.section?.section ?? 'UR',
             failedSubjects: [],
           });
@@ -674,7 +807,13 @@ export class AcademicHistoryService {
         include: {
           student: {
             include: {
-              person: { select: { firstNames: true, lastNames: true, identificationNumber: true } },
+              person: {
+                select: {
+                  firstNames: true,
+                  lastNames: true,
+                  identificationNumber: true,
+                },
+              },
             },
           },
           section: {
@@ -719,7 +858,13 @@ export class AcademicHistoryService {
       });
 
       // 5. Build subjects map per level (excluding special groups)
-      const subjectsByLevel = new Map<number, Map<number, { levelSubjectId: number; subjectCode: string; subjectName: string }>>();
+      const subjectsByLevel = new Map<
+        number,
+        Map<
+          number,
+          { levelSubjectId: number; subjectCode: string; subjectName: string }
+        >
+      >();
       for (const tg of teachingGroups) {
         if (tg.isSpecialGroup) continue;
         const code = tg.levelSubject.subject.code;
@@ -735,7 +880,9 @@ export class AcademicHistoryService {
         if (!levelSubjects.has(lsId)) {
           levelSubjects.set(lsId, {
             levelSubjectId: lsId,
-            subjectCode: tg.levelSubject.subject.code ?? tg.levelSubject.subject.subject.substring(0, 4).toUpperCase(),
+            subjectCode:
+              tg.levelSubject.subject.code ??
+              tg.levelSubject.subject.subject.substring(0, 4).toUpperCase(),
             subjectName: tg.levelSubject.subject.subject,
           });
         }
@@ -743,7 +890,10 @@ export class AcademicHistoryService {
 
       // 6. Compute average of 3 moments per student per subject
       // key = `${studentId}-${levelSubjectId}` → { periodGrades: Map<periodName, weightedAvg> }
-      const studentSubjectGrades = new Map<string, Map<string, { totalWeighted: number; totalPct: number }>>();
+      const studentSubjectGrades = new Map<
+        string,
+        Map<string, { totalWeighted: number; totalPct: number }>
+      >();
 
       for (const gr of gradeRecords) {
         const studentId = gr.studentId;
@@ -768,7 +918,15 @@ export class AcademicHistoryService {
       }
 
       // Compute average of 3 moments
-      const subjectAverages = new Map<string, { studentId: number; levelSubjectId: number; average3Moments: number | null; passed: boolean }>();
+      const subjectAverages = new Map<
+        string,
+        {
+          studentId: number;
+          levelSubjectId: number;
+          average3Moments: number | null;
+          passed: boolean;
+        }
+      >();
       for (const [key, periodMap] of studentSubjectGrades) {
         const [studentIdStr, lsIdStr] = key.split('-');
         const studentId = parseInt(studentIdStr);
@@ -783,7 +941,12 @@ export class AcademicHistoryService {
 
         let average3Moments: number | null = null;
         if (periodAverages.length > 0) {
-          average3Moments = Math.round((periodAverages.reduce((a, b) => a + b, 0) / periodAverages.length) * 10) / 10;
+          average3Moments =
+            Math.round(
+              (periodAverages.reduce((a, b) => a + b, 0) /
+                periodAverages.length) *
+                10,
+            ) / 10;
         }
 
         subjectAverages.set(key, {
@@ -811,30 +974,39 @@ export class AcademicHistoryService {
       const reviewMap = new Map<string, number>();
       for (const r of existingReviews) {
         if (r.levelSubjectId != null) {
-          reviewMap.set(`${r.studentId}-${r.levelSubjectId}`, Number(r.finalScore));
+          reviewMap.set(
+            `${r.studentId}-${r.levelSubjectId}`,
+            Number(r.finalScore),
+          );
         }
       }
 
       // 8. Group enrollments by level
-      const levelMap = new Map<number, {
-        highSchoolLevelId: number;
-        level: string;
-        students: Map<number, {
-          studentId: number;
-          studentName: string;
-          identification: string;
-          section: string;
-          sectionId: number;
-          subjectGrades: Array<{
-            levelSubjectId: number;
-            subjectCode: string;
-            subjectName: string;
-            average3Moments: number | null;
-            passed: boolean;
-            reviewScore: number | null;
-          }>;
-        }>;
-      }>();
+      const levelMap = new Map<
+        number,
+        {
+          highSchoolLevelId: number;
+          level: string;
+          students: Map<
+            number,
+            {
+              studentId: number;
+              studentName: string;
+              identification: string;
+              section: string;
+              sectionId: number;
+              subjectGrades: Array<{
+                levelSubjectId: number;
+                subjectCode: string;
+                subjectName: string;
+                average3Moments: number | null;
+                passed: boolean;
+                reviewScore: number | null;
+              }>;
+            }
+          >;
+        }
+      >();
 
       for (const enrollment of enrollments) {
         const levelId = enrollment.section.highSchoolLevel.id;
@@ -871,7 +1043,12 @@ export class AcademicHistoryService {
 
         for (const [, subjInfo] of levelSubjects) {
           // Skip if already added
-          if (student.subjectGrades.some(sg => sg.levelSubjectId === subjInfo.levelSubjectId)) continue;
+          if (
+            student.subjectGrades.some(
+              (sg) => sg.levelSubjectId === subjInfo.levelSubjectId,
+            )
+          )
+            continue;
 
           const avgKey = `${studentId}-${subjInfo.levelSubjectId}`;
           const avg = subjectAverages.get(avgKey);
@@ -891,9 +1068,12 @@ export class AcademicHistoryService {
 
       // 9. Filter out students who passed all subjects (only keep those with at least 1 failing subject)
       for (const [, level] of levelMap) {
-        const studentsWithFailing = Array.from(level.students.values())
-          .filter(student => student.subjectGrades.some(sg => !sg.passed));
-        level.students = new Map(studentsWithFailing.map(s => [s.studentId, s]));
+        const studentsWithFailing = Array.from(level.students.values()).filter(
+          (student) => student.subjectGrades.some((sg) => !sg.passed),
+        );
+        level.students = new Map(
+          studentsWithFailing.map((s) => [s.studentId, s]),
+        );
       }
 
       // 10. Convert maps to arrays and sort (always show all levels)
@@ -902,7 +1082,9 @@ export class AcademicHistoryService {
           highSchoolLevelId: level.highSchoolLevelId,
           level: level.level,
           studentCount: level.students.size,
-          subjects: Array.from(subjectsByLevel.get(level.highSchoolLevelId)?.values() ?? []),
+          subjects: Array.from(
+            subjectsByLevel.get(level.highSchoolLevelId)?.values() ?? [],
+          ),
           students: Array.from(level.students.values()),
         }))
         .sort((a, b) => a.highSchoolLevelId - b.highSchoolLevelId);
@@ -928,7 +1110,11 @@ export class AcademicHistoryService {
           status: true,
         },
       });
-      return { success: true, message: 'Nota de revisión guardada', data: record };
+      return {
+        success: true,
+        message: 'Nota de revisión guardada',
+        data: record,
+      };
     } catch (error) {
       throw new BadRequestException(String(error));
     }

@@ -243,7 +243,7 @@ export class GradeAdjustmentService {
 
         for (const student of sectionData.studentsMap.values()) {
           const existingAdj = adjustmentMap.get(
-            `${student.studentId}-${ls.id}`,
+            `${student.studentId}-${tg.id}`,
           );
           student.subjects.push({
             levelSubjectId: ls.id,
@@ -276,8 +276,11 @@ export class GradeAdjustmentService {
           );
           if (grades.length > 0) {
             const avg = Math.round(
-              grades.reduce((sum, s) => sum + (s.periodGrade ?? 0), 0) /
-                grades.length,
+              grades.reduce(
+                (sum, s) =>
+                  sum + ((s.periodGrade ?? 0) + (s.currentAdjustment ?? 0)),
+                0,
+              ) / grades.length,
             );
             studentAverages.push(avg);
           }
@@ -313,6 +316,43 @@ export class GradeAdjustmentService {
 
   async createAdjustments(data: CreateGradeAdjustmentDTO) {
     try {
+      // Validate max 2 subjects per student per period
+      const studentPeriodGroups = new Map<string, Set<number>>();
+      for (const adj of data.adjustments) {
+        const key = `${adj.studentId}-${adj.periodId}`;
+        if (!studentPeriodGroups.has(key)) {
+          studentPeriodGroups.set(key, new Set());
+        }
+        studentPeriodGroups.get(key)!.add(adj.teachingGroupId);
+      }
+
+      for (const [key, newTeachingGroupIds] of studentPeriodGroups) {
+        const [studentIdStr, periodIdStr] = key.split('-');
+        const studentId = Number(studentIdStr);
+        const periodId = Number(periodIdStr);
+
+        const existingCount = await this.prisma.gradeAdjustment.count({
+          where: { studentId, periodId },
+        });
+
+        // Count new unique subjects not already existing
+        const existingAdjustments = await this.prisma.gradeAdjustment.findMany({
+          where: { studentId, periodId },
+          select: { teachingGroupId: true },
+        });
+        const existingTGIds = new Set(
+          existingAdjustments.map((a) => a.teachingGroupId),
+        );
+        const newUniqueCount = Array.from(newTeachingGroupIds).filter(
+          (tgId) => !existingTGIds.has(tgId),
+        ).length;
+
+        if (existingCount + newUniqueCount > 2) {
+          badResponse.message = `El estudiante tiene ${existingCount} materia(s) con ajuste. Máximo 2 por lapso.`;
+          return badResponse;
+        }
+      }
+
       const operations = data.adjustments.map((adj) =>
         this.prisma.gradeAdjustment.upsert({
           where: {
