@@ -103,12 +103,12 @@ model Student {
 
   personId Int @unique
 
-  birthCountry   String?
-  state          String?
-  municipality   String?
-  parish         String?
-  currentParish  String?
-  address        String?
+  birthCountry  String?
+  state         String?
+  municipality  String?
+  parish        String?
+  currentParish String?
+  address       String?
 
   status Boolean?
 
@@ -121,9 +121,10 @@ model Student {
 
   representatives StudentRepresentative[]
 
-  gradeRecords GradeRecord[]
+  gradeRecords     GradeRecord[]
   studentHistories SchoolStudentHistory[]
-  failedSubjects StudentFailedSubject[]
+  failedSubjects   StudentFailedSubject[]
+  gradeAdjustments GradeAdjustment[]
 }
 
 //////////////////////////////////////////////////
@@ -184,6 +185,8 @@ model Employee {
   workHours EmployeeWorkHour[]
 
   payrollRecords PayrollRecord[]
+
+  approvedGradeAdjustments GradeAdjustment[]
 }
 
 //////////////////////////////////////////////////
@@ -229,7 +232,8 @@ model Period {
 
   schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
 
-  evaluations Evaluation[]
+  evaluations      Evaluation[]
+  gradeAdjustments GradeAdjustment[]
 }
 
 //////////////////////////////////////////////////
@@ -321,16 +325,16 @@ model Subject {
 //////////////////////////////////////////////////
 
 model LevelSubject {
-  id                Int             @id @default(autoincrement())
+  id                Int @id @default(autoincrement())
   highSchoolLevelId Int
   subjectId         Int
 
-  highSchoolLevel HighSchoolLevel @relation(fields: [highSchoolLevelId], references: [id])
-  subject         Subject         @relation(fields: [subjectId], references: [id])
-
-  @@unique([highSchoolLevelId, subjectId])
+  highSchoolLevel  HighSchoolLevel        @relation(fields: [highSchoolLevelId], references: [id])
+  subject          Subject                @relation(fields: [subjectId], references: [id])
   teachingGroups   TeachingGroup[]
   studentHistories SchoolStudentHistory[]
+
+  @@unique([highSchoolLevelId, subjectId])
 }
 
 //////////////////////////////////////////////////
@@ -338,24 +342,25 @@ model LevelSubject {
 //////////////////////////////////////////////////
 
 model TeachingGroup {
-  id              Int      @id @default(autoincrement())
-  teacherId       Int
-  levelSubjectId  Int
-  schoolYearId    Int
-  sectionId       Int?
-  groupName       String?
-  isSpecialGroup  Boolean  @default(false)
-  assignedAt      DateTime @default(now())
-  status          Boolean?
+  id             Int      @id @default(autoincrement())
+  teacherId      Int
+  levelSubjectId Int
+  schoolYearId   Int
+  sectionId      Int?
+  groupName      String?
+  isSpecialGroup Boolean  @default(false)
+  assignedAt     DateTime @default(now())
+  status         Boolean?
 
-  employee    Employee    @relation(fields: [teacherId], references: [id])
-  levelSubject LevelSubject @relation(fields:[levelSubjectId], references:[id])
-  schoolYear  SchoolYear  @relation(fields: [schoolYearId], references: [id])
-  section     Section?    @relation(fields: [sectionId], references: [id])
+  employee     Employee     @relation(fields: [teacherId], references: [id])
+  levelSubject LevelSubject @relation(fields: [levelSubjectId], references: [id])
+  schoolYear   SchoolYear   @relation(fields: [schoolYearId], references: [id])
+  section      Section?     @relation(fields: [sectionId], references: [id])
 
-  evaluations   Evaluation[]
-  studentGroups StudentTeachingGroup[]
-  failedSubjects StudentFailedSubject[]
+  evaluations      Evaluation[]
+  studentGroups    StudentTeachingGroup[]
+  failedSubjects   StudentFailedSubject[]
+  gradeAdjustments GradeAdjustment[]
 
   @@unique([teacherId, levelSubjectId, schoolYearId, sectionId, groupName])
 }
@@ -391,8 +396,8 @@ model EvaluationType {
 model Evaluation {
   id Int @id @default(autoincrement())
 
-  teachingGroupId Int
-  periodId        Int
+  teachingGroupId  Int
+  periodId         Int
   evaluationTypeId Int
 
   topic String
@@ -447,13 +452,13 @@ model GradeRecord {
 //////////////////////////////////////////////////
 
 model School {
-  id            Int    @id @default(autoincrement())
-  schoolName    String?
-  schoolState   String?
-  schoolCity    String?
-  countryId     Int?
+  id          Int     @id @default(autoincrement())
+  schoolName  String?
+  schoolState String?
+  schoolCity  String?
+  countryId   Int?
 
-  country          Country?             @relation(fields: [countryId], references: [id])
+  country          Country?               @relation(fields: [countryId], references: [id])
   studentHistories SchoolStudentHistory[]
 }
 
@@ -462,23 +467,23 @@ model School {
 //////////////////////////////////////////////////
 
 model SchoolStudentHistory {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   studentId      Int
   levelSubjectId Int?
   sectionId      Int?
   schoolId       Int
   schoolYearId   Int?
-  finalScore     Decimal? @db.Decimal(10, 2)
-  typeOf         String?  @db.VarChar(1)
+  finalScore     Decimal?  @db.Decimal(10, 2)
+  typeOf         String?   @db.VarChar(1)
   approvalDate   DateTime?
   status         Boolean?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
-  student      Student        @relation(fields: [studentId], references: [id])
-  levelSubject LevelSubject?  @relation(fields: [levelSubjectId], references: [id])
-  section      Section?       @relation(fields: [sectionId], references: [id])
-  school       School         @relation(fields: [schoolId], references: [id])
-  schoolYear   SchoolYear?    @relation(fields: [schoolYearId], references: [id])
+  student      Student       @relation(fields: [studentId], references: [id])
+  levelSubject LevelSubject? @relation(fields: [levelSubjectId], references: [id])
+  section      Section?      @relation(fields: [sectionId], references: [id])
+  school       School        @relation(fields: [schoolId], references: [id])
+  schoolYear   SchoolYear?   @relation(fields: [schoolYearId], references: [id])
 
   @@index([studentId])
   @@index([schoolId])
@@ -497,8 +502,8 @@ model StudentFailedSubject {
   status          Boolean  @default(true)
   createdAt       DateTime @default(now())
 
-  student       Student                  @relation(fields: [studentId], references: [id])
-  teachingGroup TeachingGroup            @relation(fields: [teachingGroupId], references: [id])
+  student       Student                       @relation(fields: [studentId], references: [id])
+  teachingGroup TeachingGroup                 @relation(fields: [teachingGroupId], references: [id])
   attempts      StudentFailedSubjectAttempt[]
 
   @@index([studentId])
@@ -510,17 +515,43 @@ model StudentFailedSubject {
 //////////////////////////////////////////////////
 
 model StudentFailedSubjectAttempt {
-  id                       Int      @id @default(autoincrement())
-  studentFailedSubjectsId  Int
-  score                    Int?
-  evaluationDate           DateTime?
-  observations             String?
-  createdAt                DateTime @default(now())
-  createdBy                Int?
+  id                      Int       @id @default(autoincrement())
+  studentFailedSubjectsId Int
+  score                   Int?
+  evaluationDate          DateTime?
+  observations            String?
+  createdAt               DateTime  @default(now())
+  createdBy               Int?
 
   failedSubject StudentFailedSubject @relation(fields: [studentFailedSubjectsId], references: [id])
 
   @@index([studentFailedSubjectsId])
+}
+
+//////////////////////////////////////////////////
+// GRADE ADJUSTMENT
+//////////////////////////////////////////////////
+
+model GradeAdjustment {
+  id              Int      @id @default(autoincrement())
+  studentId       Int
+  teachingGroupId Int
+  periodId        Int
+  adjustment      Int
+  reason          String?
+  approvedBy      Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student       Student       @relation(fields: [studentId], references: [id])
+  teachingGroup TeachingGroup @relation(fields: [teachingGroupId], references: [id])
+  period        Period        @relation(fields: [periodId], references: [id])
+  approver      Employee?     @relation(fields: [approvedBy], references: [id])
+
+  @@unique([studentId, teachingGroupId, periodId])
+  @@index([studentId])
+  @@index([teachingGroupId])
+  @@index([periodId])
 }
 
 //////////////////////////////////////////////////
@@ -531,7 +562,7 @@ model Country {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  states State[]
+  states  State[]
   schools School[]
 }
 
@@ -566,8 +597,8 @@ model Parish {
 //////////////////////////////////////////////////
 
 model PaymentType {
-  id      Int      @id @default(autoincrement())
-  type    String
+  id       Int      @id @default(autoincrement())
+  type     String
   currency Currency
 
   methods PaymentMethod[]
@@ -608,7 +639,7 @@ model Fee {
 
   schoolYearId Int
 
-  value Decimal @db.Decimal(10,2)
+  value Decimal @db.Decimal(10, 2)
 
   createdAt DateTime
 
