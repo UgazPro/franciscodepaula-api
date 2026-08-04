@@ -91,6 +91,7 @@ async function main() {
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
     'UserRole', 'Student', 'User', 'Person', 'Role',
     'Parish', 'Municipality', 'State', 'Country',
+    'TeachingGroupSchedule', 'ScheduleSlot', 'ClassHour',
   ];
   for (const table of tables) {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
@@ -1308,6 +1309,33 @@ async function main() {
     console.log(`Historial escolar creado (${historyData.length} registros).`);
   }
 
+  // ── 23. CLASS HOURS ──
+  await prisma.classHour.createMany({
+    data: [
+      { id: 1,  block: 1,  startTime: '07:00', endTime: '07:40', type: 'class' },
+      { id: 2,  block: 2,  startTime: '07:40', endTime: '08:20', type: 'class' },
+      { id: 3,  block: 3,  startTime: '08:20', endTime: '09:00', type: 'class' },
+      { id: 4,  block: 4,  startTime: '09:00', endTime: '09:40', type: 'class' },
+      { id: 5,  block: 5,  startTime: '09:40', endTime: '10:00', type: 'class' },
+      { id: 6,  block: 6,  startTime: '10:00', endTime: '10:40', type: 'class' },
+      { id: 7,  block: 7,  startTime: '10:40', endTime: '11:20', type: 'class' },
+      { id: 8,  block: 8,  startTime: '11:20', endTime: '12:00', type: 'class' },
+      { id: 9,  block: 9,  startTime: '12:00', endTime: '12:40', type: 'class' },
+      { id: 10, block: 10, startTime: '12:40', endTime: '13:40', type: 'class' },
+    ],
+  });
+  console.log('Horas de clase creadas.');
+
+  // ── 24. SCHEDULE SLOTS ──
+  const scheduleSlotData: { classHoursId: number; dayOfWeek: number }[] = [];
+  for (let day = 1; day <= 5; day++) {
+    for (let block = 1; block <= 10; block++) {
+      scheduleSlotData.push({ classHoursId: block, dayOfWeek: day });
+    }
+  }
+  await prisma.scheduleSlot.createMany({ data: scheduleSlotData });
+  console.log('Slots de horario creados (50).');
+
   // ── Sincronizar secuencias auto-increment ──
   const sequences = [
     'Role_id_seq', 'Person_id_seq', 'User_id_seq', 'UserRole_id_seq',
@@ -1317,6 +1345,7 @@ async function main() {
     'StudentEnrollment_id_seq',
     'LevelSubject_id_seq', 'TeachingGroup_id_seq', 'StudentTeachingGroup_id_seq', 'EvaluationType_id_seq', 'Evaluation_id_seq', 'GradeRecord_id_seq', 'Fee_id_seq', 'StudentFee_id_seq', 'PaymentType_id_seq', 'PaymentMethod_id_seq', 'Exchange_id_seq',
     'Payment_id_seq', 'School_id_seq', 'SchoolStudentHistory_id_seq',
+    'ClassHour_id_seq', 'ScheduleSlot_id_seq', 'TeachingGroupSchedule_id_seq',
   ];
   for (const seq of sequences) {
     const table = seq.replace('_id_seq', '');

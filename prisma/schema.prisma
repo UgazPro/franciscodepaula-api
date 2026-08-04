@@ -357,10 +357,11 @@ model TeachingGroup {
   schoolYear   SchoolYear   @relation(fields: [schoolYearId], references: [id])
   section      Section?     @relation(fields: [sectionId], references: [id])
 
-  evaluations      Evaluation[]
-  studentGroups    StudentTeachingGroup[]
-  failedSubjects   StudentFailedSubject[]
-  gradeAdjustments GradeAdjustment[]
+  evaluations            Evaluation[]
+  studentGroups          StudentTeachingGroup[]
+  failedSubjects         StudentFailedSubject[]
+  gradeAdjustments       GradeAdjustment[]
+  teachingGroupSchedules TeachingGroupSchedule[]
 
   @@unique([teacherId, levelSubjectId, schoolYearId, sectionId, groupName])
 }
@@ -834,4 +835,42 @@ model PayrollAdjustment {
   amount Decimal @db.Decimal(10, 2)
 
   payrollRecord PayrollRecord @relation(fields: [payrollRecordId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// SCHEDULES
+//////////////////////////////////////////////////
+
+model ClassHour {
+  id        Int    @id @default(autoincrement())
+  block     Int
+  startTime String @db.VarChar(10)
+  endTime   String @db.VarChar(10)
+  type      String @db.VarChar(20)
+
+  scheduleSlots ScheduleSlot[]
+}
+
+model ScheduleSlot {
+  id           Int @id @default(autoincrement())
+  classHoursId Int
+  dayOfWeek    Int
+
+  classHour ClassHour @relation(fields: [classHoursId], references: [id])
+
+  teachingGroupSchedules TeachingGroupSchedule[]
+
+  @@unique([dayOfWeek, classHoursId])
+}
+
+model TeachingGroupSchedule {
+  id              Int      @id @default(autoincrement())
+  teachingGroupId Int
+  scheduleSlotId  Int
+  classroom       String?  @db.VarChar(50)
+
+  teachingGroup TeachingGroup @relation(fields: [teachingGroupId], references: [id])
+  scheduleSlot  ScheduleSlot  @relation(fields: [scheduleSlotId], references: [id])
+
+  @@unique([teachingGroupId, scheduleSlotId])
 }
