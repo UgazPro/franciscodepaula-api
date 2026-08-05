@@ -222,4 +222,296 @@ export class ScheduleService {
       return badResponse;
     }
   }
+
+  async getCRPSchedule(groupName: string) {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+      });
+      if (!activeSchoolYear) {
+        return { success: false, message: 'No hay año escolar activo', data: [] };
+      }
+
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: {
+          groupName,
+          isSpecialGroup: true,
+          schoolYearId: activeSchoolYear.id,
+          status: true,
+        },
+        include: {
+          levelSubject: { include: { subject: true, highSchoolLevel: true } },
+          employee: { include: { user: { include: { person: true } } } },
+          teachingGroupSchedules: {
+            include: {
+              scheduleSlot: {
+                include: { classHour: true },
+              },
+            },
+          },
+        },
+      });
+
+      const schedules = teachingGroups.flatMap((tg) =>
+        tg.teachingGroupSchedules.map((tgs) => ({
+          id: tgs.id,
+          teachingGroupId: tg.id,
+          subject: tg.levelSubject.subject.subject,
+          subjectCode: tg.levelSubject.subject.code,
+          teacherName: tg.employee
+            ? `${tg.employee.user.person.firstNames} ${tg.employee.user.person.lastNames}`
+            : 'Sin asignar',
+          level: tg.levelSubject.highSchoolLevel.level,
+          groupName: tg.groupName,
+          isSpecialGroup: tg.isSpecialGroup,
+          slotId: tgs.scheduleSlot.id,
+          dayOfWeek: tgs.scheduleSlot.dayOfWeek,
+          block: tgs.scheduleSlot.classHour.block,
+          startTime: tgs.scheduleSlot.classHour.startTime,
+          endTime: tgs.scheduleSlot.classHour.endTime,
+          classroom: tgs.classroom,
+        })),
+      );
+
+      return { success: true, message: 'OK', data: schedules };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async assignCRPSchedule(groupName: string, scheduleSlotId: number, classroom?: string) {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+      });
+      if (!activeSchoolYear) {
+        return { success: false, message: 'No hay año escolar activo', data: null };
+      }
+
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: {
+          groupName,
+          isSpecialGroup: true,
+          schoolYearId: activeSchoolYear.id,
+          status: true,
+        },
+      });
+
+      if (!teachingGroups.length) {
+        return { success: false, message: 'No se encontraron grupos para este CRP', data: null };
+      }
+
+      const slot = await this.prisma.scheduleSlot.findUnique({
+        where: { id: scheduleSlotId },
+      });
+      if (!slot) {
+        return { success: false, message: 'Slot de horario no encontrado', data: null };
+      }
+
+      const results: { teachingGroupId: number; success: boolean; message: string }[] = [];
+
+      for (const tg of teachingGroups) {
+        const existing = await this.prisma.teachingGroupSchedule.findUnique({
+          where: {
+            teachingGroupId_scheduleSlotId: {
+              teachingGroupId: tg.id,
+              scheduleSlotId,
+            },
+          },
+        });
+        if (existing) {
+          results.push({ teachingGroupId: tg.id, success: false, message: 'Ya tiene este horario' });
+          continue;
+        }
+
+        const conflictingTeacher = await this.prisma.teachingGroupSchedule.findFirst({
+          where: {
+            scheduleSlotId,
+            teachingGroup: {
+              teacherId: tg.teacherId,
+              id: { not: tg.id },
+              status: true,
+            },
+          },
+        });
+        if (conflictingTeacher) {
+          results.push({ teachingGroupId: tg.id, success: false, message: 'Docente con conflicto' });
+          continue;
+        }
+
+        await this.prisma.teachingGroupSchedule.create({
+          data: {
+            teachingGroupId: tg.id,
+            scheduleSlotId,
+            classroom,
+          },
+        });
+        results.push({ teachingGroupId: tg.id, success: true, message: 'Asignado' });
+      }
+
+      const allAssigned = results.every((r) => r.success);
+      const noneAssigned = results.every((r) => !r.success);
+
+      if (noneAssigned) {
+        return { success: false, message: 'Ningún nivel pudo ser asignado (conflictos)', data: results };
+      }
+
+      return {
+        success: true,
+        message: allAssigned
+          ? 'CRP asignado a todos los niveles'
+          : 'CRP asignado parcialmente (algunos niveles tenían conflictos)',
+        data: results,
+      };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async getAllCRPSchedules() {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+      });
+      if (!activeSchoolYear) {
+        return { success: false, message: 'No hay año escolar activo', data: [] };
+      }
+
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: {
+          isSpecialGroup: true,
+          schoolYearId: activeSchoolYear.id,
+          status: true,
+        },
+        include: {
+          levelSubject: { include: { subject: true, highSchoolLevel: true } },
+          employee: { include: { user: { include: { person: true } } } },
+          teachingGroupSchedules: {
+            include: {
+              scheduleSlot: {
+                include: { classHour: true },
+              },
+            },
+          },
+        },
+      });
+
+      const schedules = teachingGroups.flatMap((tg) =>
+        tg.teachingGroupSchedules.map((tgs) => ({
+          id: tgs.id,
+          teachingGroupId: tg.id,
+          subject: tg.levelSubject.subject.subject,
+          subjectCode: tg.levelSubject.subject.code,
+          teacherName: tg.employee
+            ? `${tg.employee.user.person.firstNames} ${tg.employee.user.person.lastNames}`
+            : 'Sin asignar',
+          level: tg.levelSubject.highSchoolLevel.level,
+          groupName: tg.groupName,
+          isSpecialGroup: tg.isSpecialGroup,
+          slotId: tgs.scheduleSlot.id,
+          dayOfWeek: tgs.scheduleSlot.dayOfWeek,
+          block: tgs.scheduleSlot.classHour.block,
+          startTime: tgs.scheduleSlot.classHour.startTime,
+          endTime: tgs.scheduleSlot.classHour.endTime,
+          classroom: tgs.classroom,
+        })),
+      );
+
+      return { success: true, message: 'OK', data: schedules };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
+
+  async assignAllCRPSchedule(scheduleSlotId: number, classroom?: string) {
+    try {
+      const activeSchoolYear = await this.prisma.schoolYear.findFirst({
+        where: { isActive: true },
+      });
+      if (!activeSchoolYear) {
+        return { success: false, message: 'No hay año escolar activo', data: null };
+      }
+
+      const teachingGroups = await this.prisma.teachingGroup.findMany({
+        where: {
+          isSpecialGroup: true,
+          schoolYearId: activeSchoolYear.id,
+          status: true,
+        },
+      });
+
+      if (!teachingGroups.length) {
+        return { success: false, message: 'No se encontraron CRPs activos', data: null };
+      }
+
+      const slot = await this.prisma.scheduleSlot.findUnique({
+        where: { id: scheduleSlotId },
+      });
+      if (!slot) {
+        return { success: false, message: 'Slot de horario no encontrado', data: null };
+      }
+
+      const results: { teachingGroupId: number; groupName: string; success: boolean; message: string }[] = [];
+
+      for (const tg of teachingGroups) {
+        const existing = await this.prisma.teachingGroupSchedule.findUnique({
+          where: {
+            teachingGroupId_scheduleSlotId: {
+              teachingGroupId: tg.id,
+              scheduleSlotId,
+            },
+          },
+        });
+        if (existing) {
+          results.push({ teachingGroupId: tg.id, groupName: tg.groupName ?? '', success: false, message: 'Ya tiene este horario' });
+          continue;
+        }
+
+        const conflictingTeacher = await this.prisma.teachingGroupSchedule.findFirst({
+          where: {
+            scheduleSlotId,
+            teachingGroup: {
+              teacherId: tg.teacherId,
+              id: { not: tg.id },
+              status: true,
+            },
+          },
+        });
+        if (conflictingTeacher) {
+          results.push({ teachingGroupId: tg.id, groupName: tg.groupName ?? '', success: false, message: 'Docente con conflicto' });
+          continue;
+        }
+
+        await this.prisma.teachingGroupSchedule.create({
+          data: {
+            teachingGroupId: tg.id,
+            scheduleSlotId,
+            classroom,
+          },
+        });
+        results.push({ teachingGroupId: tg.id, groupName: tg.groupName ?? '', success: true, message: 'Asignado' });
+      }
+
+      const allAssigned = results.every((r) => r.success);
+      const noneAssigned = results.every((r) => !r.success);
+
+      if (noneAssigned) {
+        return { success: false, message: 'Ningún CRP pudo ser asignado (conflictos)', data: results };
+      }
+
+      return {
+        success: true,
+        message: allAssigned
+          ? 'Todos los CRPs asignados al horario'
+          : 'CRPs asignados parcialmente (algunos tenían conflictos)',
+        data: results,
+      };
+    } catch (error) {
+      badResponse.message = String(error);
+      return badResponse;
+    }
+  }
 }
