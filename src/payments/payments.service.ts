@@ -45,7 +45,7 @@ export class PaymentsService {
         where.paymentMethodId = filters.paymentMethodId;
       }
 
-      // Conditions on studentFees.some
+      // Conditions on studentFeePayments.some.studentFee
       const studentFeeConditions: Prisma.StudentFeeWhereInput[] = [];
 
       if (filters?.feeId) {
@@ -112,14 +112,7 @@ export class PaymentsService {
                 },
               },
             },
-            { payment: { payerName: { contains: s, mode: 'insensitive' as const } } },
-            { payment: { payerIdentification: { contains: s } } },
-            { payment: { reference: { contains: s } } },
-            {
-              fee: {
-                name: { contains: s, mode: 'insensitive' as const },
-              },
-            },
+            { fee: { name: { contains: s, mode: 'insensitive' as const } } },
           ],
         });
       }
@@ -132,8 +125,9 @@ export class PaymentsService {
             student: {
               include: {
                 studentFees: {
-                  where: { status: true },
-                  select: { feeId: true },
+                  include: {
+                    payments: { select: { amount: true } },
+                  },
                 },
               },
             },
@@ -152,29 +146,64 @@ export class PaymentsService {
 
         const morosoStudentIds = activeEnrollments
           .filter((se) => {
-            const paidFeeIds = se.student.studentFees.map((sf) => sf.feeId);
-            return se.schoolYear.fees.some((fee) => !paidFeeIds.includes(fee.id));
+            return se.schoolYear.fees.some((fee) => {
+              const studentFee = se.student.studentFees.find((sf) => sf.feeId === fee.id);
+              if (!studentFee) return true;
+              const totalPaid = studentFee.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+              return totalPaid < Number(fee.value);
+            });
           })
           .map((se) => se.studentId);
 
         studentFeeConditions.push({ studentId: { in: morosoStudentIds } });
       }
 
-      if (studentFeeConditions.length > 0) {
-        where.studentFees = { some: { AND: studentFeeConditions } };
+      // Build the studentFee where clause for the intermediate table
+      const studentFeeWhere: Prisma.StudentFeeWhereInput =
+        studentFeeConditions.length > 0 ? { AND: studentFeeConditions } : {};
+
+      // If we need to filter by payer info, we need to go through Payment
+      if (filters?.search) {
+        const s = filters.search;
+        where.OR = [
+          { payerName: { contains: s, mode: 'insensitive' as const } },
+          { payerIdentification: { contains: s } },
+          { reference: { contains: s } },
+        ];
+      }
+
+      if (filters?.representativeSearch) {
+        const r = filters.representativeSearch;
+        where.OR = [
+          ...(where.OR || []),
+          { payerName: { contains: r, mode: 'insensitive' as const } },
+          { payerIdentification: { contains: r } },
+        ];
+      }
+
+      if (studentFeeConditions.length > 0 || filters?.feeId || filters?.studentSearch || filters?.studentId || filters?.schoolYearId) {
+        where.studentFeePayments = {
+          some: {
+            studentFee: studentFeeWhere,
+          },
+        };
       }
 
       const include = {
         paymentMethod: { include: { paymentType: true } },
         exchange: true,
-        studentFees: {
+        studentFeePayments: {
           include: {
-            student: {
+            studentFee: {
               include: {
-                person: true,
+                student: {
+                  include: {
+                    person: true,
+                  },
+                },
+                fee: true,
               },
             },
-            fee: true,
           },
         },
       };
@@ -256,7 +285,11 @@ export class PaymentsService {
             },
           },
           studentFees: {
-            select: { feeId: true },
+            include: {
+              payments: {
+                select: { amount: true },
+              },
+            },
           },
         },
         orderBy: { id: 'asc' },
@@ -273,21 +306,55 @@ export class PaymentsService {
 
           if (allFeeIds.size === 0) return false;
 
-          const paidFeeIds = new Set(student.studentFees.map((sf) => sf.feeId));
-
           for (const feeId of allFeeIds) {
-            if (!paidFeeIds.has(feeId)) return true;
+            const studentFee = student.studentFees.find((sf) => sf.feeId === feeId);
+            if (!studentFee) return true;
+            const totalPaid = studentFee.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+            // Find the fee value from enrollments
+            for (const enrollment of student.enrollments) {
+              const fee = enrollment.schoolYear.fees.find((f) => f.id === feeId);
+              if (fee && totalPaid < Number(fee.value)) return true;
+            }
           }
 
           return false;
         })
-        .map((student) => ({
-          ...student,
-          paidFeeIds: [
-            ...new Set(student.studentFees.map((sf) => sf.feeId)),
-          ],
-          studentFees: undefined,
-        }));
+        .map((student) => {
+          // Calculate debts per fee
+          const debts: { feeId: number; feeName: string; totalValue: number; paidAmount: number; pending: number; schoolYearName?: string }[] = [];
+          const seenFeeIds = new Set<number>();
+
+          for (const enrollment of student.enrollments) {
+            for (const fee of enrollment.schoolYear.fees) {
+              if (seenFeeIds.has(fee.id)) continue;
+              seenFeeIds.add(fee.id);
+
+              const studentFee = student.studentFees.find((sf) => sf.feeId === fee.id);
+              const paidAmount = studentFee
+                ? studentFee.payments.reduce((sum, p) => sum + Number(p.amount), 0)
+                : 0;
+              const totalValue = Number(fee.value);
+              const pending = totalValue - paidAmount;
+
+              if (pending > 0) {
+                debts.push({
+                  feeId: fee.id,
+                  feeName: fee.name,
+                  totalValue,
+                  paidAmount,
+                  pending,
+                  schoolYearName: enrollment.schoolYear.name,
+                });
+              }
+            }
+          }
+
+          return {
+            ...student,
+            debts,
+            studentFees: undefined,
+          };
+        });
 
       return result;
     } catch (error) {
@@ -301,14 +368,18 @@ export class PaymentsService {
       const payment = await this.prismaService.payment.findUnique({
         where: { id },
         include: {
-          studentFees: {
+          studentFeePayments: {
             include: {
-              student: {
+              studentFee: {
                 include: {
-                  person: true,
+                  student: {
+                    include: {
+                      person: true,
+                    },
+                  },
+                  fee: true,
                 },
               },
-              fee: true,
             },
           },
         },
@@ -324,7 +395,7 @@ export class PaymentsService {
   private async processStudentFees(
     tx: Prisma.TransactionClient,
     paymentId: number,
-    items: { studentId: number; feeId: number }[],
+    items: { studentId: number; feeId: number; amount: number }[],
   ) {
     for (const item of items) {
       const feeInfo = await tx.fee.findUnique({
@@ -332,12 +403,11 @@ export class PaymentsService {
       });
 
       if (!feeInfo) {
-        badResponse.message = `Concepto de pago ID ${item.feeId} no encontrado.`;
-        throw new Error(badResponse.message);
+        throw new Error(`Concepto de pago ID ${item.feeId} no encontrado.`);
       }
 
       // Handle enrollment logic
-      if (feeInfo.name === "Inscripción") {
+      if (feeInfo.name === 'Inscripción') {
         const enrollment = await tx.studentEnrollment.findFirst({
           where: {
             studentId: item.studentId,
@@ -361,20 +431,54 @@ export class PaymentsService {
         });
 
         if (!activeEnrollment) {
-          badResponse.message = `El estudiante ID ${item.studentId} no tiene una inscripción activa. Debe registrar el pago de inscripción primero.`;
-          throw new Error(badResponse.message);
+          throw new Error(
+            `El estudiante ID ${item.studentId} no tiene una inscripción activa. Debe registrar el pago de inscripción primero.`,
+          );
         }
       }
 
-      // Create StudentFee with status = false (abono / partial payment marker)
-      await tx.studentFee.create({
-        data: {
-          studentId: item.studentId,
-          feeId: item.feeId,
-          paymentId,
-          status: false,
+      // Find or create StudentFee for this student+fee
+      let studentFee = await tx.studentFee.findUnique({
+        where: {
+          studentId_feeId: {
+            studentId: item.studentId,
+            feeId: item.feeId,
+          },
         },
       });
+
+      if (!studentFee) {
+        studentFee = await tx.studentFee.create({
+          data: {
+            studentId: item.studentId,
+            feeId: item.feeId,
+            status: false,
+          },
+        });
+      }
+
+      // Create record in intermediate table
+      await tx.studentFeePayment.create({
+        data: {
+          studentFeeId: studentFee.id,
+          paymentId,
+          amount: item.amount,
+        },
+      });
+
+      // Calculate total paid for this fee and update status
+      const totalPaid = await tx.studentFeePayment.aggregate({
+        where: { studentFeeId: studentFee.id },
+        _sum: { amount: true },
+      });
+
+      const sum = Number(totalPaid._sum.amount ?? 0);
+      if (sum >= Number(feeInfo.value)) {
+        await tx.studentFee.update({
+          where: { id: studentFee.id },
+          data: { status: true },
+        });
+      }
     }
   }
 
@@ -388,6 +492,7 @@ export class PaymentsService {
             currency: data.currency,
             totalAmount: data.totalAmount,
             reference: data.reference,
+            zellePayer: data.zellePayer,
             payerName: data.payerName,
             payerIdentification: data.payerIdentification,
             payerPhone: data.payerPhone,
@@ -400,11 +505,6 @@ export class PaymentsService {
         // Determine which student-fee pairs to process
         if (data.studentFees && data.studentFees.length > 0) {
           await this.processStudentFees(tx, payment.id, data.studentFees);
-        } else if (data.studentId && data.feeId) {
-          // Legacy: single student + single fee
-          await this.processStudentFees(tx, payment.id, [
-            { studentId: data.studentId, feeId: data.feeId },
-          ]);
         }
 
         return payment;
@@ -520,10 +620,14 @@ export class PaymentsService {
 
   async getExchangeRates() {
     try {
-      const rates = await this.prismaService.exchange.findFirst({
+      const latest = await this.prismaService.exchange.findFirst({
         orderBy: { id: 'desc' },
       });
-      return rates;
+      const defaultRate = await this.prismaService.exchange.findFirst({
+        where: { setByUser: false },
+        orderBy: { id: 'desc' },
+      });
+      return { latest, defaultRate };
     } catch (error) {
       badResponse.message = String(error);
       return badResponse;
@@ -536,6 +640,7 @@ export class PaymentsService {
         data: {
           rate: data.rate,
           date: data.date,
+          setByUser: data.setByUser ?? false,
         },
       });
       return { success: true, message: 'Tasa de cambio registrada exitosamente', data: exchange };
@@ -685,13 +790,13 @@ export class PaymentsService {
     try {
       const payment = await this.prismaService.payment.findUnique({
         where: { id },
-        include: { studentFees: true },
+        include: { studentFeePayments: true },
       });
 
       if (!payment) return badResponse;
 
       await this.prismaService.$transaction(async (tx) => {
-        await tx.studentFee.deleteMany({ where: { paymentId: id } });
+        await tx.studentFeePayment.deleteMany({ where: { paymentId: id } });
         await tx.payment.delete({ where: { id } });
       });
 
@@ -713,6 +818,7 @@ export class PaymentsService {
             currency: data.currency,
             totalAmount: data.totalAmount,
             reference: data.reference,
+            zellePayer: data.zellePayer,
             payerName: data.payerName,
             payerIdentification: data.payerIdentification,
             payerPhone: data.payerPhone,
@@ -721,15 +827,13 @@ export class PaymentsService {
           },
         });
 
-        // Rebuild studentFees if provided
+        // Rebuild studentFeePayments if provided
         const items = data.studentFees && data.studentFees.length > 0
           ? data.studentFees
-          : (data.studentId && data.feeId
-              ? [{ studentId: data.studentId, feeId: data.feeId }]
-              : null);
+          : null;
 
         if (items) {
-          await tx.studentFee.deleteMany({ where: { paymentId: id } });
+          await tx.studentFeePayment.deleteMany({ where: { paymentId: id } });
           await this.processStudentFees(tx, id, items);
         }
 
@@ -738,10 +842,14 @@ export class PaymentsService {
           include: {
             paymentMethod: { include: { paymentType: true } },
             exchange: true,
-            studentFees: {
+            studentFeePayments: {
               include: {
-                student: { include: { person: true } },
-                fee: true,
+                studentFee: {
+                  include: {
+                    student: { include: { person: true } },
+                    fee: true,
+                  },
+                },
               },
             },
           },

@@ -85,7 +85,7 @@ async function main() {
   const tables = [
     'SchoolStudentHistory', 'StudentFailedSubjectAttempt', 'StudentFailedSubject', 'School',
     'PayrollAdjustment', 'PayrollRecord', 'EmployeeWorkHour', 'PayrollPeriod',
-    'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
+    'StudentFeePayment', 'StudentFee', 'Payment', 'Exchange', 'PaymentType', 'PaymentMethod', 'Fee',
     'GradeRecord', 'Evaluation', 'EvaluationType', 'StudentTeachingGroup', 'TeachingGroup', 'LevelSubject', 'Subject',
     'StudentEnrollment', 'Section', 'Period', 'SchoolYear',
     'HighSchoolLevel', 'StudentRepresentative', 'Employee', 'Representative',
@@ -1197,7 +1197,8 @@ async function main() {
   // Create bundled payments
   let paymentId = 0;
   const paymentsData: any[] = [];
-  const studentFeesData: any[] = [];
+  const uniqueStudentFees = new Map<string, { studentId: number; feeId: number }>();
+  const studentFeePaymentsData: { studentFeeId: number; paymentId: number; amount: number }[] = [];
 
   for (const [repId, studentFees] of repPaymentMap) {
     if (studentFees.length === 0) continue;
@@ -1243,26 +1244,76 @@ async function main() {
       });
 
       for (const studentId of studentIds) {
-        studentFeesData.push({
-          studentId,
-          feeId,
+        // Track unique student+fee pairs for StudentFee table
+        const key = `${studentId}-${feeId}`;
+        if (!uniqueStudentFees.has(key)) {
+          uniqueStudentFees.set(key, { studentId, feeId });
+        }
+        // Track payment links for StudentFeePayment table
+        studentFeePaymentsData.push({
+          studentFeeId: 0, // will be resolved after StudentFee creation
           paymentId,
-          status: true,
+          amount: feeValue,
         });
       }
     }
   }
 
   await prisma.payment.createMany({ data: paymentsData });
-  console.log(`Pagos creados (${paymentsData.length} payments, ${studentFeesData.length} student-fee records).`);
+  console.log(`Pagos creados (${paymentsData.length} payments).`);
 
-  // Batch insert student fees in chunks to handle large datasets
+  // Create StudentFee records (unique per student+fee, no paymentId)
+  const studentFeeRecords = [...uniqueStudentFees.values()].map((sf) => ({
+    studentId: sf.studentId,
+    feeId: sf.feeId,
+    status: true,
+  }));
   const CHUNK_SIZE = 10000;
-  for (let i = 0; i < studentFeesData.length; i += CHUNK_SIZE) {
-    const chunk = studentFeesData.slice(i, i + CHUNK_SIZE);
-    await prisma.studentFee.createMany({ data: chunk });
+  for (let i = 0; i < studentFeeRecords.length; i += CHUNK_SIZE) {
+    const chunk = studentFeeRecords.slice(i, i + CHUNK_SIZE);
+    await prisma.studentFee.createMany({ data: chunk, skipDuplicates: true });
   }
-  console.log('Aranceles por estudiante creados.');
+  console.log(`StudentFee records creados (${studentFeeRecords.length}).`);
+
+  // Build lookup map: studentId+feeId → studentFee.id
+  const allStudentFees = await prisma.studentFee.findMany();
+  const sfLookup = new Map<string, number>();
+  for (const sf of allStudentFees) {
+    sfLookup.set(`${sf.studentId}-${sf.feeId}`, sf.id);
+  }
+
+  // Resolve studentFeeId for each StudentFeePayment record
+  // We need to re-traverse the payment structure to match correctly
+  let sfPaymentIdx = 0;
+  for (const [repId, studentFees] of repPaymentMap) {
+    if (studentFees.length === 0) continue;
+    const feeToStudents = new Map<number, number[]>();
+    for (const sf of studentFees) {
+      for (const feeId of sf.feeIds) {
+        if (!feeToStudents.has(feeId)) {
+          feeToStudents.set(feeId, []);
+        }
+        feeToStudents.get(feeId)!.push(sf.studentId);
+      }
+    }
+    for (const [feeId, studentIds] of feeToStudents) {
+      for (const studentId of studentIds) {
+        const key = `${studentId}-${feeId}`;
+        const studentFeeId = sfLookup.get(key);
+        if (studentFeeId !== undefined && sfPaymentIdx < studentFeePaymentsData.length) {
+          studentFeePaymentsData[sfPaymentIdx].studentFeeId = studentFeeId;
+        }
+        sfPaymentIdx++;
+      }
+    }
+  }
+
+  // Create StudentFeePayment records
+  for (let i = 0; i < studentFeePaymentsData.length; i += CHUNK_SIZE) {
+    const chunk = studentFeePaymentsData.slice(i, i + CHUNK_SIZE);
+    await prisma.studentFeePayment.createMany({ data: chunk });
+  }
+  console.log(`StudentFeePayment records creados (${studentFeePaymentsData.length}).`);
 
   // ── 21. SCHOOL ──
   await prisma.school.create({
@@ -1362,7 +1413,8 @@ async function main() {
   console.log(`  Estudiantes: ${TOTAL_STUDENTS} (todos activos)`);
   console.log(`  Representantes: ${REP_COUNT}`);
   console.log(`  Pagos realizados: ${paymentsData.length}`);
-  console.log(`  StudentFee records: ${studentFeesData.length}`);
+  console.log(`  StudentFee records: ${studentFeeRecords.length}`);
+  console.log(`  StudentFeePayment records: ${studentFeePaymentsData.length}`);
   console.log(`  Usuarios staff (sin docentes): ${staffUserData.length}`);
   console.log(`  Escuelas: 1`);
   console.log(`  Historial escolar: ${historyData.length} registros`);

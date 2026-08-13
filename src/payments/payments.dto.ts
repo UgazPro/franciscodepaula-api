@@ -62,6 +62,10 @@ export class ExchangeDTO {
   @Transform(({ value }) => new Date(value))
   @IsDate()
   date!: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  setByUser?: boolean;
 }
 
 // FEE
@@ -116,6 +120,9 @@ export class StudentFeeItemDTO {
 
   @IsNumber()
   feeId!: number;
+
+  @IsNumber()
+  amount!: number;
 }
 
 // PAYMENT
@@ -136,6 +143,10 @@ export class PaymentDTO {
   @IsOptional()
   @IsString()
   reference?: string;
+
+  @IsOptional()
+  @IsString()
+  zellePayer?: string;
 
   @IsOptional()
   @IsString()
@@ -160,16 +171,7 @@ export class PaymentDTO {
   @IsString()
   description?: string;
 
-  // Legacy single-fee fields (still supported for backwards compat)
-  @IsOptional()
-  @IsNumber()
-  feeId?: number;
-
-  @IsOptional()
-  @IsNumber()
-  studentId?: number;
-
-  // NEW: Array of student-fee pairs for multi payments
+  // Array of student-fee pairs with amounts for multi payments
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

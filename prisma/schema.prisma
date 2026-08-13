@@ -664,17 +664,37 @@ model StudentFee {
 
   feeId Int
 
-  paymentId Int
-
-  status Boolean?
+  status Boolean? @default(false)
 
   student Student @relation(fields: [studentId], references: [id])
 
   fee Fee @relation(fields: [feeId], references: [id])
 
-  payment Payment @relation(fields: [paymentId], references: [id])
+  payments StudentFeePayment[]
 
   studentEnrollment StudentEnrollment?
+
+  @@unique([studentId, feeId])
+}
+
+//////////////////////////////////////////////////
+// STUDENT FEE PAYMENT (intermediate table for abonos)
+//////////////////////////////////////////////////
+
+model StudentFeePayment {
+  id Int @id @default(autoincrement())
+
+  studentFeeId Int
+
+  paymentId Int
+
+  amount Decimal @db.Decimal(10, 2)
+
+  studentFee StudentFee @relation(fields: [studentFeeId], references: [id])
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@unique([studentFeeId, paymentId])
 }
 
 //////////////////////////////////////////////////
@@ -687,6 +707,8 @@ model Exchange {
   rate Decimal @db.Decimal(10, 2)
 
   date DateTime
+
+  setByUser Boolean @default(false)
 
   payments Payment[]
 }
@@ -708,6 +730,8 @@ model Payment {
 
   reference String?
 
+  zellePayer String? @db.VarChar(150)
+
   payerName String?
 
   payerIdentification String?
@@ -724,7 +748,7 @@ model Payment {
 
   exchange Exchange? @relation(fields: [exchangeId], references: [id])
 
-  studentFees StudentFee[]
+  studentFeePayments StudentFeePayment[]
 }
 
 //////////////////////////////////////////////////
