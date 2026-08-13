@@ -40,6 +40,11 @@ export class GradeAdjustmentController {
     );
   }
 
+  @Get('boletin/definitivas')
+  async getBoletinDefinitivas() {
+    return await this.service.getBoletinDefinitivas();
+  }
+
   @Post()
   async createAdjustments(@Body() data: CreateGradeAdjustmentDTO) {
     return await this.service.createAdjustments(data);
